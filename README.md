@@ -14,6 +14,7 @@ HELM 库 Chart（第二版）。基于 [Kubernetes API v1.28](https://kubernetes
   > `values.yaml` 映射原则：
   > - 在使用 `.Values` 的值时，建议统一映射到 `._CTX` 变量中
   > - 模板内自定义变量，建议统一使用 `.__<ENV>` 格式且使用驼峰样式
+  >   - 自定义变量，使用 [set](https://helm.sh/zh/docs/chart_template_guide/function_list/#set) 定义，使用 [unset](https://helm.sh/zh/docs/chart_template_guide/function_list/#unset) 销毁
   > - `$.Values` 等变量引用视具体情况而定
   > - 适用于 HELM 相关的变量，统一添加 `helm` 前缀，如：`helmLabels`
 
