@@ -1,3 +1,26 @@
+# Library Charts (v2)
+
+HELM 库 Chart（第二版）。基于 [Kubernetes API v1.28](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/) 实现，具有良好的可拓展性、通用性，使 Kubernetes YAML 管理更简单、方便。
+
+## 重大改动
+
+- `values.yaml` 尽量遵循 [最佳实践](https://helm.sh/zh/docs/chart_best_practices/values/)
+  - 移除 `values.yaml` 中 `.Values.global` 支持
+    - `.Values.global` 在一定程度上与 `.Values.X` 冲突且使用较少
+  - 对于不同类型的资源，建议使用 Map 进行分组放置
+  - 增加一些通用的内置变量
+- 将原有的内置变量 `._Pod` 改为 `._CTX`
+
+  > `values.yaml` 映射原则：
+  > - 在使用 `.Values` 的值时，建议统一映射到 `._CTX` 变量中
+  > - 模板内自定义变量，建议统一使用 `.__<ENV>` 格式且使用驼峰样式
+  > - `$.Values` 等变量引用视具体情况而定
+  > - 适用于 HELM 相关的变量，统一添加 `helm` 前缀，如：`helmLabels`
+
+- `templates/examples` 示例重构
+- 部分支持云平台 CRDs
+- 文档补充
+
 ## 添加库 Chart
 
 - 同步仓库到本地
@@ -8,7 +31,7 @@
     ```bash
     dependencies:
     - name: library-charts
-      version: v0.1.0
+      version: v1.28.0
       repository: https://helm-repository.example.com/
     ```
 
