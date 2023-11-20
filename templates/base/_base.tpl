@@ -1,14 +1,14 @@
 {{- /*
-  可用值:
+  variables (priority):
+  - ._CTX.apiVersion
   - .Values.apiVersion
-  - ._ctx.apiVersion
-  优先级: ._ctx.apiVersion > .Values.apiVersion
-  参考: https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#api-groups
-  备注:
+  reference:
+  - https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#api-groups
+  descr:
 */ -}}
 {{- define "base.apiVersion" -}}
-  {{- if or ._ctx.apiVersion .Values.apiVersion }}
-    {{- coalesce ._ctx.apiVersion .Values.apiVersion }}
+  {{- if or ._CTX.apiVersion .Values.apiVersion }}
+    {{- coalesce ._CTX.apiVersion .Values.apiVersion }}
   {{- else }}
     {{- fail "apiVersion not found, please check the values.yaml" }}
   {{- end }}
@@ -16,16 +16,15 @@
 
 
 {{- /*
-  可用值:
+  variables (priority):
+  - ._CTX.kind
   - .Values.kind
-  - ._ctx.kind
-  优先级: ._ctx.kind > .Values.kind
-  参考:
-  备注:
+  reference:
+  descr:
 */ -}}
 {{- define "base.kind" -}}
-  {{- if or ._ctx.kind .Values.kind }}
-    {{- coalesce ._ctx.kind .Values.kind }}
+  {{- if or ._CTX.kind .Values.kind }}
+    {{- coalesce ._CTX.kind .Values.kind }}
   {{- else }}
     {{- fail "kind not found, please check the values.yaml" }}
   {{- end }}
@@ -33,13 +32,12 @@
 
 
 {{- /*
-  可用值:
-  - .Values.name
+  variables (priority):
   - ._CTX.name
+  - .Values.name
   - .Chart.Name
-  优先级: ._CTX.name > .Values.name > .Chart.Name
-  参考:
-  备注:
+  reference:
+  descr:
 */ -}}
 {{- define "base.name" -}}
   {{- if or ._CTX.name .Values.name .Chart.Name }}
@@ -51,35 +49,38 @@
 
 
 {{- /*
-  可用值:
-  - .Values.fullname
-  - ._CTX.fullname
+  variables (priority):
   - .Release.Name
-  优先级: .Release.Name > ._CTX.fullname > .Values.fullname
-  参考:
-  备注:
-  - .Release.Name 与 .fullname 存在包含关系，如果 .Release.Name 中包含 .fullname 的字符串，则使用 .Release.Name
+  - ._CTX.fullname
+  - .Values.fullname
+  reference:
+  descr:
+  - .Release.Name 与 .fullname 存在包含关系。如果 .Release.Name 中包含 .fullname 的字符串，则使用 .Release.Name
   - .fullname 会覆盖 .name 的值
 */ -}}
 {{- define "base.fullname" -}}
   {{- if or ._CTX.fullname .Values.fullname }}
     {{- coalesce ._CTX.fullname .Values.fullname | trunc 63 | trimSuffix "-" }}
   {{- else }}
-    {{- $_ := set . "_baseName" (include "base.name" .) }}
+    {{- $_ := set . "__baseName" (include "base.name" .) }}
 
-    {{- if contains ._baseName .Release.Name }}
+    {{- if contains .__baseName .Release.Name }}
       {{- .Release.Name | trunc 63 | trimSuffix "-" }}
     {{- else }}
-      {{- ._baseName | trunc 63 | trimSuffix "-" }}
+      {{- .__baseName | trunc 63 | trimSuffix "-" }}
+    {{- end }}
+
+    {{- $_ := unset . "__baseName" }}
   {{- end }}
 {{- end }}
 
 
 {{- /*
-  可用值: .Chart.Name .Chart.Version
-  优先级:
-  参考:
-  备注:
+  variables (priority):
+  - .Chart.Name .Chart.Version
+  reference:
+  descr:
+  - 优先级相同。格式：<.Chart.Name>-<.Chart.Version>
 */ -}}
 {{- define "base.chart" -}}
   {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
@@ -87,13 +88,12 @@
 
 
 {{- /*
-  可用值:
+  variables (priority):
   - ._CTX.namespace
   - .Values.namespace
   - "default" (默认值)
-  优先级: ._CTX.namespace > .Values.namespace > "default"
-  参考:
-  备注:
+  reference:
+  descr:
 */ -}}
 {{- define "base.namespace" -}}
   {{- coalesce ._CTX.namespace .Values.namespace "default" }}

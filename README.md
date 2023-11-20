@@ -20,6 +20,9 @@ HELM 库 Chart（第二版）。基于 [Kubernetes API v1.28](https://kubernetes
 - `templates/examples` 示例重构
 - 部分支持云平台 CRDs
 - 文档补充
+  - 使用手册
+  - 代码注释
+    - `variables (priority)` 中的内容，先后顺序代表了使用时的优先级，默认情况下表示谁优先生效
 
 ## 添加库 Chart
 
