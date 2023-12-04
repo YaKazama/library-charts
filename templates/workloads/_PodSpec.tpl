@@ -62,8 +62,8 @@ reference: https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#
   {{- nindent 0 "" -}}serviceAccountName: {{ coalesce ._CTX.serviceAccountName .Values.serviceAccountName "default" }}
 {{- end }}
 
-{{- if or (kindIs "bool" ._CTX.hostPID) (kindIs "bool" .Values.hostPID) (kindIs "bool" ._CTX.shareProcessNamespace) (kindIs "bool" .Values.shareProcessNamespace) }}
-  {{- if or ._CTX.hostPID .Values.hostPID ._CTX.shareProcessNamespace .Values.shareProcessNamespace }}
+{{- if or ._CTX.hostPID .Values.hostPID ._CTX.shareProcessNamespace .Values.shareProcessNamespace }}
+  {{- if or (kindIs "bool" ._CTX.hostPID) (kindIs "bool" .Values.hostPID) (kindIs "bool" ._CTX.shareProcessNamespace) (kindIs "bool" .Values.shareProcessNamespace) }}
     {{- if and (or ._CTX.hostPID .Values.hostPID) (not (or ._CTX.shareProcessNamespace .Values.shareProcessNamespace)) }}
       {{- nindent 0 "" -}}hostPID: true
     {{- else if and (or ._CTX.shareProcessNamespace .Values.shareProcessNamespace) (not (or ._CTX.hostPID .Values.hostPID)) }}
@@ -71,9 +71,9 @@ reference: https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#
     {{- else }}
       {{- fail "HostPID and ShareProcessNamespace cannot both be set" }}
     {{- end }}
+  {{- else }}
+    {{- fail "HostPID and ShareProcessNamespace must be true or false" }}
   {{- end }}
-{{- else }}
-  {{- fail "HostPID and ShareProcessNamespace must be true or false" }}
 {{- end }}
 
 {{- if or ._CTX.subdomain .Values.subdomain }}
