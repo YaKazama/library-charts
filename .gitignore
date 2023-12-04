@@ -28,4 +28,4 @@
 **/Chart.lock
 **/library-charts*.tgz
 **/*.tgz
-
+configs/**
