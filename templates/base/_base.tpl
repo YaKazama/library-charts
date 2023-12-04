@@ -2,8 +2,7 @@
   variables (priority):
   - ._CTX.apiVersion
   - .Values.apiVersion
-  reference:
-  - https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#api-groups
+  reference: https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#api-groups
   descr:
 */ -}}
 {{- define "base.apiVersion" -}}
@@ -19,7 +18,7 @@
   variables (priority):
   - ._CTX.kind
   - .Values.kind
-  reference:
+  reference: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#types-kinds
   descr:
 */ -}}
 {{- define "base.kind" -}}
@@ -62,15 +61,13 @@
   {{- if or ._CTX.fullname .Values.fullname }}
     {{- coalesce ._CTX.fullname .Values.fullname | trunc 63 | trimSuffix "-" }}
   {{- else }}
-    {{- $_ := set . "__baseName" (include "base.name" .) }}
+    {{- $__baseName := include "base.name" . }}
 
-    {{- if contains .__baseName .Release.Name }}
+    {{- if contains $__baseName .Release.Name }}
       {{- .Release.Name | trunc 63 | trimSuffix "-" }}
     {{- else }}
-      {{- .__baseName | trunc 63 | trimSuffix "-" }}
+      {{- $__baseName | trunc 63 | trimSuffix "-" }}
     {{- end }}
-
-    {{- $_ := unset . "__baseName" }}
   {{- end }}
 {{- end }}
 
@@ -92,9 +89,31 @@
   - ._CTX.namespace
   - .Values.namespace
   - "default" (默认值)
-  reference:
+  reference: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
   descr:
 */ -}}
 {{- define "base.namespace" -}}
   {{- coalesce ._CTX.namespace .Values.namespace "default" }}
+{{- end }}
+
+
+{{- /*
+  descr:
+  - 传入的值必需为 Map 类型且包括 m 和 k 两个 Key
+  - k 类型的值只能使用 . 号作为分隔符, 格式: a.b
+*/ -}}
+{{- define "base.map.getValue" -}}
+  {{- $__keyList := mustRegexSplit "\\." .k -1 }}
+  {{- $__keyCount := len $__keyList }}
+  {{- $__firstKey := first $__keyList }}
+
+  {{- if hasKey .m $__firstKey }}
+    {{- if eq $__keyCount 1 }}
+      {{- nindent 0 "" -}}{{- get .m $__firstKey | toYaml }}
+    {{- else }}
+      {{- include "base.map.getValue" (dict "m" (get .m $__firstKey) "k" (join "." (mustRest $__keyList))) }}
+    {{- end }}
+  {{- else }}
+    {{- "" }}
+  {{- end }}
 {{- end }}

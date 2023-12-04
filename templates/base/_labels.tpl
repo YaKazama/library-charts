@@ -5,7 +5,7 @@
   - ._CTX.helmLabels .Values.helmLabels: 是否展示内置的 HELM 相关的 Labels
     - true
     - false (默认值)
-  reference:
+  reference: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
   descr:
   - 默认会统一添加 name 标签
   - ._CTX.labels .Values.labels 会进行追加处理，但会覆盖同名 Key 的内容
@@ -14,12 +14,12 @@
 {{- define "base.labels" -}}
   {{- $_ := set . "__baseLabels" dict }}
 
-    {{- range $k, $v := ._CTX.annotations }}
-      {{- $_ := set .__baseLabels $k $v }}
+    {{- range $k, $v := ._CTX.labels }}
+      {{- $_ := set $.__baseLabels $k $v }}
     {{- end }}
 
-    {{- range $k, $v := .Values.annotations }}
-      {{- $_ := set .__baseLabels $k $v }}
+    {{- range $k, $v := .Values.labels }}
+      {{- $_ := set $.__baseLabels $k $v }}
     {{- end }}
 
     {{- /*
@@ -32,8 +32,8 @@
       {{- $_ := set .__baseLabels "app.kubernetes.io/managed-by" .Release.Service }}
     {{- end }}
 
+    {{- nindent 0 "" -}}name: {{ include "base.fullname" . }}
     {{- if .__baseLabels }}
-      {{- -}}name: {{ include "base.fullname" . }}
       {{- range $k, $v := .__baseLabels }}
         {{- $k | nindent 0 }}: {{ $v }}
       {{- end }}
