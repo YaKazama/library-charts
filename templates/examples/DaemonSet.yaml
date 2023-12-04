@@ -1,0 +1,5 @@
+{{- $_ := set . "_CTX" .Values.DaemonSet }}
+
+{{- if or ._CTX.helmTesting .Values.helmTesting ._CTX.enabled }}
+  {{- include "workloads.DaemonSet" . }}
+{{- end }}

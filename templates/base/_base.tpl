@@ -117,3 +117,12 @@
     {{- "" }}
   {{- end }}
 {{- end }}
+
+
+{{- define "base.int.toString" -}}
+  {{- $__regexPercentOrNum := "^\\d+(\\%)?$" }}
+
+  {{- if mustRegexMatch $__regexPercentOrNum (toString .) }}
+    {{- . }}
+  {{- end }}
+{{- end }}
