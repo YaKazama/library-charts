@@ -1,7 +1,7 @@
 {{- define "configStorage.PersistentVolumeClaim" -}}
   {{- $_ := set . "_kind" "PersistentVolumeClaim" }}
 
-  {{- nindent 0 "" -}}apiVersion: core/v1
+  {{- nindent 0 "" -}}apiVersion: v1
   {{- nindent 0 "" -}}kind: PersistentVolumeClaim
   {{- nindent 0 "" -}}metadata:
     {{- include "definitions.ObjectMeta" . | trim | nindent 2 }}
