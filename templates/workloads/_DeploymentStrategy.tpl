@@ -6,8 +6,11 @@
       {{- nindent 0 "" -}}type: {{ default "RollingUpdate" .type }}
 
       {{- if and (eq .type "RollingUpdate") .rollingUpdate }}
-        {{- nindent 0 "" -}}rollingUpdate:
-          {{- include "workloads.RollingUpdateDeployment" .rollingUpdate | indent 2 }}
+        {{- $__rollingUpdate := include "workloads.RollingUpdateDeployment" .rollingUpdate }}
+        {{- if $__rollingUpdate }}
+          {{- nindent 0 "" -}}rollingUpdate:
+            {{- $__rollingUpdate | indent 2 }}
+        {{- end }}
       {{- end }}
     {{- end }}
   {{- end }}

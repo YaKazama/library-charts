@@ -1,10 +1,10 @@
 {{- define "workloads.ReplicationControllerSpec" -}}
-  {{- if ._CTX.minReadySeconds }}
-    {{- nindent 0 "" -}}minReadySeconds: {{ int (coalesce ._CTX.minReadySeconds 0) }}
+  {{- if or ._CTX.minReadySeconds (kindIs "float64" ._CTX.minReadySeconds) .Values.minReadySeconds (kindIs "float64" .Values.minReadySeconds) }}
+    {{- nindent 0 "" -}}minReadySeconds: {{ coalesce (toString ._CTX.minReadySeconds) (toString .Values.minReadySeconds) (toString 0) }}
   {{- end }}
 
-  {{- if ._CTX.replicas }}
-    {{- nindent 0 "" -}}replicas: {{ int (coalesce ._CTX.replicas 1) }}
+  {{- if or or ._CTX.replicas (kindIs "float64" ._CTX.replicas) .Values.replicas (kindIs "float64" .Values.replicas) }}
+    {{- nindent 0 "" -}}replicas: {{ coalesce (toString ._CTX.replicas) (toString .Values.replicas) (toString 1) }}
   {{- end }}
 
   {{- nindent 0 "" -}}selector:
