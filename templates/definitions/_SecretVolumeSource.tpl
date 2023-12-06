@@ -17,8 +17,8 @@
       {{- nindent 0 "" -}}items:
       {{- include "definitions.KeyToPath" .items | indent 0 }}
     {{- end }}
-    {{- if and .optional (kindIs "bool" .optional) }}
-      {{- nindent 0 "" -}}optional: true
+    {{- if kindIs "bool" .optional }}
+      {{- nindent 0 "" -}}optional: {{ .optional }}
     {{- end }}
   {{- end }}
 {{- end }}

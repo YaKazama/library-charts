@@ -34,20 +34,25 @@
     {{- $__vct := list }}
     {{- $__vctVal := list }}
 
-    {{- if kindIs "slice" ._CTX.volumeClaimTemplates }}
-      {{- $__vctVal = concat $__vctVal ._CTX.volumeClaimTemplates }}
-    {{- else if kindIs "map" ._CTX.volumeClaimTemplates }}
-      {{- range $k, $v := ._CTX.volumeClaimTemplates }}
-        {{- $_ := set $v "name" $k }}
-        {{- $__vctVal = mustAppend $__vctVal $v }}
+    {{- if ._CTX.volumeClaimTemplates }}
+      {{- if kindIs "slice" ._CTX.volumeClaimTemplates }}
+        {{- $__vctVal = concat $__vctVal ._CTX.volumeClaimTemplates }}
+      {{- else if kindIs "map" ._CTX.volumeClaimTemplates }}
+        {{- range $k, $v := ._CTX.volumeClaimTemplates }}
+          {{- $_ := set $v "name" $k }}
+          {{- $__vctVal = mustAppend $__vctVal $v }}
+        {{- end }}
       {{- end }}
     {{- end }}
-    {{- if kindIs "slice" .Values.volumeClaimTemplates }}
-      {{- $__vctVal = concat $__vctVal .Values.volumeClaimTemplates }}
-    {{- else if kindIs "map" .Values.volumeClaimTemplates }}
-      {{- range $k, $v := .Values.volumeClaimTemplates }}
-        {{- $_ := set $v "name" $k }}
-        {{- $__vctVal = mustAppend $__vctVal $v }}
+
+    {{- if .Values.volumeClaimTemplates }}
+      {{- if kindIs "slice" .Values.volumeClaimTemplates }}
+        {{- $__vctVal = concat $__vctVal .Values.volumeClaimTemplates }}
+      {{- else if kindIs "map" .Values.volumeClaimTemplates }}
+        {{- range $k, $v := .Values.volumeClaimTemplates }}
+          {{- $_ := set $v "name" $k }}
+          {{- $__vctVal = mustAppend $__vctVal $v }}
+        {{- end }}
       {{- end }}
     {{- end }}
 
@@ -56,9 +61,9 @@
         {{- $__vct = mustAppend $__vct (include "configStorage.PersistentVolumeClaim.StatefulSet" . | fromYaml) }}
       {{- end }}
     {{- end }}
-    {{- if (mustCompact $__vct) }}
+    {{- if (mustCompact (mustUniq $__vct)) }}
       {{- nindent 0 "" -}}volumeClaimTemplates:
-      {{- toYaml (mustCompact $__vct) | nindent 0 }}
+      {{- toYaml (mustCompact (mustUniq $__vct)) | nindent 0 }}
     {{- end }}
   {{- end }}
 

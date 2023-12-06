@@ -6,8 +6,8 @@ reference: https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#
   {{- nindent 0 "" -}}activeDeadlineSeconds: {{ int (coalesce ._CTX.activeDeadlineSeconds .Values.activeDeadlineSeconds) }}
 {{- end }}
 
-{{- if or (and ._CTX.automountServiceAccountToken (kindIs "bool" ._CTX.automountServiceAccountToken)) (and .Values.automountServiceAccountToken (kindIs "bool" .Values.automountServiceAccountToken)) }}
-  {{- nindent 0 "" -}}automountServiceAccountToken: true
+{{- if or (kindIs "bool" ._CTX.automountServiceAccountToken) (kindIs "bool" .Values.automountServiceAccountToken) }}
+  {{- nindent 0 "" -}}automountServiceAccountToken: {{ coalesce (toString ._CTX.automountServiceAccountToken) (toString .Values.automountServiceAccountToken) }}
 {{- end }}
 
 {{- if or ._CTX.dnsPolicy .Values.dnsPolicy }}
@@ -144,26 +144,30 @@ reference: https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#
   {{- $__hostList := list }}
   {{- $__hostDict := dict }}
 
-  {{- if kindIs "slice" ._CTX.hostAliases }}
-    {{- $__hostList = concat $__hostList ._CTX.hostAliases }}
-  {{- else if kindIs "map" ._CTX.hostAliases }}
-    {{- $__hostDict = mustMergeOverwrite $__hostDict ._CTX.hostAliases }}
-  {{- else if kindIs "string" ._CTX.hostAliases }}
-    {{- if not (mustRegexMatch $__regexHostList ._CTX.hostAliases) }}
-      {{- fail "Not a standard format, refer to the /etc/hosts file - 1" }}
+  {{- if ._CTX.hostAliases }}
+    {{- if kindIs "slice" ._CTX.hostAliases }}
+      {{- $__hostList = concat $__hostList ._CTX.hostAliases }}
+    {{- else if kindIs "map" ._CTX.hostAliases }}
+      {{- $__hostDict = mustMergeOverwrite $__hostDict ._CTX.hostAliases }}
+    {{- else if kindIs "string" ._CTX.hostAliases }}
+      {{- if not (mustRegexMatch $__regexHostList ._CTX.hostAliases) }}
+        {{- fail "Not a standard format, refer to the /etc/hosts file - 1" }}
+      {{- end }}
+      {{- $__hostList = mustAppend $__hostList ._CTX.hostAliases }}
     {{- end }}
-    {{- $__hostList = mustAppend $__hostList ._CTX.hostAliases }}
   {{- end }}
 
-  {{- if kindIs "slice" .Values.hostAliases }}
-    {{- $__hostList = concat $__hostList .Values.hostAliases }}
-  {{- else if kindIs "map" .Values.hostAliases }}
-    {{- $__hostDict = mustMergeOverwrite $__hostDict .Values.hostAliases }}
-  {{- else if kindIs "string" .Values.hostAliases }}
-    {{- if not (mustRegexMatch $__regexHostList .Values.hostAliases) }}
-      {{- fail "Not a standard format, refer to the /etc/hosts file - 2" }}
+  {{- if .Values.hostAliases }}
+    {{- if kindIs "slice" .Values.hostAliases }}
+      {{- $__hostList = concat $__hostList .Values.hostAliases }}
+    {{- else if kindIs "map" .Values.hostAliases }}
+      {{- $__hostDict = mustMergeOverwrite $__hostDict .Values.hostAliases }}
+    {{- else if kindIs "string" .Values.hostAliases }}
+      {{- if not (mustRegexMatch $__regexHostList .Values.hostAliases) }}
+        {{- fail "Not a standard format, refer to the /etc/hosts file - 2" }}
+      {{- end }}
+      {{- $__hostList = mustAppend $__hostList .Values.hostAliases }}
     {{- end }}
-    {{- $__hostList = mustAppend $__hostList .Values.hostAliases }}
   {{- end }}
 
   {{- if or $__hostList $__hostDict }}
