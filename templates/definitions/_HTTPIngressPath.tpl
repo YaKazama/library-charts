@@ -1,6 +1,5 @@
 {{- define "definitions.HTTPIngressPath" -}}
   {{- $__pathTypeList := list "Exact" "Prefix" "ImplementationSpecific" }}
-  {{- $__regexPath := "^/.*" }}
   {{- $__backendDict := dict }}
 
   {{- with . }}
@@ -10,7 +9,7 @@
       {{- fail "definitions.HTTPIngressPath: .pathType must be exists" }}
     {{- end }}
 
-    {{- if mustRegexMatch $__regexPath .path }}
+    {{- if isAbs .path }}
       {{- nindent 0 "" -}}path: {{ coalesce .path "/" }}
     {{- else }}
       {{- fail "definitions.HTTPIngressPath: .path must be exists" }}
