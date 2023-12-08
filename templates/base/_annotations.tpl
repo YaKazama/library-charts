@@ -10,25 +10,23 @@
   - 相同 Key 的内容会被覆盖
 */ -}}
 {{- define "base.annotations" -}}
-  {{- $_ := set . "__baseAnnotations" dict }}
+  {{- $__baseAnnotations := dict }}
+  {{- $__validOnly := false }}
 
-    {{- range $k, $v := .Values.annotations }}
-      {{- if not (eq $k "validOnly") }}
-        {{- $_ := set $.__baseAnnotations $k $v }}
-      {{- end }}
+  {{- if kindIs "map" ._CTX.annotations }}
+    {{- $__validOnly = dig "validOnly" false ._CTX.annotations }}
+    {{- $_ := mustMerge $__baseAnnotations (omit ._CTX.annotations "validOnly") }}
+  {{- end }}
+
+  {{- if kindIs "map" .Values.annotations }}
+    {{- if not $__validOnly }}
+      {{- $_ := mustMerge $__baseAnnotations (omit .Values.annotations "validOnly") }}
     {{- end }}
+  {{- end }}
 
-    {{- range $k, $v := ._CTX.annotations }}
-      {{- if not (eq $k "validOnly") }}
-        {{- $_ := set $.__baseAnnotations $k $v }}
-      {{- end }}
+  {{- if $__baseAnnotations }}
+    {{- range $k, $v := $__baseAnnotations }}
+      {{- $k | nindent 0 }}: {{ $v }}
     {{- end }}
-
-    {{- if .__baseAnnotations }}
-      {{- range $k, $v := .__baseAnnotations }}
-        {{- $k | nindent 0 }}: {{ $v }}
-      {{- end }}
-    {{- end }}
-
-  {{- $_ := unset . "__baseAnnotations" }}
+  {{- end }}
 {{- end }}
