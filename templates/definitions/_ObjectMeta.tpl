@@ -22,17 +22,17 @@
 */ -}}
 {{- define "definitions.ObjectMeta" -}}
   {{- if eq ._kind "Namespace" }}
-    {{- nindent 0 "" -}}name: {{ include "base.namespace" . }}
+    {{- nindent 0 "" -}}name: {{ kebabcase (include "base.namespace" .) | lower }}
   {{- else }}
     {{- $__clusterResourceList := list "ClusterRole" "ClusterRoleBinding" }}
     {{- $__templateSpecList := list "JobTemplateSpec" "PodTemplateSpec" }}
 
     {{- if not (or (has ._kind $__clusterResourceList) (has ._kind $__templateSpecList)) }}
-      {{- nindent 0 "" -}}namespace: {{ include "base.namespace" . }}
+      {{- nindent 0 "" -}}namespace: {{ kebabcase (include "base.namespace" .) | lower }}
     {{- end }}
 
     {{- if not (has ._kind $__templateSpecList) }}
-      {{- nindent 0 "" -}}name: {{ coalesce ._CTX.nameAlias (include "base.fullname" .) }}
+      {{- nindent 0 "" -}}name: {{ kebabcase (coalesce ._CTX.nameAlias (include "base.fullname" .)) | lower }}
     {{- end }}
 
     {{- if not (or (has ._kind $__clusterResourceList) (has ._kind $__templateSpecList)) }}
