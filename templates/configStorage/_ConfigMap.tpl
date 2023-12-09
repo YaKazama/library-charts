@@ -50,11 +50,11 @@
     {{- if or $__binaryData $__binaryDataFiles }}
       {{- nindent 0 "" -}}binaryData:
       {{- range $k, $v := $__binaryData }}
-        {{- $k | nindent 2 }}: {{ $v | b64enc | quote }}
+        {{- $k | nindent 2 }}: {{ (toString $v) | b64enc }}
       {{- end }}
       {{- range $k, $v := $__binaryDataFiles }}
         {{- $k | nindent 2 }}: |
-          {{- $v | b64enc | quote | nindent 4 }}
+          {{- $v | b64enc | nindent 4 }}
       {{- end }}
     {{- end }}
   {{- end }}
@@ -99,7 +99,7 @@
     {{- if or $__data $__dataFiles }}
       {{- nindent 0 "" -}}data:
       {{- range $k, $v := $__data }}
-        {{- $k | nindent 2 }}: {{ $v | quote }}
+        {{- $k | nindent 2 }}: {{ toString $v }}
       {{- end }}
       {{- range $k, $v := $__dataFiles }}
         {{- $k | nindent 2 }}: |

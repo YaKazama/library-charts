@@ -26,13 +26,22 @@
   {{- else }}
     {{- $__clusterResourceList := list "ClusterRole" "ClusterRoleBinding" }}
     {{- $__templateSpecList := list "JobTemplateSpec" "PodTemplateSpec" }}
+    {{- $__secretName := "" }}
+    {{- $__secretNS := "" }}
+
+    {{- if eq ._kind "Secret" }}
+      {{- if eq (coalesce ._CTX.type .Values.type) "bootstrap.kubernetes.io/token" }}
+        {{- $__secretName = include "definitions.Secret.getTokenID" . }}
+        {{- $__secretNS = "kube-system" }}
+      {{- end }}
+    {{- end }}
 
     {{- if not (or (has ._kind $__clusterResourceList) (has ._kind $__templateSpecList)) }}
-      {{- nindent 0 "" -}}namespace: {{ kebabcase (include "base.namespace" .) | lower }}
+      {{- nindent 0 "" -}}namespace: {{ coalesce $__secretNS (kebabcase (include "base.namespace" .) | lower) }}
     {{- end }}
 
     {{- if not (has ._kind $__templateSpecList) }}
-      {{- nindent 0 "" -}}name: {{ kebabcase (coalesce ._CTX.nameAlias (include "base.fullname" .)) | lower }}
+      {{- nindent 0 "" -}}name: {{ coalesce $__secretName (kebabcase (coalesce ._CTX.nameAlias (include "base.fullname" .)) | lower) }}
     {{- end }}
 
     {{- if not (or (has ._kind $__clusterResourceList) (has ._kind $__templateSpecList)) }}
