@@ -1,0 +1,5 @@
+{{- $_ := set . "_CTX" .Values.StorageClass }}
+
+{{- if or ._CTX.helmTesting .Values.helmTesting ._CTX.enabled }}
+  {{- include "configStorage.StorageClass" . }}
+{{- end }}
