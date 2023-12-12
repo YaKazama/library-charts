@@ -1,0 +1,5 @@
+{{- $_ := set . "_CTX" .Values.Namespace }}
+
+{{- if or ._CTX.helmTesting .Values.helmTesting ._CTX.enabled }}
+  {{- include "cluster.Namespace" . }}
+{{- end }}
