@@ -6,7 +6,7 @@
       {{- $__val := list }}
 
       {{- if kindIs "string" $v }}
-        {{- range (mustRegexSplit "\\s+" $v -1) }}
+        {{- range (mustRegexSplit "(,)?\\s+" $v -1) }}
           {{- $__val = mustAppend $__val . }}
         {{- end }}
       {{- else if kindIs "slice" $v }}

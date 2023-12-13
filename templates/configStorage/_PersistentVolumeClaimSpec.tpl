@@ -12,8 +12,8 @@
           {{- end }}
         {{- end }}
       {{- else if kindIs "string" .accessModes }}
-        {{- if mustRegexMatch "(ReadWriteOnce|ReadOnlyMany|ReadWriteMany|ReadWriteOncePod)(,\\s*)*" .accessModes }}
-          {{- range (mustRegexSplit ",\\s*" .accessModes -1) }}
+        {{- if mustRegexMatch "(ReadWriteOnce|ReadOnlyMany|ReadWriteMany|ReadWriteOncePod)((,)?\\s*)*" .accessModes }}
+          {{- range (mustRegexSplit "(,)?\\s*" .accessModes -1) }}
             {{- $__accessModes = mustAppend $__accessModes . }}
           {{- end }}
         {{- end }}

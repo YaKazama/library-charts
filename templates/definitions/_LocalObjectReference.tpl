@@ -4,7 +4,7 @@
 */ -}}
 {{- define "definitions.LocalObjectReference" -}}
   {{- if kindIs "map" . }}
-    {{- with .name }}
+    {{- if .name }}
       {{- nindent 0 "" -}}name: {{ .name }}
     {{- end }}
   {{- else }}

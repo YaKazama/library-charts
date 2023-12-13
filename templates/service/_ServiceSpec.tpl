@@ -25,7 +25,7 @@
           {{- end }}
         {{- end }}
       {{- else if kindIs "string" ._CTX.clusterIPs }}
-        {{- range (mustRegexSplit "\\s+" ._CTX.clusterIPs -1) }}
+        {{- range (mustRegexSplit "(,)?\\s+" ._CTX.clusterIPs -1) }}
           {{- if mustRegexMatch $__regexIP . }}
             {{- $__clusterIPs = mustAppend $__clusterIPs . }}
           {{- end }}
@@ -42,7 +42,7 @@
           {{- end }}
         {{- end }}
       {{- else if kindIs "string" .Values.clusterIPs }}
-        {{- range (mustRegexSplit "\\s+" .Values.clusterIPs -1) }}
+        {{- range (mustRegexSplit "(,)?\\s+" .Values.clusterIPs -1) }}
           {{- if mustRegexMatch $__regexIP . }}
             {{- $__clusterIPs = mustAppend $__clusterIPs . }}
           {{- end }}
@@ -69,7 +69,7 @@
           {{- end }}
         {{- end }}
       {{- else if kindIs "string" ._CTX.externalIPs }}
-        {{- range (mustRegexSplit "\\s+" ._CTX.externalIPs -1) }}
+        {{- range (mustRegexSplit "(,)?\\s+" ._CTX.externalIPs -1) }}
           {{- if mustRegexMatch $__regexIP . }}
             {{- $__externalIPs = mustAppend $__externalIPs . }}
           {{- end }}
@@ -86,7 +86,7 @@
           {{- end }}
         {{- end }}
       {{- else if kindIs "string" .Values.externalIPs }}
-        {{- range (mustRegexSplit "\\s+" .Values.externalIPs -1) }}
+        {{- range (mustRegexSplit "(,)?\\s+" .Values.externalIPs -1) }}
           {{- if mustRegexMatch $__regexIP . }}
             {{- $__externalIPs = mustAppend $__externalIPs . }}
           {{- end }}
@@ -147,7 +147,7 @@
           {{- end }}
         {{- end }}
       {{- else if kindIs "string" ._CTX.loadBalancerSourceRanges }}
-        {{- range (mustRegexSplit "\\s+" ._CTX.loadBalancerSourceRanges -1) }}
+        {{- range (mustRegexSplit "(,)?\\s+" ._CTX.loadBalancerSourceRanges -1) }}
           {{- if mustRegexMatch $__regexIP . }}
             {{- $__loadBalancerSourceRanges = mustAppend $__loadBalancerSourceRanges . }}
           {{- end }}
@@ -164,7 +164,7 @@
           {{- end }}
         {{- end }}
       {{- else if kindIs "string" .Values.loadBalancerSourceRanges }}
-        {{- range (mustRegexSplit "\\s+" .Values.loadBalancerSourceRanges -1) }}
+        {{- range (mustRegexSplit "(,)?\\s+" .Values.loadBalancerSourceRanges -1) }}
           {{- if mustRegexMatch $__regexIP . }}
             {{- $__loadBalancerSourceRanges = mustAppend $__loadBalancerSourceRanges . }}
           {{- end }}

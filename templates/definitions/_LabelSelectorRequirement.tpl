@@ -13,7 +13,7 @@
       reference: https://kubernetes.io/zh-cn/docs/concepts/overview/working-with-objects/labels/#label-selectors
     */ -}}
     {{- $__regexEquality := "^[A-Za-z0-9-]*\\s+([=]{1,2}|!=)\\s+[A-Za-z0-9-]*" }}
-    {{- $__regexSet := "^[A-Za-z0-9-]*\\s+([iI][nN]|[nN][oO][tT][iI][nN])\\s+\\(([A-Za-z0-9-]*,?\\s*)*\\)" }}
+    {{- $__regexSet := "^[A-Za-z0-9-]*\\s+([iI][nN]|[nN][oO][tT][iI][nN])\\s+\\(([A-Za-z0-9-]*(,)?\\s*)*\\)" }}
     {{- $__regexSetExists := "^!?[A-Za-z0-9-]*" }}
 
     {{- $__key := "" }}
@@ -29,7 +29,7 @@
         {{- fail "matchExpressions (map) invalid - definitions.LabelSelectorRequirement" }}
       {{- end }}
     {{- else if kindIs "string" $v }}
-      {{- $__vv := mustRegexReplaceAll ",\\s*" $v " " | replace "(" "" | replace ")" "" }}
+      {{- $__vv := mustRegexReplaceAll "(,)?\\s*" $v " " | replace "(" "" | replace ")" "" }}
       {{- $__regexSlice := mustRegexSplit " " $__vv -1 }}
 
       {{- if mustRegexMatch $__regexEquality $v }}

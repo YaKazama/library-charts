@@ -46,7 +46,7 @@
 
     {{- if ._CTX.mountOptions }}
       {{- if kindIs "string" ._CTX.mountOptions }}
-        {{- range (mustRegexSplit "\\s+" ._CTX.mountOptions -1) }}
+        {{- range (mustRegexSplit "(,)?\\s+" ._CTX.mountOptions -1) }}
           {{- $__mountOptions = mustAppend $__mountOptions . }}
         {{- end }}
       {{- else if kindIs "slice" ._CTX.mountOptions }}
@@ -57,7 +57,7 @@
     {{- end }}
     {{- if .Values.mountOptions }}
       {{- if kindIs "string" .Values.mountOptions }}
-        {{- range (mustRegexSplit "\\s+" .Values.mountOptions -1) }}
+        {{- range (mustRegexSplit "(,)?\\s+" .Values.mountOptions -1) }}
           {{- $__mountOptions = mustAppend $__mountOptions . }}
         {{- end }}
       {{- else if kindIs "slice" .Values.mountOptions }}

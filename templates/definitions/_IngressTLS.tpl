@@ -1,7 +1,7 @@
 {{- define "definitions.IngressTLS" -}}
   {{- $__hosts := list }}
   {{- $__regexHost := "^(\\*\\.)?([a-zA-Z0-9][-a-zA-Z0-9]{0,62})(\\.[a-zA-Z0-9][-a-zA-Z0-9]{0,62})+$" }}
-  {{- $__regexHostSplit := "\\s+" }}
+  {{- $__regexHostSplit := "(,)?\\s+" }}
 
   {{- with . }}
     {{- if kindIs "string" .hosts }}
