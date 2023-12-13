@@ -45,8 +45,11 @@
     {{- end }}
 
     {{- if not (or (has ._kind $__clusterResourceList) (has ._kind $__templateSpecList)) }}
-      {{- nindent 0 "" -}}annotations:
-        {{- include "base.annotations" . | indent 2 }}
+      {{- $__annotations := include "base.annotations" . }}
+      {{- if $__annotations }}
+        {{- nindent 0 "" -}}annotations:
+          {{- $__annotations | indent 2 }}
+      {{- end }}
     {{- end }}
 
     {{- nindent 0 "" -}}labels:
