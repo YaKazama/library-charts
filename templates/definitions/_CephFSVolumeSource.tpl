@@ -6,7 +6,7 @@
 {{- define "definitions.CephFSVolumeSource" -}}
   {{- with . }}
     {{- $__regexSplit := "\\s+|\\s*[\\|,]\\s*" }}
-    {{- $__monitors := include "base.fmt.slice" (dict "s" .monitors "r" $__regexSplit) }}
+    {{- $__monitors := include "base.fmt.slice" (dict "s" (list .monitors) "r" $__regexSplit) }}
     {{- if $__monitors }}
       {{- nindent 0 "" -}}monitors:
       {{- $__monitors | nindent 0 }}
