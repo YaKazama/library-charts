@@ -193,6 +193,7 @@ reference:
   {{- range $__clean | mustUniq | mustCompact }}
     {{- $__volumes = mustAppend $__volumes (include "configStorage.Volume" . | fromYaml) }}
   {{- end }}
+  {{- $__volumes := $__volumes | mustUniq | mustCompact }}
   {{- if $__volumes }}
     {{- nindent 0 "" -}}volumes:
     {{- toYaml $__volumes | nindent 0 }}
