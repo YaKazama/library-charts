@@ -13,7 +13,7 @@
         {{- include "definitions.LocalObjectReference" . }}
       {{- end }}
     {{- else }}
-      {{- fail "definitions.LocalObjectReference: type not support" }}
+      {{- fail "definitions.LocalObjectReference: type not support, please use string or map" }}
     {{- end }}
   {{- end }}
 {{- end }}
