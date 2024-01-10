@@ -18,8 +18,8 @@
       {{- nindent 0 "" -}}image: {{ $__image }}
     {{- end }}
 
-    {{- $__keyring := include "base.fmt" (dict "s" .keyring "r" "^/.*") }}
-    {{- if $__keyring }}
+    {{- $__keyring := include "base.string" .keyring }}
+    {{- if isAbs $__keyring }}
       {{- nindent 0 "" -}}keyring: {{ coalesce $__keyring "/etc/ceph/keyring" }}
     {{- end }}
 
