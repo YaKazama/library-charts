@@ -4,6 +4,32 @@
 */ -}}
 {{- define "definitions.PodAntiAffinity" -}}
   {{- with . }}
+    {{- if .preferred }}
+      {{- if or (kindIs "slice" .preferred) (kindIs "map" .preferred) }}
+        {{- $__preferred := list }}
+        {{- $__val := dict }}
+
+        {{- if kindIs "slice" .preferred }}
+          {{- range .preferred }}
+            {{- $__val = mustMerge $__val . }}
+          {{- end }}
+        {{- else if kindIs "map" .preferred }}
+            {{- $__val = mustMerge $__val .preferred }}
+        {{- else }}
+          {{- fail "definitions.PodAntiAffinity: not support, please use slice or map" }}
+        {{- end }}
+        {{- range $k, $v := $__val }}
+          {{- $__preferred = mustAppend $__preferred (include "definitions.WeightedPodAffinityTerm" (dict $k $v) | fromYaml) }}
+        {{- end }}
+        {{- if $__preferred }}
+          {{- nindent 0 "" -}}preferredDuringSchedulingIgnoredDuringExecution:
+          {{- toYaml $__preferred | nindent 0 }}
+        {{- end }}
+      {{- else }}
+        {{- fail "definitions.PodAntiAffinity: preferred not support, please use map" }}
+      {{- end }}
+    {{- end }}
+
     {{- if .required }}
       {{- if or (kindIs "slice" .required) (kindIs "map" .required) }}
 
@@ -28,32 +54,6 @@
         {{- end }}
       {{- else }}
         {{- fail "definitions.PodAntiAffinity: required not support, please use slice or map" }}
-      {{- end }}
-    {{- end }}
-
-    {{- if .preferred }}
-      {{- if or (kindIs "slice" .preferred) (kindIs "map" .preferred) }}
-        {{- $__preferred := list }}
-        {{- $__val := dict }}
-
-        {{- if kindIs "slice" .preferred }}
-          {{- range .preferred }}
-            {{- $__val = mustMerge $__val . }}
-          {{- end }}
-        {{- else if kindIs "map" .preferred }}
-            {{- $__val = mustMerge $__val .preferred }}
-        {{- else }}
-          {{- fail "definitions.PodAntiAffinity: not support, please use slice or map" }}
-        {{- end }}
-        {{- range $k, $v := $__val }}
-          {{- $__preferred = mustAppend $__preferred (include "definitions.WeightedPodAffinityTerm" (dict $k $v) | fromYaml) }}
-        {{- end }}
-        {{- if $__preferred }}
-          {{- nindent 0 "" -}}preferredDuringSchedulingIgnoredDuringExecution:
-          {{- toYaml $__preferred | nindent 0 }}
-        {{- end }}
-      {{- else }}
-        {{- fail "definitions.PodAntiAffinity: preferred not support, please use map" }}
       {{- end }}
     {{- end }}
   {{- end }}

@@ -31,10 +31,10 @@
 
     {{- if .required }}
       {{- if or (kindIs "slice" .required) (kindIs "map" .required) }}
-        {{- $__required := include "definitions.NodeSelector" .required }}
+        {{- $__required := include "definitions.NodeSelector" .required | fromYaml }}
         {{- if $__required }}
           {{- nindent 0 "" -}}requiredDuringSchedulingIgnoredDuringExecution:
-            {{- $__required | indent 2 }}
+            {{- toYaml $__required | nindent 2 }}
         {{- end }}
       {{- else }}
         {{- fail "definitions.NodeAffinity: required not support, please use slice or map" }}
