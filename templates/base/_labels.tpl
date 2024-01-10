@@ -25,6 +25,7 @@
   */ -}}
   {{- $__labelsSrc := pluck "labels" .Context .Values }}
   {{- range $__labelsSrc | mustUniq | mustCompact }}
+    {{- $_ := unset . "ignoreLabels" }}
     {{- if kindIs "map" . }}
       {{- $__labels = mustMerge $__labels . }}
     {{- end }}
