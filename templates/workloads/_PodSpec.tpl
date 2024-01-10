@@ -10,6 +10,33 @@ reference:
     {{- nindent 0 "" -}}activeDeadlineSeconds: {{ $__activeDeadlineSeconds }}
   {{- end }}
 
+  {{- $__nodeAffinity := dict }}
+  {{- $__nodeAffinitySrc := pluck "nodeAffinity" .Context .Values }}
+  {{- range ($__nodeAffinitySrc | mustUniq | mustCompact) }}
+    {{- if kindIs "map" . }}
+      {{- $__nodeAffinity = mustMerge $__nodeAffinity . }}
+    {{- end }}
+  {{- end }}
+  {{- $__podAffinity := dict }}
+  {{- $__podAffinitySrc := pluck "podAffinity" .Context .Values }}
+  {{- range ($__podAffinitySrc | mustUniq | mustCompact) }}
+    {{- if kindIs "map" . }}
+      {{- $__podAffinity = mustMerge $__podAffinity . }}
+    {{- end }}
+  {{- end }}
+  {{- $__podAntiAffinity := dict }}
+  {{- $__podAntiAffinitySrc := pluck "podAntiAffinity" .Context .Values }}
+  {{- range ($__podAntiAffinitySrc | mustUniq | mustCompact) }}
+    {{- if kindIs "map" . }}
+      {{- $__podAntiAffinity = mustMerge $__podAntiAffinity . }}
+    {{- end }}
+  {{- end }}
+  {{- $__affinity := include "definitions.Affinity" (dict "nodeAffinity" $__nodeAffinity "podAffinity" $__podAffinity "podAntiAffinity" $__podAntiAffinity) }}
+  {{- if $__affinity }}
+    {{- nindent 0 "" -}}affinity:
+      {{- $__affinity | indent 2 }}
+  {{- end }}
+
   {{- $__automountServiceAccountToken := include "base.bool.false" (pluck "automountServiceAccountToken" .Context .Values) }}
   {{- if $__automountServiceAccountToken }}
     {{- nindent 0 "" -}}automountServiceAccountToken: {{ $__automountServiceAccountToken }}
@@ -18,6 +45,42 @@ reference:
   {{- $__dnsPolicyAllowed := list "ClusterFirstWithHostNet" "ClusterFirst" "Default" "None" }}
   {{- if mustHas (coalesce .Context.dnsPolicy .Values.dnsPolicy) $__dnsPolicyAllowed }}
     {{- nindent 0 "" -}}dnsPolicy: {{ coalesce .Context.dnsPolicy .Values.dnsPolicy "ClusterFirst" }}
+  {{- end }}
+
+  {{- $__hostAlias := list }}
+  {{- $__clean := list }}
+  {{- $__cleanDict := dict }}
+  {{- $__hostAliasesSrc := pluck "hostAliases" .Context .Values }}
+  {{- range ($__hostAliasesSrc | mustUniq | mustCompact) }}
+    {{- if kindIs "string" . }}
+      {{- $__clean = mustAppend $__clean . }}
+    {{- else if kindIs "slice" . }}
+      {{- $__clean = concat $__clean . }}
+    {{- else if kindIs "map" . }}
+      {{- $__cleanDict = mustMerge $__cleanDict . }}
+    {{- end }}
+  {{- end }}
+  {{- range $k, $v := $__cleanDict }}
+    {{- $__clean = mustAppend $__clean (dict $k $v) }}
+  {{- end }}
+  {{- range $__clean | mustUniq | mustCompact }}
+    {{- $__hostAlias = mustAppend $__hostAlias (include "definitions.HostAlias" . | fromYaml) }}
+  {{- end }}
+  {{- if $__hostAlias }}
+    {{- nindent 0 "" -}}hostAliases:
+    {{- toYaml $__hostAlias | nindent 0 }}
+  {{- end }}
+
+  {{- $__hostPID := include "base.bool" (coalesce .Context.hostPID .Values.hostPID) }}
+  {{- $__shareProcessNamespace := include "base.bool" (coalesce .Context.shareProcessNamespace .Values.shareProcessNamespace) }}
+  {{- if or $__hostPID $__shareProcessNamespace }}
+    {{- if and $__hostPID (not $__shareProcessNamespace) }}
+      {{- nindent 0 "" -}}hostPID: {{ $__hostPID }}
+    {{- else if and $__shareProcessNamespace (not $__hostPID) }}
+      {{- nindent 0 "" -}}shareProcessNamespace: {{ $__shareProcessNamespace }}
+    {{- else }}
+      {{- fail "HostPID and ShareProcessNamespace cannot both be set" }}
+    {{- end }}
   {{- end }}
 
   {{- $__hostname := include "base.string" (coalesce .Context.hostname .Values.hostname) }}
@@ -71,84 +134,6 @@ reference:
     {{- nindent 0 "" -}}schedulerName: {{ coalesce $__schedulerName "default-scheduler" }}
   {{- end }}
 
-  {{- $__serviceAccountName := include "base.string" (coalesce .Context.serviceAccountName .Values.serviceAccountName) }}
-  {{- if $__serviceAccountName }}
-    {{- nindent 0 "" -}}serviceAccountName: {{ $__serviceAccountName }}
-  {{- end }}
-
-  {{- $__hostPID := include "base.bool" (coalesce .Context.hostPID .Values.hostPID) }}
-  {{- $__shareProcessNamespace := include "base.bool" (coalesce .Context.shareProcessNamespace .Values.shareProcessNamespace) }}
-  {{- if or $__hostPID $__shareProcessNamespace }}
-    {{- if and $__hostPID (not $__shareProcessNamespace) }}
-      {{- nindent 0 "" -}}hostPID: {{ $__hostPID }}
-    {{- else if and $__shareProcessNamespace (not $__hostPID) }}
-      {{- nindent 0 "" -}}shareProcessNamespace: {{ $__shareProcessNamespace }}
-    {{- else }}
-      {{- fail "HostPID and ShareProcessNamespace cannot both be set" }}
-    {{- end }}
-  {{- end }}
-
-  {{- $__subdomain := include "base.string" (coalesce .Context.subdomain .Values.subdomain) }}
-  {{- if $__subdomain }}
-    {{- nindent 0 "" -}}subdomain: {{ $__subdomain }}
-  {{- end }}
-
-  {{- $__terminationGracePeriodSeconds := include "base.int.zero" (pluck "terminationGracePeriodSeconds" .Context .Values) }}
-  {{- if $__terminationGracePeriodSeconds }}
-    {{- nindent 0 "" -}}terminationGracePeriodSeconds: {{ coalesce $__terminationGracePeriodSeconds 30 }}
-  {{- end }}
-
-  {{- $__nodeAffinity := dict }}
-  {{- $__nodeAffinitySrc := pluck "nodeAffinity" .Context .Values }}
-  {{- range ($__nodeAffinitySrc | mustUniq | mustCompact) }}
-    {{- if kindIs "map" . }}
-      {{- $__nodeAffinity = mustMerge $__nodeAffinity . }}
-    {{- end }}
-  {{- end }}
-  {{- $__podAffinity := dict }}
-  {{- $__podAffinitySrc := pluck "podAffinity" .Context .Values }}
-  {{- range ($__podAffinitySrc | mustUniq | mustCompact) }}
-    {{- if kindIs "map" . }}
-      {{- $__podAffinity = mustMerge $__podAffinity . }}
-    {{- end }}
-  {{- end }}
-  {{- $__podAntiAffinity := dict }}
-  {{- $__podAntiAffinitySrc := pluck "podAntiAffinity" .Context .Values }}
-  {{- range ($__podAntiAffinitySrc | mustUniq | mustCompact) }}
-    {{- if kindIs "map" . }}
-      {{- $__podAntiAffinity = mustMerge $__podAntiAffinity . }}
-    {{- end }}
-  {{- end }}
-  {{- $__affinity := include "definitions.Affinity" (dict "nodeAffinity" $__nodeAffinity "podAffinity" $__podAffinity "podAntiAffinity" $__podAntiAffinity) }}
-  {{- if $__affinity }}
-    {{- nindent 0 "" -}}affinity:
-      {{- $__affinity | indent 2 }}
-  {{- end }}
-
-  {{- $__hostAlias := list }}
-  {{- $__clean := list }}
-  {{- $__cleanDict := dict }}
-  {{- $__hostAliasesSrc := pluck "hostAliases" .Context .Values }}
-  {{- range ($__hostAliasesSrc | mustUniq | mustCompact) }}
-    {{- if kindIs "string" . }}
-      {{- $__clean = mustAppend $__clean . }}
-    {{- else if kindIs "slice" . }}
-      {{- $__clean = concat $__clean . }}
-    {{- else if kindIs "map" . }}
-      {{- $__cleanDict = mustMerge $__cleanDict . }}
-    {{- end }}
-  {{- end }}
-  {{- range $k, $v := $__cleanDict }}
-    {{- $__clean = mustAppend $__clean (dict $k $v) }}
-  {{- end }}
-  {{- range $__clean | mustUniq | mustCompact }}
-    {{- $__hostAlias = mustAppend $__hostAlias (include "definitions.HostAlias" . | fromYaml) }}
-  {{- end }}
-  {{- if $__hostAlias }}
-    {{- nindent 0 "" -}}hostAliases:
-    {{- toYaml $__hostAlias | nindent 0 }}
-  {{- end }}
-
   {{- $__clean := dict }}
   {{- $__securityContextSrc := pluck "securityContext" .Context .Values }}
   {{- range ($__securityContextSrc | mustUniq | mustCompact) }}
@@ -160,6 +145,21 @@ reference:
   {{- if $__securityContext }}
     {{- nindent 0 "" -}}securityContext:
     {{- $__securityContext | indent 2 }}
+  {{- end }}
+
+  {{- $__serviceAccountName := include "base.string" (coalesce .Context.serviceAccountName .Values.serviceAccountName) }}
+  {{- if $__serviceAccountName }}
+    {{- nindent 0 "" -}}serviceAccountName: {{ $__serviceAccountName }}
+  {{- end }}
+
+  {{- $__subdomain := include "base.string" (coalesce .Context.subdomain .Values.subdomain) }}
+  {{- if $__subdomain }}
+    {{- nindent 0 "" -}}subdomain: {{ $__subdomain }}
+  {{- end }}
+
+  {{- $__terminationGracePeriodSeconds := include "base.int.zero" (pluck "terminationGracePeriodSeconds" .Context .Values) }}
+  {{- if $__terminationGracePeriodSeconds }}
+    {{- nindent 0 "" -}}terminationGracePeriodSeconds: {{ coalesce $__terminationGracePeriodSeconds 30 }}
   {{- end }}
 
   {{- $__tolerations := list }}
