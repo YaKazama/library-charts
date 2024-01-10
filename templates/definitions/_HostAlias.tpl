@@ -53,7 +53,6 @@
     {{- end }}
 
     {{- if and $__ip $__hostnames }}
-      {{- nindent 0 "" -}}ip: {{ $__ip }}
       {{- nindent 0 "" -}}hostnames:
       {{- if kindIs "string" $__hostnames }}
         {{- include "base.fmt.slice" (dict "s" ($__hostnames | list)) | nindent 0 }}
@@ -62,6 +61,7 @@
       {{- else }}
         {{- fail "definitions.HostAlias: hostnames not support, please use string or slice" }}
       {{- end }}
+      {{- nindent 0 "" -}}ip: {{ $__ip }}
     {{- end }}
   {{- end }}
 {{- end }}
