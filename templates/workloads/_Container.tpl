@@ -446,6 +446,8 @@
             {{- end }}
           {{- end }}
         {{- end }}
+      {{- else }}
+        {{- fail "workloads.Container.env: env not support, please use map or slice" }}
       {{- end }}
     {{- end }}
 
@@ -491,6 +493,8 @@
                   {{- end }}
                 {{- end }}
               {{- end }}
+            {{- else }}
+              {{- fail "workloads.Container.env: envFiles values not support, please use one of string, map slice" }}
             {{- end }}
           {{- end }}
         {{- end }}
@@ -528,40 +532,46 @@
       {{- $__regexSplit = .r }}
     {{- end }}
 
-    {{- range (mustCompact (mustUniq .envFromFilesSrc)) }}
+    {{- range (.envFromSrc | mustUniq | mustCompact) }}
       {{- if kindIs "map" . }}
-        {{- range $f, $p := . }}
-          {{- $__val := $.Files.Get $f | fromYaml }}
-          {{- range (mustRegexSplit $__regexSplit $p -1) }}
-            {{- $__val = dig . "" $__val }}
-          {{- end }}
-          {{- if kindIs "slice" $__val }}
-            {{- range $__val }}
-              {{- $__clean = mustAppend $__clean (pick . "configMapRef" "prefix" "secretRef") }}
-            {{- end }}
-          {{- else if kindIs "map" $__val }}
-            {{- $__clean = mustAppend $__clean (pick $__val "configMapRef" "prefix" "secretRef") }}
-          {{- end }}
-        {{- end }}
-      {{- else }}
-        {{- fail "workloads.Container.envFrom: envFromFiles not support, please use map." }}
-      {{- end }}
-    {{- end }}
-
-    {{- range (mustCompact (mustUniq .envFromSrc)) }}
-      {{- if kindIs "slice" . }}
+        {{- $__clean = mustAppend $__clean (pick . "configMapRef" "prefix" "secretRef") }}
+      {{- else if kindIs "slice" . }}
         {{- range . }}
           {{- $__clean = mustAppend $__clean (pick . "configMapRef" "prefix" "secretRef") }}
         {{- end }}
-      {{- else if kindIs "map" . }}
-        {{- $__clean = mustAppend $__clean (pick . "configMapRef" "prefix" "secretRef") }}
       {{- else }}
-        {{- fail "workloads.Container.envFrom: envFrom not support, please use slice or map." }}
+        {{- fail "workloads.Container.envFrom: envFrom not support, please use map or slice" }}
+      {{- end }}
+    {{- end }}
+
+    {{- range (.envFromFilesSrc | mustUniq | mustCompact) }}
+      {{- if kindIs "map" . }}
+        {{- range $f, $p := . }}
+          {{- $__val := $.Files.Get $f | fromYaml }}
+          {{- $__keys := mustRegexSplit $__regexSplit $p -1 }}
+          {{- if $__val }}
+            {{- range $__keys }}
+              {{- $__val = dig . "" $__val }}
+            {{- end }}
+
+            {{- if kindIs "map" $__val }}
+              {{- $__clean = mustAppend $__clean (pick $__val "configMapRef" "prefix" "secretRef") }}
+            {{- else if kindIs "slice" $__val }}
+              {{- range $__val }}
+                {{- $__clean = mustAppend $__clean (pick . "configMapRef" "prefix" "secretRef") }}
+              {{- end }}
+            {{- else }}
+              {{- fail "workloads.Container.envFrom: envFromFiles values not support, please use map or slice" }}
+            {{- end }}
+          {{- end }}
+        {{- end }}
+      {{- else }}
+        {{- fail "workloads.Container.envFrom: envFromFiles not support, please use map" }}
       {{- end }}
     {{- end }}
 
     {{- $__envFrom := list }}
-    {{- range (mustCompact (mustUniq $__clean)) }}
+    {{- range ($__clean | mustUniq | mustCompact) }}
       {{- $__envFrom = mustAppend $__envFrom (include "definitions.EnvFromSource" . | fromYaml) }}
     {{- end }}
     {{- if $__envFrom }}
