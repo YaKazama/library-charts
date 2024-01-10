@@ -15,16 +15,6 @@
     {{- nindent 0 "" -}}backoffLimit: {{ $__backoffLimit }}
   {{- end }}
 
-  {{- $__suspend := include "base.bool" (coalesce .Context.jobSuspend .Values.jobSuspend .Context.suspend .Values.suspend) }}
-  {{- if $__suspend }}
-    {{- nindent 0 "" -}}suspend: {{ coalesce $__suspend "false" }}
-  {{- end }}
-
-  {{- $__ttlSecondsAfterFinished := include "base.int.zero" (pluck "ttlSecondsAfterFinished" .Context .Values) }}
-  {{- if $__ttlSecondsAfterFinished }}
-    {{- nindent 0 "" -}}ttlSecondsAfterFinished: {{ coalesce $__ttlSecondsAfterFinished 0 }}
-  {{- end }}
-
   {{- $__clean := dict "matchExpressions" list "matchLabels" dict }}
   {{- $__selectorSrc := pluck "selector" .Context .Values }}
   {{- range ($__selectorSrc | mustUniq | mustCompact) }}
@@ -59,9 +49,19 @@
       {{- toYaml $__selector | nindent 2 }}
   {{- end }}
 
+  {{- $__suspend := include "base.bool" (coalesce .Context.jobSuspend .Values.jobSuspend .Context.suspend .Values.suspend) }}
+  {{- if $__suspend }}
+    {{- nindent 0 "" -}}suspend: {{ coalesce $__suspend "false" }}
+  {{- end }}
+
   {{- $__template := include "metadata.PodTemplateSpec" . }}
   {{- if $__template }}
     {{- nindent 0 "" -}}template:
       {{- $__template | indent 2 }}
+  {{- end }}
+
+  {{- $__ttlSecondsAfterFinished := include "base.int.zero" (pluck "ttlSecondsAfterFinished" .Context .Values) }}
+  {{- if $__ttlSecondsAfterFinished }}
+    {{- nindent 0 "" -}}ttlSecondsAfterFinished: {{ coalesce $__ttlSecondsAfterFinished 0 }}
   {{- end }}
 {{- end }}
