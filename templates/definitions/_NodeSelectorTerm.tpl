@@ -5,6 +5,7 @@
   - https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#nodeselectorrequirement-v1-core
   descr:
   - 复用 definitions.LabelSelectorRequirement
+    - 实际应该调用 definitions.NodeSelectorRequirement
 */ -}}
 {{- define "definitions.NodeSelectorTerm" -}}
   {{- with . }}
