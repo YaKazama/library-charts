@@ -31,10 +31,10 @@ reference:
       {{- $__podAntiAffinity = mustMerge $__podAntiAffinity . }}
     {{- end }}
   {{- end }}
-  {{- $__affinity := include "definitions.Affinity" (dict "nodeAffinity" $__nodeAffinity "podAffinity" $__podAffinity "podAntiAffinity" $__podAntiAffinity) }}
+  {{- $__affinity := include "definitions.Affinity" (dict "nodeAffinity" $__nodeAffinity "podAffinity" $__podAffinity "podAntiAffinity" $__podAntiAffinity) | fromYaml }}
   {{- if $__affinity }}
     {{- nindent 0 "" -}}affinity:
-      {{- $__affinity | indent 2 }}
+      {{- toYaml $__affinity | nindent 2 }}
   {{- end }}
 
   {{- $__automountServiceAccountToken := include "base.bool.false" (pluck "automountServiceAccountToken" .Context .Values) }}
