@@ -43,9 +43,9 @@
           {{- if gt (int $__weight) 100 }}
             {{- $__weight = 100 }}
           {{- end }}
-          {{- nindent 0 "" -}}weight: {{ $__weight }}
           {{- nindent 0 "" -}}preference:
             {{- toYaml $__preference | nindent 2 }}
+          {{- nindent 0 "" -}}weight: {{ $__weight }}
         {{- end }}
       {{- end }}
     {{- end }}

@@ -3,18 +3,6 @@
 */ -}}
 {{- define "definitions.NodeAffinity" -}}
   {{- with . }}
-    {{- if .required }}
-      {{- if or (kindIs "slice" .required) (kindIs "map" .required) }}
-        {{- $__required := include "definitions.NodeSelector" .required }}
-        {{- if $__required }}
-          {{- nindent 0 "" -}}requiredDuringSchedulingIgnoredDuringExecution:
-            {{- $__required | indent 2 }}
-        {{- end }}
-      {{- else }}
-        {{- fail "definitions.NodeAffinity: required not support, please use slice or map" }}
-      {{- end }}
-    {{- end }}
-
     {{- if .preferred }}
       {{- if or (kindIs "slice" .preferred) (kindIs "map" .preferred) }}
         {{- $__preferred := list }}
@@ -37,7 +25,19 @@
           {{- toYaml $__preferred | nindent 0 }}
         {{- end }}
       {{- else }}
-        {{- fail "definitions.NodeAffinity: preferred not support, please use map" }}
+        {{- fail "definitions.NodeAffinity: preferred not support, please use map or slice" }}
+      {{- end }}
+    {{- end }}
+
+    {{- if .required }}
+      {{- if or (kindIs "slice" .required) (kindIs "map" .required) }}
+        {{- $__required := include "definitions.NodeSelector" .required }}
+        {{- if $__required }}
+          {{- nindent 0 "" -}}requiredDuringSchedulingIgnoredDuringExecution:
+            {{- $__required | indent 2 }}
+        {{- end }}
+      {{- else }}
+        {{- fail "definitions.NodeAffinity: required not support, please use slice or map" }}
       {{- end }}
     {{- end }}
   {{- end }}
