@@ -411,33 +411,85 @@
 */ -}}
 {{- define "workloads.Container.env" -}}
   {{- with .}}
-    {{- $__clean := dict }}
+    {{- $__clean := list }}
     {{- $__regexSplit := "\\.|\\:" }}
     {{- if .r }}
       {{- $__regexSplit = .r }}
     {{- end }}
 
-    {{- range (mustCompact (mustUniq .envFilesSrc)) }}
+    {{- range (.envSrc | mustUniq | mustCompact) }}
+      {{- if kindIs "map" . }}
+        {{- if and .name .value }}
+          {{- $__clean = mustAppend $__clean (dict "name" .name "value" .value) }}
+        {{- else if and .name .valueFrom (empty .value) }}
+          {{- $__clean = mustAppend $__clean (dict "name" .name "valueFrom" .valueFrom) }}
+        {{- end }}
+        {{- range $k, $v := (omit . "name" "value" "valueFrom") }}
+          {{- if kindIs "string" $v }}
+            {{- $__clean = mustAppend $__clean (dict "name" $k "value" $v) }}
+          {{- else if kindIs "map" $v }}
+            {{- $__clean = mustAppend $__clean (dict "name" $k "valueFrom" $v) }}
+          {{- end }}
+        {{- end }}
+      {{- else if kindIs "slice" . }}
+        {{- range . }}
+          {{- if and .name .value }}
+            {{- $__clean = mustAppend $__clean (dict "name" .name "value" .value) }}
+          {{- else if and .name .valueFrom (empty .value) }}
+            {{- $__clean = mustAppend $__clean (dict "name" .name "valueFrom" .valueFrom) }}
+          {{- end }}
+          {{- range $k, $v := (omit . "name" "value" "valueFrom") }}
+            {{- if kindIs "string" $v }}
+              {{- $__clean = mustAppend $__clean (dict "name" $k "value" $v) }}
+            {{- else if kindIs "map" $v }}
+              {{- $__clean = mustAppend $__clean (dict "name" $k "valueFrom" $v) }}
+            {{- end }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
+    {{- end }}
+
+    {{- range (.envFilesSrc | mustUniq | mustCompact) }}
       {{- if kindIs "map" . }}
         {{- range $f, $p := . }}
           {{- $__val := $.Files.Get $f | fromYaml }}
-            {{- if $__val }}
-              {{- range (mustRegexSplit $__regexSplit $p -1) }}
-                {{- $__val = dig . "" $__val }}
+          {{- $__keys := mustRegexSplit $__regexSplit $p -1 }}
+          {{- if $__val }}
+            {{- range $__keys }}
+              {{- $__val = dig . "" $__val }}
+            {{- end }}
+
+            {{- if kindIs "string" $__val }}
+              {{- $__clean = mustMerge $__clean (dict "name" (mustLast $__keys) "value" $__val) }}
+            {{- else if kindIs "map" $__val }}
+              {{- with $__val }}
+                {{- if and .name .value }}
+                  {{- $__clean = mustAppend $__clean (dict "name" .name "value" .value) }}
+                {{- else if and .name .valueFrom (empty .value) }}
+                  {{- $__clean = mustAppend $__clean (dict "name" .name "valueFrom" .valueFrom) }}
+                {{- end }}
+                {{- range $k, $v := (omit . "name" "value" "valueFrom") }}
+                  {{- if kindIs "string" $v }}
+                    {{- $__clean = mustAppend $__clean (dict "name" $k "value" $v) }}
+                  {{- else if kindIs "map" $v }}
+                    {{- $__clean = mustAppend $__clean (dict "name" $k "valueFrom" $v) }}
+                  {{- end }}
+                {{- end }}
               {{- end }}
-            {{- end }}
-          {{- if kindIs "string" $__val }}
-            {{- $__clean = mustMerge $__clean (dict $p $__val) }}
-          {{- else if kindIs "map" $__val }}
-            {{- range $k, $v := $__val }}
-              {{- $__clean = mustMerge $__clean (dict $k $v) }}
-            {{- end }}
-          {{- else if kindIs "slice" $__val }}
-            {{- range $__val }}
-              {{- if and .name .value }}
-                {{- $__clean = mustMerge $__clean (dict .name .value) }}
-              {{- else if and .name .valueFrom (empty .value) }}
-                {{- $__clean = mustMerge $__clean (dict .name .valueFrom) }}
+            {{- else if kindIs "slice" $__val }}
+              {{- range $__val }}
+                {{- if and .name .value }}
+                  {{- $__clean = mustAppend $__clean (dict "name" .name "value" .value) }}
+                {{- else if and .name .valueFrom (empty .value) }}
+                  {{- $__clean = mustAppend $__clean (dict "name" .name "valueFrom" .valueFrom) }}
+                {{- end }}
+                {{- range $k, $v := (omit . "name" "value" "valueFrom") }}
+                  {{- if kindIs "string" $v }}
+                    {{- $__clean = mustAppend $__clean (dict "name" $k "value" $v) }}
+                  {{- else if kindIs "map" $v }}
+                    {{- $__clean = mustAppend $__clean (dict "name" $k "valueFrom" $v) }}
+                  {{- end }}
+                {{- end }}
               {{- end }}
             {{- end }}
           {{- end }}
@@ -447,36 +499,9 @@
       {{- end }}
     {{- end }}
 
-    {{- range (mustCompact (mustUniq .envSrc)) }}
-      {{- if kindIs "map" . }}
-        {{- range $k, $v := . }}
-          {{- $__clean = mustMerge $__clean (dict $k $v) }}
-        {{- end }}
-      {{- else if kindIs "slice" . }}
-        {{- range . }}
-          {{- if and .name .value }}
-            {{- $__clean = mustMerge $__clean (dict .name .value) }}
-          {{- else if and .name .valueFrom (empty .value) }}
-            {{- $__clean = mustMerge $__clean (dict .name .valueFrom) }}
-          {{- end }}
-          {{- range $k, $v := (omit . "name" "value" "valueFrom") }}
-            {{- $__clean = mustMerge $__clean (dict $k $v) }}
-          {{- end }}
-        {{- end }}
-      {{- else }}
-        {{- fail "workloads.Container.env: env not support, please use slice or map." }}
-      {{- end }}
-    {{- end }}
-
     {{- $__env := list }}
-    {{- range $k, $v := $__clean }}
-      {{- $__var := dict }}
-      {{- if kindIs "map" $v }}
-        {{- $__var = dict "name" $k "valueFrom" $v }}
-      {{- else }}
-        {{- $__var = dict "name" $k "value" $v }}
-      {{- end }}
-      {{- $__env = mustAppend $__env (include "definitions.EnvVar" $__var | fromYaml) }}
+    {{- range ($__clean | mustUniq | mustCompact) }}
+      {{- $__env = mustAppend $__env (include "definitions.EnvVar" . | fromYaml) }}
     {{- end }}
     {{- if $__env }}
       {{- toYaml $__env | nindent 0 }}
