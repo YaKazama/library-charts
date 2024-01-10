@@ -66,7 +66,7 @@
     {{- nindent 0 "" -}}operator: {{ $__operator }}
 
     {{- $__operatorG1 := list "In" "NotIn" }}
-    {{- $__operatorG2 := list "Exists" "DoesNotExist" }}
+    {{- $__operatorG2 := list "Exists" "DoesNotExists" }}
     {{- $__operatorG3 := list "Gt" "Lt" }}
 
     {{- if mustHas $__operator $__operatorG1 }}
