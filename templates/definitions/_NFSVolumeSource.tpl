@@ -4,8 +4,8 @@
 */ -}}
 {{- define "definitions.NFSVolumeSource" -}}
   {{- with . }}
-    {{- $__path := include "base.fmt" (dict "s" .path "r" "^/.*") }}
-    {{- if $__path }}
+    {{- $__path := include "base.string" .path }}
+    {{- if isAbs $__path }}
       {{- nindent 0 "" -}}path: {{ $__path }}
     {{- else }}
       {{- fail "definitions.NFSVolumeSource: .path invalid or not found" }}
