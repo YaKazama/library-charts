@@ -5,12 +5,6 @@
 */ -}}
 {{- define "definitions.PodAffinityTerm" -}}
   {{- with . }}
-    {{- if .topologyKey }}
-      {{- nindent 0 "" -}}topologyKey: {{ .topologyKey | quote }}
-    {{- else }}
-      {{- fail "definitions.PodAffinityTerm: Empty topologyKey is not allowed" }}
-    {{- end }}
-
     {{- if .labelSelector }}
       {{- nindent 0 "" -}}labelSelector:
         {{- include "definitions.LabelSelector" .labelSelector | indent 2 }}
@@ -25,6 +19,12 @@
       {{- $__namespaces := include "base.fmt.slice" (dict "s" (list .namespaces)) }}
       {{- nindent 0 "" -}}namespaces:
       {{- $__namespaces | nindent 0 }}
+    {{- end }}
+
+    {{- if .topologyKey }}
+      {{- nindent 0 "" -}}topologyKey: {{ .topologyKey | quote }}
+    {{- else }}
+      {{- fail "definitions.PodAffinityTerm: Empty topologyKey is not allowed" }}
     {{- end }}
   {{- end }}
 {{- end }}
