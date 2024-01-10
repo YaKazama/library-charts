@@ -421,9 +421,11 @@
       {{- if kindIs "map" . }}
         {{- range $f, $p := . }}
           {{- $__val := $.Files.Get $f | fromYaml }}
-          {{- range (mustRegexSplit $__regexSplit $p -1) }}
-            {{- $__val = dig . "" $__val }}
-          {{- end }}
+            {{- if $__val }}
+              {{- range (mustRegexSplit $__regexSplit $p -1) }}
+                {{- $__val = dig . "" $__val }}
+              {{- end }}
+            {{- end }}
           {{- if kindIs "string" $__val }}
             {{- $__clean = mustMerge $__clean (dict $p $__val) }}
           {{- else if kindIs "map" $__val }}
@@ -456,6 +458,9 @@
             {{- $__clean = mustMerge $__clean (dict .name .value) }}
           {{- else if and .name .valueFrom (empty .value) }}
             {{- $__clean = mustMerge $__clean (dict .name .valueFrom) }}
+          {{- end }}
+          {{- range $k, $v := (omit . "name" "value" "valueFrom") }}
+            {{- $__clean = mustMerge $__clean (dict $k $v) }}
           {{- end }}
         {{- end }}
       {{- else }}
