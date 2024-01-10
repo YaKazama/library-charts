@@ -3,34 +3,81 @@
   - https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#deploymentspec-v1-apps
 */ -}}
 {{- define "workloads.DeploymentSpec" -}}
-  {{- if or ._CTX.minReadySeconds (kindIs "float64" ._CTX.minReadySeconds) .Values.minReadySeconds (kindIs "float64" .Values.minReadySeconds) }}
-    {{- nindent 0 "" -}}minReadySeconds: {{ coalesce (toString ._CTX.minReadySeconds) (toString .Values.minReadySeconds) (toString 0) }}
+  {{- $__minReadySeconds := include "base.int" (coalesce .Context.minReadySeconds .Values.minReadySeconds) }}
+  {{- if $__minReadySeconds }}
+    {{- nindent 0 "" -}}minReadySeconds: {{ $__minReadySeconds }}
   {{- end }}
 
-  {{- if and ._CTX.paused (kindIs "bool" ._CTX.paused) }}
-    {{- nindent 0 "" -}}paused: true
+  {{- $__paused := include "base.bool" (coalesce .Context.paused .Values.paused) }}
+  {{- if $__paused }}
+    {{- nindent 0 "" -}}paused: {{ $__paused }}
   {{- end }}
 
-  {{- if ._CTX.progressDeadlineSeconds }}
-    {{- nindent 0 "" -}}progressDeadlineSeconds: {{ int (coalesce ._CTX.progressDeadlineSeconds 600) }}
+  {{- $__progressDeadlineSeconds := include "base.int.zero" (pluck "progressDeadlineSeconds" .Context .Values) }}
+  {{- if $__progressDeadlineSeconds }}
+    {{- nindent 0 "" -}}progressDeadlineSeconds: {{ $__progressDeadlineSeconds }}
   {{- end }}
 
-  {{- if or ._CTX.replicas (kindIs "float64" ._CTX.replicas) .Values.replicas (kindIs "float64" .Values.replicas) }}
-    {{- nindent 0 "" -}}replicas: {{ coalesce (toString ._CTX.replicas) (toString .Values.replicas) (toString 1) }}
+  {{- $__replicas := include "base.int" (coalesce .Context.replicas .Values.replicas) }}
+  {{- if $__replicas }}
+    {{- nindent 0 "" -}}replicas: {{ $__replicas }}
   {{- end }}
 
-  {{- if ._CTX.revisionHistoryLimit }}
-    {{- nindent 0 "" -}}revisionHistoryLimit: {{ int (coalesce ._CTX.revisionHistoryLimit 10) }}
+  {{- $__revisionHistoryLimit := include "base.int" (coalesce .Context.revisionHistoryLimit .Values.revisionHistoryLimit) }}
+  {{- if $__revisionHistoryLimit }}
+    {{- nindent 0 "" -}}revisionHistoryLimit: {{ $__revisionHistoryLimit }}
   {{- end }}
 
-  {{- if ._CTX.strategy }}
+  {{- $__clean := dict "matchExpressions" list "matchLabels" dict }}
+  {{- $__selectorSrc := pluck "selector" .Context .Values }}
+  {{- range ($__selectorSrc | mustUniq | mustCompact) }}
+    {{- $__valMatchExpressions := list }}
+    {{- $__valMatchLabels := dict }}
+
+    {{- if kindIs "map" . }}
+      {{- if kindIs "slice" .matchExpressions }}
+        {{- $__valMatchExpressions = concat $__valMatchExpressions .matchExpressions }}
+      {{- end }}
+      {{- if kindIs "map" .matchLabels }}
+        {{- $__valMatchLabels = mustMerge $__valMatchLabels .matchLabels }}
+      {{- end }}
+    {{- else if kindIs "slice" . }}
+      {{- range . }}
+        {{- if kindIs "map" . }}
+          {{- if kindIs "slice" .matchExpressions }}
+            {{- $__valMatchExpressions = concat $__valMatchExpressions .matchExpressions }}
+          {{- end }}
+          {{- if kindIs "map" .matchLabels }}
+            {{- $__valMatchLabels = mustMerge $__valMatchLabels .matchLabels }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
+    {{- end }}
+    {{- $_ := set $__clean "matchExpressions" (concat $__clean.matchExpressions $__valMatchExpressions) }}
+    {{- $_ := set $__clean "matchLabels" (mustMerge $__clean.matchLabels $__valMatchLabels) }}
+  {{- end }}
+  {{- $__selector := include "definitions.LabelSelector" $__clean | fromYaml }}
+  {{- if $__selector }}
+    {{- nindent 0 "" -}}selector:
+      {{- toYaml $__selector | nindent 2 }}
+  {{- end }}
+
+  {{- $__clean := dict }}
+  {{- $__strategySrc := pluck "strategy" .Context .Values }}
+  {{- range ($__strategySrc | mustUniq | mustCompact) }}
+    {{- if kindIs "map" . }}
+      {{- $__clean = mustMerge $__clean . }}
+    {{- end }}
+  {{- end }}
+  {{- $__strategy := include "workloads.DeploymentStrategy" $__clean | fromYaml }}
+  {{- if $__strategy }}
     {{- nindent 0 "" -}}strategy:
-    {{- include "workloads.DeploymentStrategy" ._CTX.strategy | indent 2 }}
+      {{- toYaml $__strategy | nindent 2 }}
   {{- end }}
 
-  {{- nindent 0 "" -}}selector:
-    {{- include "definitions.LabelSelector" . | indent 2 }}
-
-  {{- nindent 0 "" -}}template:
-    {{- include "metadata.PodTemplateSpec" . | indent 2 }}
+  {{- $__template := include "metadata.PodTemplateSpec" . | fromYaml }}
+  {{- if $__template }}
+    {{- nindent 0 "" -}}template:
+      {{- toYaml $__template | nindent 2 }}
+  {{- end }}
 {{- end }}

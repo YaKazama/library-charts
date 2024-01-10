@@ -1,241 +1,214 @@
+{{- /*
+  涉及到 IP 的选项，暂时只支持 IPv4
+*/ -}}
 {{- define "service.ServiceSpec" -}}
-  {{- $__regexIP := "^((2(5[0-5]|[0-4]\\d))|[0-1]?\\d{1,2})(\\.((2(5[0-5]|[0-4]\\d))|[0-1]?\\d{1,2})){3}(\\/\\d+)?$" }}
-  {{- $__typeList := list "ExternalName" "ClusterIP" "NodePort" "LoadBalancer" }}
-  {{- $__externalTrafficPolicyList := list "Local" "Cluster" }}
-  {{- $__internalTrafficPolicyList := list "Local" "Cluster" }}
-  {{- $__ipFamilyPolicyList := list "SingleStack" "PreferDualStack" "RequireDualStack" }}
-  {{- $__sessionAffinityList := list "ClientIP" "None" }}
+  {{- /*
+    后续有很多地方需要用到它，但它的排序在最后，故此处先预处理
+  */ -}}
+  {{- $__type := include "base.string" (coalesce .Context.type .Values.type) }}
 
-  {{- if or (kindIs "bool" ._CTX.allocateLoadBalancerNodePorts) (kindIs "bool" .Values.allocateLoadBalancerNodePorts) }}
-    {{- nindent 0 "" -}}allocateLoadBalancerNodePorts: {{ coalesce (toString ._CTX.allocateLoadBalancerNodePorts) (toString .Values.allocateLoadBalancerNodePorts) }}
+  {{- $__allocateLoadBalancerNodePorts := include "base.bool.false" (pluck "allocateLoadBalancerNodePorts" .Context .Values) }}
+  {{- if $__allocateLoadBalancerNodePorts }}
+    {{- nindent 0 "" -}}allocateLoadBalancerNodePorts: {{ $__allocateLoadBalancerNodePorts }}
   {{- end }}
 
-  {{- if or (mustRegexMatch $__regexIP ._CTX.clusterIP) (mustRegexMatch $__regexIP .Values.clusterIP) }}
-    {{- nindent 0 "" -}}clusterIP: {{ coalesce ._CTX.clusterIP .Values.clusterIP }}
+  {{- $__typeClusterIPsAllowed := list "ClusterIP" "NodePort" "LoadBalancer" }}
+  {{- /*
+    ports 需要用到 clusterIP 作为 targePort 的判断条件，故此处先预处理
+  */ -}}
+  {{- $__clusterIP := include "base.string.empty" (dict "s" .Values.clusterIP "empty" true) }}
+  {{- if not $__clusterIP }}
+    {{- $__clusterIP = include "base.string.empty" (dict "s" .Context.clusterIP "empty" true) }}
   {{- end }}
-
-  {{- if or ._CTX.clusterIPs .Values.clusterIPs }}
-    {{- $__clusterIPs := list }}
-
-    {{- if ._CTX.clusterIPs }}
-      {{- if kindIs "slice" ._CTX.clusterIPs }}
-        {{- range ._CTX.clusterIPs }}
-          {{- if mustRegexMatch $__regexIP . }}
-            {{- $__clusterIPs = mustAppend $__clusterIPs . }}
-          {{- end }}
+  {{- if or (empty $__type) (mustHas $__type $__typeClusterIPsAllowed) }}
+    {{- $__clusterIPAllowed := list "\"\"" "None" }}
+    {{- $__regexClusterIP := "^((2(5[0-5]|[0-4]\\d))|[0-1]?\\d{1,2})(\\.((2(5[0-5]|[0-4]\\d))|[0-1]?\\d{1,2})){3}(\\/\\d+)?$" }}
+    {{- if $__clusterIP }}
+      {{- if not (mustHas $__clusterIP $__clusterIPAllowed) }}
+        {{- if not (mustRegexMatch $__regexClusterIP $__clusterIP) }}
+          {{- fail "service.ServiceSpec: clusterIP invalid" }}
         {{- end }}
-      {{- else if kindIs "string" ._CTX.clusterIPs }}
-        {{- range (mustRegexSplit "(,)?\\s+" ._CTX.clusterIPs -1) }}
-          {{- if mustRegexMatch $__regexIP . }}
-            {{- $__clusterIPs = mustAppend $__clusterIPs . }}
-          {{- end }}
-        {{- end }}
-      {{- else }}
-        {{- fail "service.ServiceSpec: .clusterIPs not support" }}
       {{- end }}
-    {{- end }}
-    {{- if .Values.clusterIPs }}
-      {{- if kindIs "slice" .Values.clusterIPs }}
-        {{- range .Values.clusterIPs }}
-          {{- if mustRegexMatch $__regexIP . }}
-            {{- $__clusterIPs = mustAppend $__clusterIPs . }}
-          {{- end }}
-        {{- end }}
-      {{- else if kindIs "string" .Values.clusterIPs }}
-        {{- range (mustRegexSplit "(,)?\\s+" .Values.clusterIPs -1) }}
-          {{- if mustRegexMatch $__regexIP . }}
-            {{- $__clusterIPs = mustAppend $__clusterIPs . }}
-          {{- end }}
-        {{- end }}
-      {{- else }}
-        {{- fail "service.ServiceSpec: .Values.clusterIPs not support" }}
-      {{- end }}
+      {{- nindent 0 "" -}}clusterIP: {{ $__clusterIP }}
     {{- end }}
 
-    {{- if (mustCompact (mustUniq $__clusterIPs)) }}
+    {{- $__clusterIPsSrc := pluck "clusterIPs" .Context .Values }}
+    {{- /*
+      依次判断空字符串, None, IP 地址
+    */ -}}
+    {{- if mustHas "" $__clusterIPsSrc }}
+      {{- $__clusterIPsSrc = list "" }}
+    {{- else if (mustHas "None" $__clusterIPsSrc) }}
+      {{- $__clusterIPsSrc = list "None" }}
+    {{- else }}
+      {{- $__clusterIPsSrc = $__clusterIPsSrc | mustUniq | mustCompact }}
+    {{- end }}
+    {{- /*
+      - 此处，如果 clusterIP = "\"\"" 则重置为 ""
+        - "\"\"" 由 base.string.empty 产生
+      - clusterIPs[0] 需要与 clusterIP 相同
+    */ -}}
+    {{- if eq $__clusterIP "\"\"" }}
+      {{- $__clusterIP = "" }}
+    {{- end }}
+    {{- $__val := list }}
+    {{- $__valTmp := index $__clusterIPsSrc 0 }}
+    {{- if kindIs "slice" $__valTmp }}
+      {{- $__val = concat $__val $__valTmp }}
+    {{- else if kindIs "string" $__valTmp }}
+      {{- $__val = mustAppend $__val $__valTmp }}
+    {{- end }}
+    {{- if not (eq (index $__val 0) $__clusterIP) }}
+      {{- $__clusterIPsSrc = list $__clusterIP }}
+    {{- end }}
+    {{- $__regexClusterIPs := "^$|\"\"|^None|((2(5[0-5]|[0-4]\\d))|[0-1]?\\d{1,2})(\\.((2(5[0-5]|[0-4]\\d))|[0-1]?\\d{1,2})){3}(\\/\\d+)?$" }}
+    {{- $__clusterIPs := include "base.fmt.slice" (dict "s" $__clusterIPsSrc "c" $__regexClusterIPs "empty" true) }}
+    {{- if $__clusterIPs }}
       {{- nindent 0 "" -}}clusterIPs:
-      {{- toYaml (mustCompact (mustUniq $__clusterIPs)) | nindent 0 }}
+      {{- $__clusterIPs | nindent 0 }}
     {{- end }}
   {{- end }}
 
-  {{- if or ._CTX.externalIPs .Values.externalIPs }}
-    {{- $__externalIPs := list }}
-
-    {{- if ._CTX.externalIPs }}
-      {{- if kindIs "slice" ._CTX.externalIPs }}
-        {{- range ._CTX.externalIPs }}
-          {{- if mustRegexMatch $__regexIP . }}
-            {{- $__externalIPs = mustAppend $__externalIPs . }}
-          {{- end }}
-        {{- end }}
-      {{- else if kindIs "string" ._CTX.externalIPs }}
-        {{- range (mustRegexSplit "(,)?\\s+" ._CTX.externalIPs -1) }}
-          {{- if mustRegexMatch $__regexIP . }}
-            {{- $__externalIPs = mustAppend $__externalIPs . }}
-          {{- end }}
-        {{- end }}
-      {{- else }}
-        {{- fail "service.ServiceSpec: .externalIPs not support" }}
-      {{- end }}
-    {{- end }}
-    {{- if .Values.externalIPs }}
-      {{- if kindIs "slice" .Values.externalIPs }}
-        {{- range .Values.externalIPs }}
-          {{- if mustRegexMatch $__regexIP . }}
-            {{- $__externalIPs = mustAppend $__externalIPs . }}
-          {{- end }}
-        {{- end }}
-      {{- else if kindIs "string" .Values.externalIPs }}
-        {{- range (mustRegexSplit "(,)?\\s+" .Values.externalIPs -1) }}
-          {{- if mustRegexMatch $__regexIP . }}
-            {{- $__externalIPs = mustAppend $__externalIPs . }}
-          {{- end }}
-        {{- end }}
-      {{- else }}
-        {{- fail "service.ServiceSpec: .Values.externalIPs not support" }}
-      {{- end }}
-    {{- end }}
-
-    {{- if (mustCompact (mustUniq $__externalIPs)) }}
-      {{- nindent 0 "" -}}externalIPs:
-      {{- toYaml (mustCompact (mustUniq $__externalIPs)) | nindent 0 }}
-    {{- end }}
+  {{- $__regexExternalIPs := "^((2(5[0-5]|[0-4]\\d))|[0-1]?\\d{1,2})(\\.((2(5[0-5]|[0-4]\\d))|[0-1]?\\d{1,2})){3}(\\/\\d+)?$" }}
+  {{- $__externalIPsSrc := pluck "externalIPs" .Context .Values }}
+  {{- $__externalIPs := include "base.fmt.slice" (dict "s" ($__externalIPsSrc | mustUniq | mustCompact) "c" $__regexExternalIPs) }}
+  {{- if $__externalIPs }}
+    {{- nindent 0 "" -}}externalIPs:
+    {{- $__externalIPs | nindent 0 }}
   {{- end }}
 
-  {{- if and (or ._CTX.externalName .Values.externalName) (or (eq "ExternalName" ._CTX.type) (eq "ExternalName" .Values.type)) }}
-    {{- nindent 0 "" -}}externalName: {{ coalesce ._CTX.externalName .Values.externalName | lower }}
+  {{- $__externalName := include "base.string" (coalesce .Context.externalName .Values.externalName) }}
+  {{- if $__externalName }}
+    {{- nindent 0 "" -}}externalName: {{ $__externalName | lower }}
   {{- end }}
 
-  {{- if or (mustHas ._CTX.externalTrafficPolicy $__externalTrafficPolicyList) (mustHas .Values.externalTrafficPolicy $__externalTrafficPolicyList) }}
-    {{- nindent 0 "" -}}externalTrafficPolicy: {{ coalesce ._CTX.externalTrafficPolicy .Values.externalTrafficPolicy "Cluster" }}
+  {{- $__externalTrafficPolicyAllowed := list "Local" "Cluster" }}
+  {{- $__externalTrafficPolicy := include "base.string" (coalesce .Context.externalTrafficPolicy .Values.externalTrafficPolicy) }}
+  {{- if mustHas $__externalTrafficPolicy $__externalTrafficPolicyAllowed }}
+    {{- nindent 0 "" -}}externalTrafficPolicy: {{ $__externalTrafficPolicy }}
   {{- end }}
 
-  {{- if or (kindIs "float64" ._CTX.healthCheckNodePort) (kindIs "float64" .Values.healthCheckNodePort) }}
-    {{- nindent 0 "" -}}healthCheckNodePort: {{ coalesce (toString ._CTX.healthCheckNodePort) (toString .Values.healthCheckNodePort) }}
+  {{- $__healthCheckNodePort := include "base.int" (coalesce .Context.healthCheckNodePort .Values.healthCheckNodePort) }}
+  {{- if $__healthCheckNodePort }}
+    {{- nindent 0 "" -}}healthCheckNodePort: {{ $__healthCheckNodePort }}
   {{- end }}
 
-  {{- if or (mustHas ._CTX.internalTrafficPolicy $__internalTrafficPolicyList) (mustHas .Values.internalTrafficPolicy $__internalTrafficPolicyList) }}
-    {{- nindent 0 "" -}}internalTrafficPolicy: {{ coalesce ._CTX.internalTrafficPolicy .Values.internalTrafficPolicy "Cluster" }}
+  {{- $__internalTrafficPolicyAllowed := list "Local" "Cluster" }}
+  {{- $__internalTrafficPolicy := include "base.string" (coalesce .Context.internalTrafficPolicy .Values.internalTrafficPolicy) }}
+  {{- if mustHas $__internalTrafficPolicy $__internalTrafficPolicyAllowed }}
+    {{- nindent 0 "" -}}internalTrafficPolicy: {{ $__internalTrafficPolicy }}
   {{- end }}
 
-  {{- if or ._CTX.ipFamilies .Values.ipFamilies }}
+  {{- $__regexIpFamilies := "^((2(5[0-5]|[0-4]\\d))|[0-1]?\\d{1,2})(\\.((2(5[0-5]|[0-4]\\d))|[0-1]?\\d{1,2})){3}(\\/\\d+)?$" }}
+  {{- $__ipFamiliesSrc := pluck "ipFamilies" .Context .Values }}
+  {{- $__ipFamilies := include "base.fmt.slice" (dict "s" ($__ipFamiliesSrc | mustUniq | mustCompact) "c" $__regexIpFamilies) }}
+  {{- if $__ipFamilies }}
     {{- nindent 0 "" -}}ipFamilies:
-    {{- toYaml ._CTX.ipFamilies | nindent 0 }}
-    {{- toYaml .Values.ipFamilies | nindent 0 }}
+    {{- $__ipFamilies | nindent 0 }}
   {{- end }}
 
-  {{- if or (mustHas ._CTX.ipFamilyPolicy $__ipFamilyPolicyList) (mustHas .Values.ipFamilyPolicy $__ipFamilyPolicyList) }}
-    {{- nindent 0 "" -}}ipFamilyPolicy: {{ coalesce ._CTX.ipFamilyPolicy .Values.ipFamilyPolicy "SingleStack" }}
+  {{- $__ipFamilyPolicyAllowed := list "SingleStack" "PreferDualStack" "RequireDualStack" }}
+  {{- $__ipFamilyPolicy := include "base.string" (coalesce .Context.ipFamilyPolicy .Values.ipFamilyPolicy) }}
+  {{- if mustHas $__ipFamilyPolicy $__ipFamilyPolicyAllowed }}
+    {{- nindent 0 "" -}}ipFamilyPolicy: {{ $__ipFamilyPolicy }}
   {{- end }}
 
-  {{- if or ._CTX.loadBalancerClass .Values.loadBalancerClass }}
-    {{- nindent 0 "" -}}loadBalancerClass: {{ coalesce ._CTX.loadBalancerClass .Values.loadBalancerClass }}
-  {{- end }}
-
-  {{- if or (mustRegexMatch $__regexIP ._CTX.loadBalancerIP) (mustRegexMatch $__regexIP .Values.loadBalancerIP) }}
-    {{- nindent 0 "" -}}loadBalancerIP: {{ coalesce ._CTX.loadBalancerIP .Values.loadBalancerIP }}
-  {{- end }}
-
-  {{- if or ._CTX.loadBalancerSourceRanges .Values.loadBalancerSourceRanges }}
-    {{- $__loadBalancerSourceRanges := list }}
-
-    {{- if ._CTX.loadBalancerSourceRanges }}
-      {{- if kindIs "slice" ._CTX.loadBalancerSourceRanges }}
-        {{- range ._CTX.loadBalancerSourceRanges }}
-          {{- if mustRegexMatch $__regexIP . }}
-            {{- $__loadBalancerSourceRanges = mustAppend $__loadBalancerSourceRanges . }}
-          {{- end }}
-        {{- end }}
-      {{- else if kindIs "string" ._CTX.loadBalancerSourceRanges }}
-        {{- range (mustRegexSplit "(,)?\\s+" ._CTX.loadBalancerSourceRanges -1) }}
-          {{- if mustRegexMatch $__regexIP . }}
-            {{- $__loadBalancerSourceRanges = mustAppend $__loadBalancerSourceRanges . }}
-          {{- end }}
-        {{- end }}
-      {{- else }}
-        {{- fail "service.ServiceSpec: .loadBalancerSourceRanges not support" }}
-      {{- end }}
-    {{- end }}
-    {{- if .Values.loadBalancerSourceRanges }}
-      {{- if kindIs "slice" .Values.loadBalancerSourceRanges }}
-        {{- range .Values.loadBalancerSourceRanges }}
-          {{- if mustRegexMatch $__regexIP . }}
-            {{- $__loadBalancerSourceRanges = mustAppend $__loadBalancerSourceRanges . }}
-          {{- end }}
-        {{- end }}
-      {{- else if kindIs "string" .Values.loadBalancerSourceRanges }}
-        {{- range (mustRegexSplit "(,)?\\s+" .Values.loadBalancerSourceRanges -1) }}
-          {{- if mustRegexMatch $__regexIP . }}
-            {{- $__loadBalancerSourceRanges = mustAppend $__loadBalancerSourceRanges . }}
-          {{- end }}
-        {{- end }}
-      {{- else }}
-        {{- fail "service.ServiceSpec: .Values.loadBalancerSourceRanges not support" }}
-      {{- end }}
+  {{- $__typeLoadBalancerClassAllowed := list "LoadBalancer" }}
+  {{- if mustHas $__type $__typeLoadBalancerClassAllowed }}
+    {{- $__loadBalancerClass := include "base.string" (coalesce .Context.loadBalancerClass .Values.loadBalancerClass) }}
+    {{- if $__loadBalancerClass }}
+      {{- nindent 0 "" -}}loadBalancerClass: {{ $__loadBalancerClass }}
     {{- end }}
 
-    {{- if (mustCompact (mustUniq $__loadBalancerSourceRanges)) }}
-      {{- nindent 0 "" -}}loadBalancerSourceRanges:
-      {{- toYaml (mustCompact (mustUniq $__loadBalancerSourceRanges)) | nindent 0 }}
+    {{- $__regexLoadBalancerIP := "^$|\"\"|^None|((2(5[0-5]|[0-4]\\d))|[0-1]?\\d{1,2})(\\.((2(5[0-5]|[0-4]\\d))|[0-1]?\\d{1,2})){3}(\\/\\d+)?$" }}
+    {{- $__loadBalancerIP := include "base.string" (coalesce .Context.loadBalancerIP .Values.loadBalancerIP) }}
+    {{- $__loadBalancerIP = include "base.fmt" (dict "s" $__loadBalancerIP "r" $__regexLoadBalancerIP) }}
+    {{- if $__loadBalancerIP }}
+      {{- nindent 0 "" -}}loadBalancerIP:
+      {{- $__loadBalancerIP | nindent 0 }}
     {{- end }}
   {{- end }}
 
-  {{- if or (kindIs "bool" ._CTX.publishNotReadyAddresses) (kindIs "bool" .Values.publishNotReadyAddresses) }}
-    {{- nindent 0 "" -}}publishNotReadyAddresses: {{ coalesce (toString ._CTX.publishNotReadyAddresses) (toString .Values.publishNotReadyAddresses) }}
+  {{- $__regexLoadBalancerSourceRanges := "^((2(5[0-5]|[0-4]\\d))|[0-1]?\\d{1,2})(\\.((2(5[0-5]|[0-4]\\d))|[0-1]?\\d{1,2})){3}(\\/\\d+)?$" }}
+  {{- $__loadBalancerSourceRangesSrc := pluck "loadBalancerSourceRanges" .Context .Values }}
+  {{- $__loadBalancerSourceRanges := include "base.fmt.slice" (dict "s" ($__loadBalancerSourceRangesSrc | mustUniq | mustCompact) "c" $__regexLoadBalancerSourceRanges) }}
+  {{- if $__loadBalancerSourceRanges }}
+    {{- nindent 0 "" -}}loadBalancerSourceRanges:
+    {{- $__loadBalancerSourceRanges | nindent 0 }}
   {{- end }}
 
-  {{- if or ._CTX.ports .Values.ports }}
-    {{- $__ports := list }}
-
-    {{- if ._CTX.ports }}
-      {{- if kindIs "slice" ._CTX.ports }}
-        {{- range ._CTX.ports }}
-          {{- $_ := set . "type" $._CTX.type }}
-          {{- $__ports = mustAppend $__ports . }}
+  {{- $__clean := list }}
+  {{- $__portsSrc := pluck "ports" .Context .Values }}
+  {{- range ($__portsSrc | mustUniq | mustCompact) }}
+    {{- if kindIs "map" . }}
+      {{- $__clean = mustAppend $__clean (mustMerge . (dict "clusterIP" $__clusterIP "type" $__type)) }}
+    {{- else if kindIs "slice" . }}
+      {{- range . }}
+        {{- if kindIs "map" . }}
+          {{- $__clean = mustAppend $__clean (mustMerge . (dict "clusterIP" $__clusterIP "type" $__type)) }}
         {{- end }}
-      {{- else }}
-        {{- fail "service.ServiceSpec: .ports not support" }}
       {{- end }}
     {{- end }}
-    {{- if .Values.ports }}
-      {{- if kindIs "slice" .Values.ports }}
-        {{- range .Values.ports }}
-          {{- $_ := set . "type" $.Values.type }}
-          {{- $__ports = mustAppend $__ports . }}
+  {{- end }}
+  {{- $__val := list }}
+  {{- range ($__clean | mustUniq | mustCompact) }}
+    {{- if kindIs "map" . }}
+      {{- $__val = mustAppend $__val (dict .port .) }}
+    {{- end }}
+  {{- end }}
+  {{- $__ports := list }}
+  {{- range $k, $v := include "base.map.merge" (dict "s" ($__val | mustUniq | mustCompact) "merge" true) | fromYaml }}
+    {{- $__ports = mustAppend $__ports (include "definitions.ServicePort" $v | fromYaml) }}
+  {{- end }}
+  {{- $__ports = $__ports | mustUniq | mustCompact }}
+  {{- if $__ports }}
+    {{- nindent 0 "" -}}ports:
+    {{- toYaml $__ports | nindent 0 }}
+  {{- end }}
+
+  {{- $__publishNotReadyAddresses := include "base.bool" (coalesce .Context.publishNotReadyAddresses .Values.publishNotReadyAddresses) }}
+  {{- if $__publishNotReadyAddresses }}
+    {{- nindent 0 "" -}}publishNotReadyAddresses: {{ $__publishNotReadyAddresses }}
+  {{- end }}
+
+  {{- $__typeSelectorAllowed := list "ClusterIP" "NodePort" "LoadBalancer" }}
+  {{- if or (empty $__type) (mustHas $__type $__typeSelectorAllowed) }}
+    {{- $__selector := dict }}
+    {{- $__selectorSrc := pluck "selector" .Context .Values }}
+    {{- range ($__selectorSrc | mustUniq | mustCompact) }}
+      {{- if kindIs "map" . }}
+        {{- $__selector = mustMerge $__selector . }}
+      {{- end }}
+    {{- end }}
+    {{- if $__selector }}
+      {{- nindent 0 "" -}}selector:
+        {{- toYaml $__selector | nindent 2 }}
+    {{- end }}
+  {{- end }}
+
+  {{- $__sessionAffinityAllowed := list "ClientIP" "None" }}
+  {{- $__sessionAffinity := include "base.string" (coalesce .Context.sessionAffinity .Values.sessionAffinity) }}
+  {{- if mustHas $__sessionAffinity $__sessionAffinityAllowed }}
+    {{- nindent 0 "" -}}sessionAffinity: {{ $__sessionAffinity }}
+
+    {{- if eq $__sessionAffinity "ClientIP" }}
+      {{- $__clean := dict "sessionAffinity" $__sessionAffinity }}
+      {{- $__sessionAffinityConfigSrc := pluck "sessionAffinityConfig" .Context .Values }}
+      {{- range ($__sessionAffinityConfigSrc | mustUniq | mustCompact) }}
+        {{- if kindIs "map" . }}
+          {{- $__clean = mustMerge $__clean . }}
         {{- end }}
-      {{- else }}
-        {{- fail "service.ServiceSpec: .ports not support" }}
+      {{- end }}
+      {{- $__sessionAffinityConfig := include "definitions.SessionAffinityConfig" $__clean | fromYaml }}
+      {{- if $__sessionAffinityConfig }}
+        {{- nindent 0 "" -}}sessionAffinityConfig:
+          {{- toYaml $__sessionAffinityConfig | nindent 2 }}
       {{- end }}
     {{- end }}
-
-    {{- if (mustCompact (mustUniq $__ports)) }}
-      {{- $__portsList := list }}
-
-      {{- range $__ports }}
-        {{- $__portsList = mustAppend $__portsList (include "definitions.ServicePort" . | fromYaml) }}
-      {{- end }}
-
-      {{- if $__portsList }}
-        {{- nindent 0 "" -}}ports:
-        {{- toYaml $__portsList | nindent 0 }}
-      {{- end }}
-    {{- end }}
-
   {{- end }}
 
-  {{- nindent 0 "" -}}selector:
-    {{- include "definitions.LabelSelector" . | indent 2 }}
-
-  {{- if or (mustHas ._CTX.sessionAffinity $__sessionAffinityList) (mustHas .Values.sessionAffinity $__sessionAffinityList) }}
-    {{- nindent 0 "" -}}sessionAffinity: {{ coalesce ._CTX.sessionAffinity .Values.sessionAffinity "None" }}
-  {{- end }}
-
-  {{- if or ._CTX.sessionAffinityConfig .Values.sessionAffinityConfig }}
-    {{- nindent 0 "" -}}sessionAffinityConfig:
-      {{- include "definitions.SessionAffinityConfig" (coalesce ._CTX.sessionAffinityConfig .Values.sessionAffinityConfig) | indent 2 }}
-  {{- end }}
-
-  {{- if or (mustHas ._CTX.type $__typeList) (mustHas .Values.type $__typeList) }}
-    {{- nindent 0 "" -}}type: {{ coalesce ._CTX.type .Values.type "ClusterIP" }}
+  {{- $__typeAllowed := list "ExternalName" "ClusterIP" "NodePort" "LoadBalancer" }}
+  {{- if mustHas $__type $__typeAllowed }}
+    {{- nindent 0 "" -}}type: {{ $__type }}
   {{- end }}
 {{- end }}

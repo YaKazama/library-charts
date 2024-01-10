@@ -1,0 +1,21 @@
+
+IngressClass:
+  helmTesting: true
+  helmLabels: false
+  namespace: xxx
+  nameAlias: name-alias
+  annotations:
+    validOnly: true
+    app.example.com: 123
+  labels:
+    name: ccc
+  controller: xxx
+  parameters:
+  - kind: xx
+    name: xx
+    apiGroup: xxx
+    scope: Namespace
+    namespace: xxx
+parameters:
+  kind: xxx
+  name: xxx

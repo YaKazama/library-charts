@@ -1,11 +1,20 @@
 {{- define "definitions.RoleRef" -}}
   {{- with . }}
-    {{- nindent 0 "" -}}apiGroup: {{ coalesce .apiGroup "rbac.authorization.k8s.io" }}
-    {{- nindent 0 "" -}}kind: {{ coalesce .kind "ClusterRole" }}
-    {{- if .name }}
-      {{- nindent 0 "" -}}name: {{ .name }}
+    {{- $__apiGroup := include "base.string" (coalesce .apiGroup "rbac.authorization.k8s.io") }}
+    {{- if $__apiGroup }}
+      {{- nindent 0 "" -}}apiGroup: {{ $__apiGroup }}
+    {{- end }}
+
+    {{- $__kind := include "base.string" (coalesce .kind "ClusterRole") }}
+    {{- if $__kind }}
+      {{- nindent 0 "" -}}kind: {{ $__kind }}
+    {{- end }}
+
+    {{- $__name := include "base.string" .name }}
+    {{- if $__name }}
+      {{- nindent 0 "" -}}name: {{ $__name }}
     {{- else }}
-      {{- fail "definitions.RoleRef: .name not found" }}
+      {{- fail "definitions.RoleRef: name not found." }}
     {{- end }}
   {{- end }}
 {{- end }}

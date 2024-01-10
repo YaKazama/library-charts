@@ -7,9 +7,9 @@
   {{- nindent 0 "" -}}metadata:
     {{- include "definitions.ObjectMeta" . | trim | nindent 2 }}
 
-  {{- $__spec := include "workloads.PodSpec" . | trim }}
+  {{- $__spec := include "workloads.PodSpec" . }}
   {{- if $__spec }}
     {{- nindent 0 "" -}}spec:
-      {{- $__spec | nindent 2 }}
+      {{- $__spec | indent 2 }}
   {{- end }}
 {{- end }}

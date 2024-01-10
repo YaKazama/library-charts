@@ -1,13 +1,15 @@
 {{- define "definitions.RollingUpdateStatefulSetStrategy" -}}
   {{- with . }}
-    {{- if .maxUnavailable }}
-      {{- nindent 0 "" -}}maxUnavailable: {{ coalesce (include "base.int.toString" .maxUnavailable) "1" }}
+    {{- $__maxUnavailable := include "base.fmt" (dict "s" .maxUnavailable "r" "^\\d+(\\%)?$") }}
+    {{- if $__maxUnavailable }}
+      {{- nindent 0 "" -}}maxUnavailable: {{ $__maxUnavailable }}
     {{- else }}
       {{- fail "definitions.RollingUpdateStatefulSetStrategy: maxUnavailable can not be 0" }}
     {{- end }}
 
-    {{- if or .partition (eq 0 (int .partition)) }}
-      {{- nindent 0 "" -}}partition: {{ coalesce (toString .partition) "0" }}
+    {{- $__partition := include "base.int.zero" (list .partition) }}
+    {{- if $__partition }}
+      {{- nindent 0 "" -}}partition: {{ $__partition }}
     {{- end }}
   {{- end }}
 {{- end }}

@@ -2,48 +2,36 @@
   {{- $_ := set . "_kind" "ServiceAccount" }}
 
   {{- nindent 0 "" -}}apiVersion: v1
-  {{- nindent 0 "" -}}kind: ServiceAccount
+  {{- nindent 0 "" -}}kind: {{ ._kind }}
   {{- nindent 0 "" -}}metadata:
     {{- include "definitions.ObjectMeta" . | trim | nindent 2 }}
 
-  {{- if or (kindIs "bool" ._CTX.automountServiceAccountToken) (kindIs "bool" .Values.automountServiceAccountToken) }}
-    {{- nindent 0 "" -}}automountServiceAccountToken: {{ coalesce (toString ._CTX.automountServiceAccountToken) (toString .Values.automountServiceAccountToken) }}
+  {{- $__automountServiceAccountToken := include "base.bool" .automountServiceAccountToken }}
+  {{- if $__automountServiceAccountToken }}
+    {{- nindent 0 "" -}}automountServiceAccountToken: {{ $__automountServiceAccountToken }}
   {{- end }}
 
-  {{- if or ._CTX.imagePullSecrets .Values.imagePullSecrets }}
-    {{- $__imagePullSecretsList := list }}
-    {{- if ._CTX.imagePullSecrets }}
-      {{- $__imagePullSecretsList = concat ._CTX.imagePullSecrets }}
-    {{- end }}
-    {{- if .Values.imagePullSecrets }}
-      {{- $__imagePullSecretsList = concat $__imagePullSecretsList .Values.imagePullSecrets }}
-    {{- end }}
-    {{- if $__imagePullSecretsList }}
-      {{- nindent 0 "" -}}imagePullSecrets:
-        {{- range $v := $__imagePullSecretsList | uniq }}
-          {{- nindent 0 "" -}}- {{ include "definitions.LocalObjectReference" $v | trim }}
-        {{- end }}
-    {{- end }}
+  {{- $__imagePullSecrets := include "base.fmt.slice" (dict "s" (pluck "imagePullSecrets" .Context .Values) "define" "definitions.LocalObjectReference") }}
+  {{- if $__imagePullSecrets }}
+    {{- nindent 0 "" -}}imagePullSecrets:
+    {{- $__imagePullSecrets | nindent 0 }}
   {{- end }}
 
-  {{- if or ._CTX.secrets .Values.secrets }}
-    {{- $__cleanData := list }}
-    {{- $__secrets := list }}
-
-    {{- if ._CTX.secrets }}
-      {{- $__cleanData = concat $__cleanData ._CTX.secrets }}
-    {{- end }}
-    {{- if .Values.target }}
-      {{- $__cleanData = concat $__cleanData .Values.secrets }}
-    {{- end }}
-
-    {{- range $__cleanData }}
-      {{- $__secrets = mustAppend $__secrets (include "definitions.ObjectReference" . | fromYaml) }}
-    {{- end }}
-    {{- if $__secrets }}
-      {{- nindent 0 "" -}}secrets:
-      {{- toYaml $__secrets | nindent 0 }}
+  {{- $__clean := list }}
+  {{- $__secretsSrc := pluck "secrets" .Context .Values }}
+  {{- range $__secretsSrc | mustUniq | mustCompact }}
+    {{- if kindIs "map" . }}
+      {{- $__clean = mustAppend $__clean . }}
+    {{- else if kindIs "slice" . }}
+      {{- $__clean = concat $__clean . }}
     {{- end }}
   {{- end }}
-
+  {{- $__secrets := list }}
+  {{- range ($__clean | mustUniq | mustCompact) }}
+    {{- $__secrets = mustAppend $__secrets (include "definitions.ObjectReference" . | fromYaml) }}
+  {{- end }}
+  {{- if $__secrets }}
+    {{- nindent 0 "" -}}secrets:
+    {{- toYaml $__secrets | nindent 0 }}
+  {{- end }}
 {{- end }}

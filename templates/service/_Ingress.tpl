@@ -2,9 +2,13 @@
   {{- $_ := set . "_kind" "Ingress" }}
 
   {{- nindent 0 "" -}}apiVersion: networking.k8s.io/v1
-  {{- nindent 0 "" -}}kind: Ingress
+  {{- nindent 0 "" -}}kind: {{ ._kind }}
   {{- nindent 0 "" -}}metadata:
     {{- include "definitions.ObjectMeta" . | trim | nindent 2 }}
-  {{- nindent 0 "" -}}spec:
-    {{- include "service.IngressSpec" . | trim | nindent 2 }}
+
+  {{- $__spec := include "service.IngressSpec" .  }}
+  {{- if $__spec }}
+    {{- nindent 0 "" -}}spec:
+      {{- toYaml $__spec | nindent 2 }}
+  {{- end }}
 {{- end }}

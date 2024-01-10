@@ -4,27 +4,36 @@
   - https://github.com/kubernetes/examples/blob/master/staging/volumes/fibre_channel/fc.yaml
 */ -}}
 {{- define "definitions.FCVolumeSource" -}}
-  {{- $__fsTypeList := list "ext4" "xfs" "ntfs" }}
+  {{- $__fsTypeAllowed := list "ext4" "xfs" "ntfs" }}
 
   {{- with .}}
-    {{- if mustHas .fsType $__fsTypeList }}
-      {{- nindent 0 "" -}}fsType: {{ coalesce .fsType "ext4" }}
+    {{- $__fsType := include "base.string" .fsType }}
+    {{- if mustHas $__fsType $__fsTypeAllowed }}
+      {{- nindent 0 "" -}}fsType: {{ coalesce $__fsType "ext4" }}
     {{- else }}
-      {{- fail "fc.fsType not found" }}
+      {{- fail "definitions.FCVolumeSource .fsType not found" }}
     {{- end }}
-    {{- if .lun }}
-      {{- nindent 0 "" -}}lun: {{ int .lun }}
+
+    {{- $__lun := include "base.int" .lun }}
+    {{- if $__lun }}
+      {{- nindent 0 "" -}}lun: {{ $__lun }}
     {{- end }}
-    {{- if and .readOnly (kindIs "bool" .readOnly) }}
-      {{- nindent 0 "" -}}readOnly: true
+
+    {{- $__readOnly := include "base.bool" .readOnly }}
+    {{- if $__readOnly }}
+      {{- nindent 0 "" -}}readOnly: {{ $__readOnly }}
     {{- end }}
-    {{- if .targetWWNs }}
+
+    {{- $__targetWWNs := include "base.fmt.slice" (dict "s" (list .targetWWNs)) }}
+    {{- if $__targetWWNs }}
       {{- nindent 0 "" -}}targetWWNs:
-      {{- toYaml .targetWWNs | nindent 0 }}
+      {{- $__targetWWNs | nindent 0 }}
     {{- end }}
-    {{- if and .wwids (not (and .lun .targetWWNs)) }}
+
+    {{- $__wwids := include "base.fmt.slice" (dict "s" (list .wwids)) }}
+    {{- if and $__wwids (not (and $__lun $__targetWWNs)) }}
       {{- nindent 0 "" -}}wwids:
-      {{- toYaml .wwids | nindent 0 }}
+      {{- $__wwids | nindent 0 }}
     {{- end }}
   {{- end }}
 {{- end }}

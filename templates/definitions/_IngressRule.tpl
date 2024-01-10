@@ -1,27 +1,19 @@
 {{- define "definitions.IngressRule" -}}
-  {{- $__regexHost := "^(\\*\\.)?([a-zA-Z0-9][-a-zA-Z0-9]{0,62})(\\.[a-zA-Z0-9][-a-zA-Z0-9]{0,62})+$" }}
   {{- with . }}
-    {{- if mustRegexMatch $__regexHost .host }}
-      {{- nindent 0 "" -}}host: {{ .host | quote }}
-    {{- else }}
-      {{- fail "definitions.IngressRule: .host not allowed" }}
+    {{- $__regexHost := "^(\\*\\.)?([a-zA-Z0-9][-a-zA-Z0-9]{0,62})(\\.[a-zA-Z0-9][-a-zA-Z0-9]{0,62})+$" }}
+    {{- $__host := include "base.string" .host }}
+    {{- $__host = include "base.fmt" (dict "s" $__host "r" $__regexHost) }}
+    {{- if $__host }}
+      {{- /*
+        域名可能出现 * 号, 所以此处添加 quote
+      */ -}}
+      {{- nindent 0 "" -}}host: {{ $__host | quote }}
     {{- end }}
 
-    {{- if .http }}
-      {{- range .http }}
-        {{- if and .apiGroup .kind .name }}
-          {{- $_ := set . "backendType" "resource" }}
-        {{- else if or (and .portName .name) (and .portNumber .name) }}
-          {{- $_ := set . "backendType" "service" }}
-        {{- end }}
-      {{- end }}
-
-      {{- $__backend := (include "definitions.HTTPIngressRuleValue" .http | fromYaml) }}
-
-      {{- if $__backend }}
-        {{- nindent 0 "" -}}http:
-          {{- toYaml $__backend | nindent 2 }}
-      {{- end }}
+    {{- $__http := include "definitions.HTTPIngressRuleValue" (dict "http" .http) | fromYaml }}
+    {{- if $__http }}
+      {{- nindent 0 "" -}}http:
+        {{- toYaml $__http | nindent 2 }}
     {{- end }}
   {{- end }}
 {{- end }}

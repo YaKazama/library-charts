@@ -1,0 +1,30 @@
+
+StorageClass:
+  helmTesting: true
+  helmLabels: false
+  namespace: xxx
+  nameAlias: name-alias
+  annotations:
+    validOnly: true
+    app.example.com: 123
+  labels:
+    name: ccc
+  allowVolumeExpansion: true
+  mountOptions: xxxx
+  parameters:
+    x: xx
+  provisioner: ccc
+  reclaimPolicy: Retain
+  volumeBindingMode: WaitForFirstConsumer
+  allowedTopologies:
+    matchLabelExpressions:
+      key: a
+      values: a b c
+      ccc: vvv
+allowedTopologies:
+- matchLabelExpressions:
+  - key: ccc
+    values:
+    - cc
+    - dd
+  - xx: ff dd , fff

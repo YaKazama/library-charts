@@ -1,0 +1,68 @@
+
+Service:
+  helmTesting: true
+  helmLabels: false
+  namespace: xxx
+  nameAlias: name-alias
+  annotations:
+    validOnly: true
+    app.example.com: 123
+  labels:
+    name: ccc
+  allocateLoadBalancerNodePorts: false
+  clusterIP: 2.2.2.2
+  clusterIPs: ""
+  externalIPs: 1.1.1.1
+  externalName: xxx
+  externalTrafficPolicy: Cluster
+  healthCheckNodePort: 1
+  internalTrafficPolicy: Local
+  ipFamilies: 1.1.1.1
+  loadBalancerSourceRanges: 1.1.1.1/32
+  publishNotReadyAddresses: true
+  type: ClusterIP
+  selector:
+    a: a
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP: 300
+      # timeoutSeconds: 0
+  ports:
+  - appProtocol: xx
+    name: xx1
+    nodePort: 30001
+    # nodePortScope: 30000-32767
+    port: 3122
+    # protocol: tcp  # tcp udp sctp
+    targetPort: 3122
+    clusterIP: None
+    type: NodePort  # LoadBalancer
+  - appProtocol: xx
+    name: xx2
+    nodePort: 30002
+    # nodePortScope: 30000-32767
+    port: 3222
+    # protocol: tcp  # tcp udp sctp
+    # targetPort: 3122
+    clusterIP: None
+    type: NodePort  # LoadBalancer
+ports:
+  appProtocol: xx
+  name: xx3
+  nodePort: 30003
+  nodePortScope: 30000-32767
+  port: 3122
+  protocol: udp
+  targetPort: 3222
+sessionAffinityConfig:
+  clientIP:
+    timeoutSeconds: 600
+loadBalancerSourceRanges:
+- 2.2.2.2/32 3.3.3.3/32
+ipFamilies:
+- 2.2.2.2 3.3.3.3
+externalIPs:
+- 2.2.2.2 3.3.3.3
+clusterIPs:
+- 1.1.1.1
+- 2.2.2.2, 3.3.3.3

@@ -2,15 +2,43 @@
   reference: https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#nodeaffinity-v1-core
 */ -}}
 {{- define "definitions.NodeAffinity" -}}
-  {{- if .required }}
-    {{- nindent 0 "" -}}requiredDuringSchedulingIgnoredDuringExecution:
-      {{- include "definitions.NodeSelector" .required | indent 2 }}
-  {{- end }}
-  {{- if .preferred }}
-    {{- $__preferredPST := include "definitions.PreferredSchedulingTerm" .preferred }}
-    {{- if $__preferredPST }}
-      {{- nindent 0 "" -}}preferredDuringSchedulingIgnoredDuringExecution:
-      {{- $__preferredPST | indent 0 }}
+  {{- with . }}
+    {{- if .required }}
+      {{- if or (kindIs "slice" .required) (kindIs "map" .required) }}
+        {{- $__required := include "definitions.NodeSelector" .required }}
+        {{- if $__required }}
+          {{- nindent 0 "" -}}requiredDuringSchedulingIgnoredDuringExecution:
+            {{- $__required | indent 2 }}
+        {{- end }}
+      {{- else }}
+        {{- fail "definitions.NodeAffinity: required not support, please use slice or map" }}
+      {{- end }}
+    {{- end }}
+
+    {{- if .preferred }}
+      {{- if or (kindIs "slice" .preferred) (kindIs "map" .preferred) }}
+        {{- $__preferred := list }}
+        {{- $__val := dict }}
+
+        {{- if kindIs "slice" .preferred }}
+          {{- range .preferred }}
+            {{- $__val = mustMerge $__val . }}
+          {{- end }}
+        {{- else if kindIs "map" .preferred }}
+            {{- $__val = mustMerge $__val .preferred }}
+        {{- else }}
+          {{- fail "definitions.PreferredSchedulingTerm: not support, please use slice or map" }}
+        {{- end }}
+        {{- range $k, $v := $__val }}
+          {{- $__preferred = mustAppend $__preferred (include "definitions.PreferredSchedulingTerm" (dict $k $v) | fromYaml) }}
+        {{- end }}
+        {{- if $__preferred }}
+          {{- nindent 0 "" -}}preferredDuringSchedulingIgnoredDuringExecution:
+          {{- toYaml $__preferred | nindent 0 }}
+        {{- end }}
+      {{- else }}
+        {{- fail "definitions.NodeAffinity: preferred not support, please use map" }}
+      {{- end }}
     {{- end }}
   {{- end }}
 {{- end }}

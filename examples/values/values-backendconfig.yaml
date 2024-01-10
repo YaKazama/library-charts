@@ -1,0 +1,25 @@
+
+BackendConfig:
+  helmTesting: true
+  helmLabels: false
+  namespace: xxx
+  nameAlias: name-alias
+  annotations:
+    validOnly: true
+    app.example.com: 123
+  labels:
+    name: ccc
+  timeoutSec: 40
+  connectionDraining:
+    drainingTimeoutSec: 60
+  healthCheck:
+    checkIntervalSec: 15
+    timeoutSec: 15
+    healthyThreshold: 1
+    unhealthyThreshold: 2
+    type: HTTP
+    requestPath: /account/health/
+    port: 9191
+  logging:
+    enable: true
+    sampleRate: 0.5

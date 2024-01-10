@@ -5,20 +5,36 @@
 */ -}}
 {{- define "definitions.SecretVolumeSource" -}}
   {{- with . }}
-    {{- if or .secretName .name }}
-      {{- nindent 0 "" -}}secretName: {{ coalesce .secretName .name }}
-    {{- else }}
-      {{- fail "secret.secretName not found" }}
+    {{- $__defaultMode := include "base.fmt" (dict "s" (toString .defaultMode) "r" "^(0[0124]{3}|[1-9]?[0-9]|[1-4][0-9]{2}|50[0-9]|51[01])$") }}
+    {{- if $__defaultMode }}
+      {{- nindent 0 "" -}}defaultMode: {{ coalesce $__defaultMode "0644" }}
     {{- end }}
-    {{- if .defaultMode }}
-      {{- nindent 0 "" -}}defaultMode: {{ int (coalesce .defaultMode 0644) }}
+
+    {{- $__items := list }}
+    {{- $__clean := list }}
+    {{- if kindIs "slice" .items }}
+      {{- $__clean = concat $__clean .items }}
+    {{- else if kindIs "map" .items }}
+      {{- $__clean = mustAppend $__clean (pick .items "key" "mode" "path") }}
     {{- end }}
-    {{- if .items }}
+    {{- range (mustCompact (mustUniq $__clean)) }}
+      {{- $__items = mustAppend $__items (include "definitions.KeyToPath" . | fromYaml) }}
+    {{- end }}
+    {{- if $__items }}
       {{- nindent 0 "" -}}items:
-      {{- include "definitions.KeyToPath" .items | indent 0 }}
+      {{- toYaml $__items | nindent 0 }}
     {{- end }}
-    {{- if kindIs "bool" .optional }}
-      {{- nindent 0 "" -}}optional: {{ .optional }}
+
+    {{- $__optional := include "base.bool" .optional }}
+    {{- if $__optional }}
+      {{- nindent 0 "" -}}optional: {{ $__optional }}
+    {{- end }}
+
+    {{- $__secretName := include "base.string" (coalesce .secretName .name) }}
+    {{- if $__secretName }}
+      {{- nindent 0 "" -}}secretName: {{ $__secretName }}
+    {{- else }}
+      {{- fail "definitions.SecretVolumeSource: .secretName or .name must be exists" }}
     {{- end }}
   {{- end }}
 {{- end }}

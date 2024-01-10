@@ -1,27 +1,31 @@
 {{- define "definitions.VolumeMount" -}}
   {{- with . }}
-    {{- if .name }}
-      {{- nindent 0 "" -}}name: {{ .name }}
-    {{- else }}
-      {{- fail "volumeMounts.name not found" }}
+    {{- $__mountPath := include "base.string" .mountPath }}
+    {{- if $__mountPath }}
+      {{- nindent 0 "" -}}mountPath: {{ $__mountPath }}
     {{- end }}
 
-    {{- if .mountPath }}
-      {{- nindent 0 "" -}}mountPath: {{ .mountPath }}
+    {{- $__mountPropagation := include "base.string" .mountPropagation }}
+    {{- if $__mountPropagation }}
+      {{- nindent 0 "" -}}mountPropagation: {{ $__mountPropagation }}
     {{- end }}
 
-    {{- if .mountPropagation }}
-      {{- nindent 0 "" -}}mountPropagation: {{ .mountPropagation }}
+    {{- $__name := include "base.string" .name }}
+    {{- if $__name }}
+      {{- nindent 0 "" -}}name: {{ $__name }}
     {{- end }}
 
-    {{- if and .readOnly (kindIs "bool" .readOnly) }}
-      {{- nindent 0 "" -}}readOnly: true
+    {{- $__readOnly := include "base.bool" .readOnly }}
+    {{- if $__readOnly }}
+      {{- nindent 0 "" -}}readOnly: {{ $__readOnly }}
     {{- end }}
 
-    {{- if and .subPath (not .subPathExpr) }}
-      {{- nindent 0 "" -}}subPath: {{ .subPath }}
-    {{- else if and .subPathExpr (not .subPath) }}
-      {{- nindent 0 "" -}}subPathExpr: {{ .subPathExpr }}
+    {{- $__subPath := include "base.string" .subPath }}
+    {{- $__subPathExpr := include "base.string" .subPathExpr }}
+    {{- if and $__subPath (not $__subPathExpr) }}
+      {{- nindent 0 "" -}}subPath: {{ $__subPath }}
+    {{- else if and $__subPathExpr (not $__subPath) }}
+      {{- nindent 0 "" -}}subPathExpr: {{ $__subPathExpr }}
     {{- end }}
   {{- end }}
 {{- end }}

@@ -3,32 +3,51 @@
   - https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#labelselector-v1-meta
   - https://kubernetes.io/zh-cn/docs/concepts/overview/working-with-objects/labels/
   descr:
-  - matchLabels 默认会统一添加
-  - matchExpressions 为列表，以“|”作为分隔符。格式: <key> <operator> <value>
-    - <value> 如果使用 array 需要使用 ["a", "b"] 形式
-    - <operator> 的值为 In, NotIn, Exists, DoesNotExists
-      - 当值为 Exists 或 DoesNotExists 时，<value> 可以为空
+  - .Context.LabelSelector 和 .Values.LabelSelector 的支持参考 workloads.DaemonSetSpec 中的处理方式
+    - matchExpressions 只能使用 slice 格式
+    - matchLabels 只能使用 map 格式
 */ -}}
 {{- define "definitions.LabelSelector" -}}
-  {{- nindent 0 "" -}}matchLabels:
-  {{- if .matchLabels }}
-    {{- /*
-      for base.PodAffinityTerm
-    */ -}}
-    {{- toYaml .matchLabels | nindent 2 }}
+  {{- $__matchExpressions := list }}
+  {{- $__matchLabels := dict }}
+
+  {{- if kindIs "slice" . }}
+    {{- range . }}
+      {{- if kindIs "slice" .matchExpressions }}
+        {{- range .matchExpressions }}
+          {{- $__matchExpressions = mustAppend $__matchExpressions (include "definitions.LabelSelectorRequirement" . ) }}
+        {{- end }}
+      {{- end }}
+
+      {{- if kindIs "map" .matchLabels }}
+        {{- $__matchLabels = mustMerge $__matchLabels .matchLabels }}
+      {{- else }}
+        {{- fail "definitions.LabelSelector: matchLabels (slice) not support, please use map" }}
+      {{- end }}
+    {{- end }}
+  {{- else if kindIs "map" . }}
+    {{- if .matchExpressions }}
+      {{- range .matchExpressions }}
+        {{- $__matchExpressions = mustAppend $__matchExpressions (include "definitions.LabelSelectorRequirement" . | fromYaml) }}
+      {{- end }}
+    {{- end }}
+
+    {{- if kindIs "map" .matchLabels }}
+      {{- $__matchLabels = mustMerge $__matchLabels .matchLabels }}
+    {{- else }}
+      {{- fail "definitions.LabelSelector: matchLabels (map) not support, please use map" }}
+    {{- end }}
   {{- else }}
-    {{- include "base.labels" . | indent 2 }}
+    {{- fail "definitions.LabelSelector: matchExpressions not support, please use slice or map" }}
   {{- end }}
 
-  {{- if or .matchExpressions ._CTX.matchExpressions }}
+  {{- $__matchExpressions = mustCompact (mustUniq $__matchExpressions) }}
+  {{- if $__matchExpressions }}
     {{- nindent 0 "" -}}matchExpressions:
-    {{- if .matchExpressions }}
-      {{- /*
-        for base.PodAffinityTerm
-      */ -}}
-      {{- include "definitions.LabelSelectorRequirement" .matchExpressions | indent 0 }}
-    {{- else }}
-      {{- include "definitions.LabelSelectorRequirement" ._CTX.matchExpressions | indent 0 }}
-    {{- end }}
+    {{- toYaml $__matchExpressions | nindent 0 }}
+  {{- end }}
+  {{- if $__matchLabels }}
+    {{- nindent 0 "" -}}matchLabels:
+      {{- toYaml $__matchLabels | nindent 2 }}
   {{- end }}
 {{- end }}

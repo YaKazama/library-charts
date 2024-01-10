@@ -1,11 +1,8 @@
 {{- define "definitions.StatefulSetOrdinals" -}}
-  {{- $__regexNum := "^\\d+$" }}
-
-  {{- if kindIs "map" . }}
-    {{- with . }}
-      {{- nindent 0 "" -}}start: {{ int .start }}
+  {{- with . }}
+    {{- $__start := include "base.int.zero" (list .start) }}
+    {{- if $__start }}
+      {{- nindent 0 "" -}}start: {{ $__start }}
     {{- end }}
-  {{- else if mustRegexMatch $__regexNum (toString .) }}
-    {{- nindent 0 "" -}}start: {{ int . }}
   {{- end }}
 {{- end }}

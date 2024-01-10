@@ -4,13 +4,14 @@
 */ -}}
 {{- define "definitions.PersistentVolumeClaimVolumeSource" -}}
   {{- with . }}
-    {{- if .claimName }}
-      {{- nindent 0 "" -}}claimName: {{ .claimName }}
-    {{- else }}
-      {{- fail "pvc.claimName not found" }}
+    {{- $__claimName := include "base.string" .claimName }}
+    {{- if $__claimName }}
+      {{- nindent 0 "" -}}claimName: {{ $__claimName }}
     {{- end }}
-    {{- if and .readOnly (kindIs "bool" .readOnly) }}
-      {{- nindent 0 "" -}}readOnly: true
+
+    {{- $__readOnly := include "base.bool" .readOnly }}
+    {{- if $__readOnly }}
+      {{- nindent 0 "" -}}readOnly: {{ $__readOnly }}
     {{- end }}
   {{- end }}
 {{- end }}

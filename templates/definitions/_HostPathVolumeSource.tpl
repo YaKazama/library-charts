@@ -4,16 +4,18 @@
   - https://kubernetes.io/docs/concepts/storage/volumes/#hostpath
 */ -}}
 {{- define "definitions.HostPathVolumeSource" -}}
-  {{- $__typeList := list "DirectoryOrCreate" "Directory" "FileOrCreate" "File" "Socket" "CharDevice" "BlockDevice" }}
-
   {{- with . }}
-    {{- if .path }}
-      {{- nindent 0 "" -}}path: {{ .path }}
+    {{- $__path := include "base.fmt" (dict "s" .path "r" "^/.*") }}
+    {{- if $__path }}
+      {{- nindent 0 "" -}}path: {{ $__path }}
     {{- else }}
-      {{- fail "hostPath.path not found" }}
+      {{- fail "definitions.HostPathVolumeSource: .path invalid" }}
     {{- end }}
-    {{- if mustHas .type $__typeList }}
-      {{- nindent 0 "" -}}type: {{ coalesce .type "" }}
+
+    {{- $__typeAllowed := list "DirectoryOrCreate" "Directory" "FileOrCreate" "File" "Socket" "CharDevice" "BlockDevice" }}
+    {{- $__type := include "base.string" .type }}
+    {{- if mustHas $__type $__typeAllowed }}
+      {{- nindent 0 "" -}}type: {{ coalesce $__type "" }}
     {{- end }}
   {{- end }}
 {{- end }}

@@ -1,25 +1,38 @@
 {{- define "definitions.ObjectReference" -}}
   {{- with . }}
-    {{- if .apiVersion }}
-      {{- nindent 0 "" -}}apiVersion: {{ .apiVersion }}
+    {{- $__apiVersion := include "base.string" .apiVersion }}
+    {{- if $__apiVersion }}
+      {{- nindent 0 "" -}}apiVersion: {{ $__apiVersion }}
     {{- end }}
-    {{- if .kind }}
-      {{- nindent 0 "" -}}kind: {{ .kind }}
+
+    {{- $__fieldPath := include "base.string" .fieldPath }}
+    {{- if $__fieldPath }}
+      {{- nindent 0 "" -}}fieldPath: {{ $__fieldPath }}
     {{- end }}
-    {{- if or .name .targetName }}
-      {{- nindent 0 "" -}}name: {{ .name }}
+
+    {{- $__kind := include "base.string" .kind }}
+    {{- if $__kind }}
+      {{- nindent 0 "" -}}kind: {{ $__kind }}
     {{- end }}
-    {{- if .namespace }}
-      {{- nindent 0 "" -}}namespace: {{ .namespace }}
+
+    {{- $__name := include "base.string" .name }}
+    {{- if $__name }}
+      {{- nindent 0 "" -}}name: {{ $__name }}
     {{- end }}
-    {{- if .fieldPath }}
-      {{- nindent 0 "" -}}fieldPath: {{ .fieldPath }}
+
+    {{- $__namespace := include "base.string" .namespace }}
+    {{- if $__namespace }}
+      {{- nindent 0 "" -}}namespace: {{ $__namespace }}
     {{- end }}
-    {{- if .resourceVersion }}
-      {{- nindent 0 "" -}}resourceVersion: {{ .resourceVersion }}
+
+    {{- $__resourceVersion := include "base.string" .resourceVersion }}
+    {{- if $__resourceVersion }}
+      {{- nindent 0 "" -}}resourceVersion: {{ $__resourceVersion }}
     {{- end }}
-    {{- if or .uid .uuid }}
-      {{- nindent 0 "" -}}uid: {{ coalesce .uid .uuid }}
+
+    {{- $__uid := include "base.string" .uid }}
+    {{- if $__uid }}
+      {{- nindent 0 "" -}}uid: {{ $__uid }}
     {{- end }}
   {{- end }}
 {{- end }}

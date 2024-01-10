@@ -2,25 +2,39 @@
   reference:
   - https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#configmapvolumesource-v1-core
   - https://kubernetes.io/docs/concepts/storage/volumes/#configmap
-  descr:
-  - 处理 array 类型的数据
 */ -}}
 {{- define "definitions.ConfigMapVolumeSource" -}}
   {{- with . }}
-    {{- if .name }}
-      {{- nindent 0 "" -}}name: {{ .name }}
-    {{- else }}
-      {{- fail "configMap.name not found" }}
+    {{- $__defaultMode := include "base.fmt" (dict "s" (toString .defaultMode) "r" "^(0[0124]{3}|[1-9]?[0-9]|[1-4][0-9]{2}|50[0-9]|51[01])$") }}
+    {{- if $__defaultMode }}
+      {{- nindent 0 "" -}}defaultMode: {{ coalesce $__defaultMode "0644" }}
     {{- end }}
-    {{- if .defaultMode }}
-      {{- nindent 0 "" -}}defaultMode: {{ int (coalesce .defaultMode 0644) }}
+
+    {{- $__items := list }}
+    {{- $__clean := list }}
+    {{- if kindIs "slice" .items }}
+      {{- $__clean = concat $__clean .items }}
+    {{- else if kindIs "map" .items }}
+      {{- $__clean = mustAppend $__clean (pick .items "key" "mode" "path") }}
     {{- end }}
-    {{- if .items }}
+    {{- range (mustCompact (mustUniq $__clean)) }}
+      {{- $__items = mustAppend $__items (include "definitions.KeyToPath" . | fromYaml) }}
+    {{- end }}
+    {{- if $__items }}
       {{- nindent 0 "" -}}items:
-      {{- include "definitions.KeyToPath" .items | indent 0 }}
+      {{- toYaml $__items | nindent 0 }}
     {{- end }}
-    {{- if and .optional (kindIs "bool" .optional) }}
-      {{- nindent 0 "" -}}optional: true
+
+    {{- $__name := include "base.string" .name }}
+    {{- if $__name }}
+      {{- nindent 0 "" -}}name: {{ $__name }}
+    {{- else }}
+      {{- fail "definitions.ConfigMapVolumeSource: name must be exists" }}
+    {{- end }}
+
+    {{- $__optional := include "base.bool" .optional }}
+    {{- if $__optional }}
+      {{- nindent 0 "" -}}optional: {{ $__optional }}
     {{- end }}
   {{- end }}
 {{- end }}

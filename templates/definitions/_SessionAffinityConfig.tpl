@@ -1,18 +1,15 @@
 {{- define "definitions.SessionAffinityConfig" -}}
-  {{- $__clientIPConfig := "" }}
-
-  {{- if kindIs "float64" . }}
-    {{- $__clientIPConfig = include "definitions.ClientIPConfig" . }}
-  {{- else if kindIs "map" . }}
-    {{- with . }}
-      {{- if .clientIP }}
-          {{- $__clientIPConfig = include "definitions.ClientIPConfig" .clientIP }}
-      {{- end }}
+  {{- with . }}
+    {{- $__clean := dict }}
+    {{- if or (kindIs "int" .clientIP) (kindIs "float64" .clientIP) }}
+      {{- $__clean = mustMerge (dict "timeoutSeconds" .clientIP) }}
+    {{- else if kindIs "map" .clientIP }}
+      {{- $__clean = mustMerge $__clean .clientIP }}
     {{- end }}
-  {{- end }}
-
-  {{- if $__clientIPConfig }}
-    {{- nindent 0 "" -}}clientIP:
-      {{- $__clientIPConfig | indent 2 }}
+    {{- $__clientIP := include "definitions.ClientIPConfig" $__clean | fromYaml }}
+    {{- if $__clientIP }}
+      {{- nindent 0 "" -}}clientIP:
+        {{- toYaml $__clientIP | nindent 2 }}
+    {{- end }}
   {{- end }}
 {{- end }}

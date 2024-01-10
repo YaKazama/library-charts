@@ -1,94 +1,78 @@
+{{- /*
+  descr:
+  - 有限支持
+    - cephfs
+    - fc
+    - hostPath
+    - nfs
+    - rbd
+*/ -}}
 {{- define "cluster.PersistentVolumeSpec" -}}
-  {{- $__accessModesList := list "ReadWriteOnce" "ReadOnlyMany" "ReadWriteMany" "ReadWriteOncePod" }}
-
-  {{- if or ._CTX.accessModes .Values.accessModes }}
-    {{- $__accessModes := list }}
-
-    {{- if ._CTX.accessModes }}
-      {{- if kindIs "slice" ._CTX.accessModes }}
-        {{- range ._CTX.accessModes }}
-          {{- if mustHas . $__accessModesList }}
-            {{- $__accessModes = mustAppend $__accessModes . }}
-          {{- end }}
-        {{- end }}
-      {{- else if kindIs "string" ._CTX.accessModes }}
-        {{- if mustRegexMatch "(ReadWriteOnce|ReadOnlyMany|ReadWriteMany|ReadWriteOncePod)((,)?\\s*)*" ._CTX.accessModes }}
-          {{- range (mustRegexSplit "(,)?\\s+" ._CTX.accessModes -1) }}
-            {{- $__accessModes = mustAppend $__accessModes . }}
-          {{- end }}
-        {{- end }}
-      {{- else }}
-        {{- fail "cluster.PersistentVolumeSpec: .accessModes not support" }}
-      {{- end }}
-    {{- end }}
-    {{- if .Values.accessModes }}
-      {{- if kindIs "slice" .Values.accessModes }}
-        {{- range .Values.accessModes }}
-          {{- if mustHas . $__accessModesList }}
-            {{- $__accessModes = mustAppend $__accessModes . }}
-          {{- end }}
-        {{- end }}
-      {{- else if kindIs "string" .Values.accessModes }}
-        {{- if mustRegexMatch "(ReadWriteOnce|ReadOnlyMany|ReadWriteMany|ReadWriteOncePod)((,)?\\s*)*" .Values.accessModes }}
-          {{- range (mustRegexSplit "(,)?\\s+" .Values.accessModes -1) }}
-            {{- $__accessModes = mustAppend $__accessModes . }}
-          {{- end }}
-        {{- end }}
-      {{- else }}
-        {{- fail "cluster.PersistentVolumeSpec: .accessModes not support" }}
-      {{- end }}
-    {{- end }}
-
-    {{- $__accessModes = mustCompact (mustUniq $__accessModes) }}
+  {{- with . }}
+    {{- $__accessModesAllowed := list "ReadWriteOnce" "ReadOnlyMany" "ReadWriteMany" "ReadWriteOncePod" }}
+    {{- $__regexCheck := "(ReadWriteOnce|ReadOnlyMany|ReadWriteMany|ReadWriteOncePod)" }}
+    {{- $__accessModes := include "base.fmt.slice" (dict "s" (list .accessModes) "c" $__regexCheck) }}
     {{- if $__accessModes }}
       {{- nindent 0 "" -}}accessModes:
-      {{- toYaml $__accessModes | nindent 0 }}
-    {{- end }}
-  {{- end }}
-
-  {{- if or (kindIs "string" ._CTX.storageClassName) (kindIs "string" .Values.storageClassName) }}
-    {{- nindent 0 "" -}}storageClassName: {{ coalesce ._CTX.storageClassName .Values.storageClassName "" }}
-  {{- end }}
-
-  {{- $__volumeModeList := list "Filesystem" "Block" }}
-  {{- if or (mustHas ._CTX.volumeMode $__volumeModeList) (mustHas .Values.volumeMode $__volumeModeList) }}
-    {{- nindent 0 "" -}}volumeMode: {{ coalesce .volumeMode "Filesystem" }}
-  {{- end }}
-
-  {{- if or ._CTX.mountOptions .Values.mountOptions }}
-    {{- $__mountOptions := list }}
-
-    {{- if ._CTX.mountOptions }}
-      {{- if kindIs "string" ._CTX.mountOptions }}
-        {{- range (mustRegexSplit "(,)?\\s+" ._CTX.mountOptions -1) }}
-          {{- $__mountOptions = mustAppend $__mountOptions . }}
-        {{- end }}
-      {{- else if kindIs "slice" ._CTX.mountOptions }}
-        {{- $__mountOptions = concat $__mountOptions ._CTX.mountOptions }}
-      {{- else }}
-        {{- fail "configStorage.StorageClass: mountOptions not support" }}
-      {{- end }}
-    {{- end }}
-    {{- if .Values.mountOptions }}
-      {{- if kindIs "string" .Values.mountOptions }}
-        {{- range (mustRegexSplit "(,)?\\s+" .Values.mountOptions -1) }}
-          {{- $__mountOptions = mustAppend $__mountOptions . }}
-        {{- end }}
-      {{- else if kindIs "slice" .Values.mountOptions }}
-        {{- $__mountOptions = concat $__mountOptions .Values.mountOptions }}
-      {{- else }}
-        {{- fail "configStorage.StorageClass: mountOptions not support" }}
-      {{- end }}
+      {{- $__accessModes | nindent 0 }}
     {{- end }}
 
-    {{- $__mountOptions = mustCompact (mustUniq $__mountOptions) }}
+    {{- $__capacity := include "base.map" .capacity | fromYaml }}
+    {{- if $__capacity }}
+      {{- nindent 0 "" -}}capacity:
+        {{- toYaml $__capacity | nindent 2 }}
+    {{- end }}
+
+    {{- $__regexSplit := "\\s+" }}
+    {{- $__mountOptions := include "base.fmt.slice" (dict "s" (list .mountOptions) "r" $__regexSplit) }}
     {{- if $__mountOptions }}
       {{- nindent 0 "" -}}mountOptions:
-      {{- toYaml $__mountOptions | nindent 0 }}
+      {{- $__mountOptions | nindent 0 }}
+    {{- end }}
+
+    {{- $__persistentVolumeReclaimPolicyAllowed := list "Retain" "Delete" }}
+    {{- $__persistentVolumeReclaimPolicy := include "base.string" .persistentVolumeReclaimPolicy }}
+    {{- if mustHas $__persistentVolumeReclaimPolicy $__persistentVolumeReclaimPolicyAllowed }}
+      {{- nindent 0 "" -}}persistentVolumeReclaimPolicy: {{ $__persistentVolumeReclaimPolicy }}
+    {{- end }}
+
+    {{- $__storageClassName := include "base.string.empty" (dict "s" .storageClassName "empty" true) }}
+    {{- if $__storageClassName }}
+      {{- nindent 0 "" -}}storageClassName: {{ $__storageClassName }}
+    {{- end }}
+
+    {{- $__volumeModeAllowed := list "Filesystem" "Block" }}
+    {{- $__volumeMode := include "base.string" .volumeMode }}
+    {{- if mustHas $__volumeMode $__volumeModeAllowed }}
+      {{- nindent 0 "" -}}volumeMode: {{ $__volumeMode }}
+    {{- end }}
+
+    {{- if .nodeAffinity }}
+      {{- $__nodeAffinity := include "definitions.VolumeNodeAffinity" .nodeAffinity | fromYaml }}
+      {{- if $__nodeAffinity }}
+        {{- nindent 0 "" -}}nodeAffinity:
+          {{- toYaml $__nodeAffinity | nindent 2 }}
+      {{- end }}
+    {{- end }}
+
+    {{- if .cephfs }}
+      {{- include "configStorage.Volume.VolumeSource" (dict "s" .cephfs "k" "cephfs" "define" "definitions.CephFSPersistentVolumeSource") | indent 0 }}
+    {{- end }}
+
+    {{- if .fc }}
+      {{- include "configStorage.Volume.VolumeSource" (dict "s" .fc "k" "fc" "define" "definitions.FCVolumeSource") | indent 0 }}
+    {{- end }}
+
+    {{- if .hostPath }}
+      {{- include "configStorage.Volume.VolumeSource" (dict "s" .hostPath "k" "hostPath" "define" "definitions.HostPathVolumeSource") | indent 0 }}
+    {{- end }}
+
+    {{- if .nfs }}
+      {{- include "configStorage.Volume.VolumeSource" (dict "s" .nfs "k" "nfs" "define" "definitions.NFSVolumeSource") | indent 0 }}
+    {{- end }}
+
+    {{- if .rbd }}
+      {{- include "configStorage.Volume.VolumeSource" (dict "s" .rbd "k" "rbd" "define" "definitions.RBDPersistentVolumeSource") | indent 0 }}
     {{- end }}
   {{- end }}
-
-  {{- /*
-    TODO: 半成品，暂无需求，此功能暂停开发 2023-12-13
-  */ -}}
 {{- end }}

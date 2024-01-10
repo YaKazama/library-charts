@@ -1,0 +1,13 @@
+
+Namespace:
+  helmTesting: true
+  helmLabels: false
+  # name: xxx
+  namespace: xxx
+  nameAlias: name-alias
+  annotations:
+    validOnly: true
+    app.example.com: 123
+  ignoreLabels: true
+  labels:
+    name: ccc

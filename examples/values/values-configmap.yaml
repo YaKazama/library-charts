@@ -1,0 +1,24 @@
+
+ConfigMap:
+  helmTesting: true
+  helmLabels: false
+  namespace: xxx
+  nameAlias: name-alias
+  annotations:
+    validOnly: true
+    app.example.com: 123
+  labels:
+    name: ccc
+  immutable: true
+  binaryData:
+    a: b
+  binaryDataFiles:
+    aaa: config/envs.yaml
+  data:
+    c: xxx
+  dataFiles:
+  - cc: config/envs.yaml
+dataFiles: config/envs.yaml
+data:
+- d: xxx
+  c: aaa

@@ -1,0 +1,72 @@
+
+Ingress:
+  helmTesting: true
+  helmLabels: false
+  namespace: xxx
+  nameAlias: name-alias
+  annotations:
+    validOnly: true
+    app.example.com: 123
+  labels:
+    name: ccc
+  defaultBackend:
+    resource:
+      apiGroup: string
+      kind: string
+      name: string
+    service:
+      name: string
+      port:
+        name: string
+        number: 66
+  ingressClassName: xxx
+  # rules:
+  # - host: string
+  #   http:
+  #     paths:
+  #     - backend:
+  #         resource:
+  #           apiGroup: string
+  #           kind: string
+  #           name: string
+  #         service:
+  #           name: string
+  #           port:
+  #             name: string
+  #             number: integer
+  #       path: string
+  #       pathType: string
+  tls:
+  - hosts:
+    - 11.example.com
+    secretName: string
+  - string1
+  - string2: 3.example.com 4.example.com
+  rules:
+    "*.example.com":
+    # resource
+      apiGroup: apiGroup.example.com
+      kind: Secret
+      name: secret-name
+      path: "/"
+      pathType: "Prefix"
+rules:
+- "*.example.com":
+  # service
+  - name: aaa
+    portName: bbb
+    portNumber: 123
+    path: "/aaa"
+    pathType: "Prefix"
+- "1.example.com":
+  # service
+  - name: aaa
+    portName: bbb
+    portNumber: 123
+    path: "/aaa"
+    pathType: "Prefix"
+tls:
+  hosts:
+  - "*.example.com"
+  secretName: string1
+  string2: 5.example.com

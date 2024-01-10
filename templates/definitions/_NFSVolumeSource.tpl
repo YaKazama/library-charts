@@ -4,18 +4,23 @@
 */ -}}
 {{- define "definitions.NFSVolumeSource" -}}
   {{- with . }}
-    {{- if .path }}
-      {{- nindent 0 "" -}}path: {{ .path }}
+    {{- $__path := include "base.fmt" (dict "s" .path "r" "^/.*") }}
+    {{- if $__path }}
+      {{- nindent 0 "" -}}path: {{ $__path }}
     {{- else }}
-      {{- fail "nfs.path not found" }}
+      {{- fail "definitions.NFSVolumeSource: .path invalid or not found" }}
     {{- end }}
-    {{- if and .readOnly (kindIs "bool" .readOnly) }}
-      {{- nindent 0 "" -}}readOnly: true
+
+    {{- $__readOnly := include "base.bool" .readOnly }}
+    {{- if $__readOnly }}
+      {{- nindent 0 "" -}}readOnly: {{ $__readOnly }}
     {{- end }}
-    {{- if .server }}
-      {{- nindent 0 "" -}}server: {{ .server }}
+
+    {{- $__server := include "base.string" .server }}
+    {{- if $__server }}
+      {{- nindent 0 "" -}}server: {{ $__server }}
     {{- else }}
-      {{- fail "nfs.server not found" }}
+      {{- fail "definitions.NFSVolumeSource: .server must be exists" }}
     {{- end }}
   {{- end }}
 {{- end }}

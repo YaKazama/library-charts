@@ -4,40 +4,36 @@
   - https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
 */ -}}
 {{- define "definitions.Toleration" -}}
-  {{- $__effectList := list "NoSchedule" "PreferNoSchedule" "NoExecute" }}
-  {{- $__operatorList := list "Exists" "Equal" }}
+  {{- $__effectAllowed := list "NoSchedule" "PreferNoSchedule" "NoExecute" }}
+  {{- $__operatorAllowed := list "Exists" "Equal" }}
 
   {{- with . }}
-    {{- range . }}
-      {{- if .key }}
-        {{- nindent 0 "" -}}- key: {{ .key }}
+    {{- $__effect := include "base.string" .effect }}
+    {{- if mustHas $__effect $__effectAllowed }}
+      {{- nindent 0 "" -}}effect: {{ $__effect }}
+    {{- end }}
 
-        {{- if mustHas .operator $__operatorList }}
-          {{- nindent 2 "" -}}  operator: {{ .operator }}
-        {{- else }}
-          {{- fail "tolerations.operator not support" }}
-        {{- end }}
-      {{- else }}
-        {{- if mustHas .operator $__operatorList }}
-          {{- if eq .operator "Exists" }}
-            {{- nindent 0 "" -}}- operator: {{ .operator }}
-          {{- end }}
-        {{- else }}
-          {{- fail "tolerations.operator not support" }}
-        {{- end }}
-      {{- end }}
+    {{- $__key := include "base.string" .key }}
+    {{- if $__key }}
+      {{- nindent 0 "" -}}key: {{ $__key }}
+    {{- end }}
 
-      {{- if and .value (mustHas .operator $__operatorList) (ne .operator "Exists") }}
-        {{- nindent 2 "" -}}  value: {{ .value }}
+    {{- $__operator := include "base.string" .operator }}
+    {{- if mustHas $__operator $__operatorAllowed }}
+      {{- if not $__key }}
+        {{- $__operator = "Exists" }}
       {{- end }}
+      {{- nindent 0 "" -}}operator: {{ coalesce $__operator "Equal" }}
+    {{- end }}
 
-      {{- if mustHas .effect $__effectList }}
-        {{- nindent 2 "" -}}  effect: {{ .effect }}
-      {{- end }}
+    {{- $__tolerationSeconds := include "base.int.zero" (.tolerationSeconds | list) }}
+    {{- if and $__tolerationSeconds (eq $__effect "NoExecute") }}
+      {{- nindent 0 "" -}}tolerationSeconds: {{ $__tolerationSeconds }}
+    {{- end }}
 
-      {{- if and .tolerationSeconds (ge (int .tolerationSeconds) 0) (eq .effect "NoExecute") }}
-        {{- nindent 2 "" -}}  tolerationSeconds: {{ int .tolerationSeconds }}
-      {{- end }}
+    {{- $__value := include "base.string" .value }}
+    {{- if and $__value (not (eq $__operator "Exists")) }}
+      {{- nindent 0 "" -}}value: {{ $__value }}
     {{- end }}
   {{- end }}
 {{- end }}

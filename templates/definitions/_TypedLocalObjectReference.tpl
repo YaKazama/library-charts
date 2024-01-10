@@ -1,13 +1,20 @@
 {{- define "definitions.TypedLocalObjectReference" -}}
   {{- with . }}
-    {{- if .apiGroup }}
-      {{- nindent 0 "" -}}apiGroup: {{ .apiGroup }}
+    {{- $__apiGroup := include "base.string" .apiGroup }}
+    {{- if $__apiGroup }}
+      {{- nindent 0 "" -}}apiGroup: {{ $__apiGroup }}
     {{- end }}
-    {{- if .kind }}
-      {{- nindent 0 "" -}}kind: {{ .kind }}
+
+    {{- $__kind := include "base.string" .kind }}
+    {{- if $__kind }}
+      {{- nindent 0 "" -}}kind: {{ $__kind }}
     {{- end }}
-    {{- if .name }}
-      {{- nindent 0 "" -}}name: {{ .name }}
+
+    {{- $__name := include "base.string" .name }}
+    {{- if $__name }}
+      {{- nindent 0 "" -}}name: {{ $__name }}
+    {{- else }}
+      {{- fail "definitions.TypedLocalObjectReference: name not found." }}
     {{- end }}
   {{- end }}
 {{- end }}

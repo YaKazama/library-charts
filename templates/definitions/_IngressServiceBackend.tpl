@@ -1,13 +1,16 @@
 {{- define "definitions.IngressServiceBackend" -}}
   {{- with . }}
-    {{- if .name }}
-      {{- nindent 0 "" -}}name: {{ .name }}
+    {{- $__name := include "base.string" .name }}
+    {{- if $__name }}
+      {{- nindent 0 "" -}}name: {{ $__name }}
     {{- end }}
 
-    {{- $__port := include "definitions.ServiceBackendPort" . }}
+    {{- $__clean := dict }}
+    {{- $__clean = mustMerge $__clean (coalesce .port (dict "name" .portName "number" .portNumber)) }}
+    {{- $__port := include "definitions.ServiceBackendPort" $__clean | fromYaml }}
     {{- if $__port }}
       {{- nindent 0 "" -}}port:
-        {{- $__port | nindent 2 }}
+        {{- toYaml $__port | nindent 2 }}
     {{- end }}
   {{- end }}
 {{- end }}

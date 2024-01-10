@@ -1,18 +1,23 @@
 {{- /*
   reference:
   - https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#envvar-v1-core
-
-    {{- nindent 0 "" -}}- name: {{ .name }}
-    {{- if .value }}
-      {{- nindent 2 "" -}}value: {{ .value | toString }}
-    {{- else if .valueFrom }}
-      {{- nindent 2 "" -}}valueFrom:
-    {{- end }}
-
-  TODO:
-  - valueFrom 未处理
 */ -}}
 {{- define "definitions.EnvVar" -}}
   {{- with . }}
+    {{- $__name := include "base.string" .name }}
+    {{- if $__name }}
+      {{- nindent 0 "" -}}name: {{ .name }}
+    {{- end }}
+
+    {{- $__value := include "base.string" .value }}
+    {{- if $__value }}
+      {{- nindent 0 "" -}}value: {{ $__value }}
+    {{- else if and .valueFrom (empty $__value) }}
+      {{- $__valueFrom := include "definitions.EnvVarSource" .valueFrom | fromYaml }}
+      {{- if $__valueFrom }}
+        {{- nindent 0 "" -}}valueFrom:
+          {{- toYaml $__valueFrom | nindent 2 }}
+      {{- end }}
+    {{- end }}
   {{- end }}
 {{- end }}

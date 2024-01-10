@@ -2,65 +2,59 @@
   {{- $_ := set . "_kind" "PersistentVolumeClaim" }}
 
   {{- nindent 0 "" -}}apiVersion: v1
-  {{- nindent 0 "" -}}kind: PersistentVolumeClaim
+  {{- nindent 0 "" -}}kind: {{ ._kind }}
   {{- nindent 0 "" -}}metadata:
     {{- include "definitions.ObjectMeta" . | trim | nindent 2 }}
 
-  {{- $__spec := include "configStorage.PersistentVolumeClaimSpec" . | trim }}
+  {{- $__clean := dict }}
+  {{- $__persistentVolumeSrc := list .Context.spec .Context.persistentVolumeClaim .Values.spec .Values.persistentVolumeClaim }}
+  {{- range $__persistentVolumeSrc | mustUniq | mustCompact }}
+    {{- if kindIs "map" . }}
+      {{- $__clean = mustMerge $__clean . }}
+    {{- end }}
+  {{- end }}
+  {{- $__spec := include "configStorage.PersistentVolumeClaimSpec" $__clean | fromYaml }}
   {{- if $__spec }}
     {{- nindent 0 "" -}}spec:
-      {{- $__spec | nindent 2 }}
+      {{- toYaml $__spec | nindent 2 }}
   {{- end }}
 {{- end }}
 
 
 {{- define "configStorage.PersistentVolumeClaim.StatefulSet" -}}
-  {{- $__accessModesList := list "ReadWriteOnce" "ReadOnlyMany" "ReadWriteMany" "ReadWriteOncePod" }}
-
   {{- with . }}
-    {{- if .name }}
+    {{- $__name := include "base.string" .name }}
+    {{- if $__name }}
       {{- nindent 0 "" -}}metadata:
-        {{- nindent 2 "" -}}name: {{ .name }}
+        {{- nindent 2 "" -}}name: {{ $__name }}
     {{- else }}
-      {{- fail "configStorage.PersistentVolumeClaim.StatefulSet: .name must be exists" }}
+      {{- fail "configStorage.PersistentVolumeClaim.StatefulSet: name must be exists" }}
     {{- end }}
 
-    {{- if and .accessModes .storageClassName (or .size .storage) }}
+    {{- $__accessModesAllowed := list "ReadWriteOnce" "ReadOnlyMany" "ReadWriteMany" "ReadWriteOncePod" }}
+    {{- $__regexAccessModesCheck := "(ReadWriteOnce|ReadOnlyMany|ReadWriteMany|ReadWriteOncePod)" }}
+    {{- $__accessModes := include "base.fmt.slice" (dict "s" (list .accessModes) "c" $__regexAccessModesCheck) }}
+    {{- $__storageClassName := include "base.string.empty" (dict "s" .storageClassName "empty" true) }}
+    {{- $__size := include "definitions.Quantity" .size }}
+    {{- $__storage := include "definitions.Quantity" .storage }}
+    {{- if and $__accessModes $__storageClassName (or $__size $__storage) }}
       {{- nindent 0 "" -}}spec:
-        {{- $__accessModes := list }}
-
-        {{- if kindIs "slice" .accessModes }}
-          {{- range .accessModes }}
-            {{- if mustHas . $__accessModesList }}
-              {{- $__accessModes = mustAppend $__accessModes . }}
-            {{- end }}
-          {{- end }}
-        {{- else if kindIs "string" .accessModes }}
-          {{- if mustRegexMatch "(ReadWriteOnce|ReadOnlyMany|ReadWriteMany|ReadWriteOncePod)((,)?\\s*)*" .accessModes }}
-            {{- range (mustRegexSplit "(,)?\\s*" .accessModes -1) }}
-              {{- $__accessModes = mustAppend $__accessModes . }}
-            {{- end }}
-          {{- end }}
-        {{- else }}
-          {{- fail "configStorage.PersistentVolumeClaim.StatefulSet: .accessModes not support" }}
-        {{- end }}
-
         {{- if $__accessModes }}
           {{- nindent 2 "" -}}accessModes:
-          {{- toYaml (mustUniq $__accessModes) | nindent 2 }}
+          {{- $__accessModes | nindent 2 }}
         {{- end }}
 
-        {{- if .storageClassName }}
-          {{- nindent 2 "" -}}storageClassName: {{ .storageClassName }}
+        {{- if $__storageClassName }}
+          {{- nindent 2 "" -}}storageClassName: {{ $__storageClassName }}
         {{- end }}
 
-        {{- if or .size .storage }}
+        {{- if or $__size $__storage }}
           {{- nindent 2 "" -}}resources:
             {{- nindent 4 "" -}}requests:
-              {{- nindent 6 "" -}}storage: {{ coalesce .size .storage "1Gi" }}
+              {{- nindent 6 "" -}}storage: {{ coalesce $__storage $__size "1Gi" }}
         {{- end }}
     {{- else }}
-      {{- fail "configStorage.PersistentVolumeClaim.StatefulSet: .accessModes .storageClassName .storage must be exists" }}
+      {{- fail "configStorage.PersistentVolumeClaim.StatefulSet: accessModes storageClassName storage (size) must be exists" }}
     {{- end }}
   {{- end }}
 {{- end }}

@@ -7,12 +7,26 @@
   - 复用 definitions.LabelSelectorRequirement
 */ -}}
 {{- define "definitions.NodeSelectorTerm" -}}
-  {{- if .matchExpressions }}
-    {{- nindent 0 "" -}}- matchExpressions:
-      {{- include "definitions.LabelSelectorRequirement" .matchExpressions | indent 2 }}
-  {{- end }}
-  {{- if .matchFields }}
-    {{- nindent 0 "" -}}- matchFields:
-      {{- include "definitions.LabelSelectorRequirement" .matchFields | indent 2 }}
+  {{- with . }}
+    {{- $__matchExpressions := list }}
+    {{- $__matchFields := list }}
+
+    {{- range .matchExpressions }}
+      {{- $__matchExpressions = mustAppend $__matchExpressions (include "definitions.LabelSelectorRequirement" . | fromYaml) }}
+    {{- end }}
+    {{- range .matchFields }}
+      {{- $__matchFields = mustAppend $__matchFields (include "definitions.LabelSelectorRequirement" . | fromYaml) }}
+    {{- end }}
+
+    {{- $__matchExpressions = mustCompact (mustUniq $__matchExpressions) }}
+    {{- $__matchFields = mustCompact (mustUniq $__matchFields) }}
+    {{- if $__matchExpressions }}
+      {{- nindent 0 "" -}}matchExpressions:
+        {{- toYaml $__matchExpressions | nindent 0 }}
+    {{- end }}
+    {{- if $__matchFields }}
+      {{- nindent 0 "" -}}matchFields:
+        {{- toYaml $__matchFields | nindent 0 }}
+    {{- end }}
   {{- end }}
 {{- end }}

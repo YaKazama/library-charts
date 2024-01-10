@@ -1,5 +1,6 @@
 {{- /*
-  reference: https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#jobtemplatespec-v1-batch
+  reference:
+  - https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#jobtemplatespec-v1-batch
 */ -}}
 {{- define "definitions.JobTemplateSpec" -}}
   {{- $_ := set . "_kind" "JobTemplateSpec" }}

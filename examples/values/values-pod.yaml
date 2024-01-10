@@ -1,0 +1,34 @@
+
+Pod:
+  helmTesting: true
+  helmLabels: false
+  namespace: xxx
+  nameAlias: name-alias
+  annotations:
+    validOnly: true
+    app.example.com: 123
+  labels:
+    name: ccc
+  minReadySeconds: 10
+  revisionHistoryLimit: 10
+  # matchExpressions
+  selector:
+    # slice
+  - matchExpressions:
+    # - podAntiAffinity1 = 111
+    - xxx in (vvv, fff)
+    # map
+  - matchLabels:
+     podAntiAffinity2: 222
+  activeDeadlineSeconds: 10
+  strategy:
+    rollingUpdate:
+      maxSurge: 10%
+      maxUnavailable: 1
+strategy:
+  type: RollingUpdate
+selector:
+  matchExpressions:
+  - podAntiAffinity3 = 333
+  matchLabels:
+    podAntiAffinity4: 444

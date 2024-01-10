@@ -1,32 +1,33 @@
 {{- define "definitions.IngressClassParametersReference" -}}
-  {{- $__scopeList := list "Cluster" "Namespace" }}
-
   {{- with . }}
-    {{- if .apiGroup }}
-      {{- nindent 0 "" -}}apiGroup: {{ .apiGroup }}
-    {{- else }}
-      {{- fail "definitions.IngressClassParametersReference: apiGroup must be exists" }}
+    {{- $__apiGroup := include "base.string" .apiGroup }}
+    {{- if $__apiGroup }}
+      {{- nindent 0 "" -}}apiGroup: {{ $__apiGroup }}
     {{- end }}
-    {{- if .kind }}
-      {{- nindent 0 "" -}}kind: {{ .kind }}
+
+    {{- $__kind := include "base.string" .kind }}
+    {{- if $__kind }}
+      {{- nindent 0 "" -}}kind: {{ $__kind }}
     {{- else }}
       {{- fail "definitions.IngressClassParametersReference: kind must be exists" }}
     {{- end }}
-    {{- if .name }}
-      {{- nindent 0 "" -}}name: {{ .name }}
+
+    {{- $__name := include "base.string" .name }}
+    {{- if $__name }}
+      {{- nindent 0 "" -}}name: {{ $__name }}
     {{- else }}
       {{- fail "definitions.IngressClassParametersReference: name must be exists" }}
     {{- end }}
-    {{- if mustHas .scope $__scopeList }}
-      {{- nindent 0 "" -}}scope: {{ coalesce .scope "Cluster" }}
 
-      {{- if eq .scope "Namespace" }}
-        {{- nindent 0 "" -}}namespace: {{ coalesce .namespace "default" }}
-      {{- else if ne .scope "Cluster" }}
-        {{- fail "definitions.IngressClassParametersReference: namespace is required when scope is set to \"Namespace\"" }}
+    {{- $__namespace := include "base.string" .namespace }}
+    {{- $__scope := include "base.string" .scope }}
+    {{- $__scopeAllowed := list "Cluster" "Namespace" }}
+    {{- if mustHas $__scope $__scopeAllowed }}
+      {{- if eq $__scope "Namespace" }}
+        {{- nindent 0 "" -}}namespace: {{ $__namespace }}
       {{- end }}
-    {{- else }}
-      {{- fail "definitions.IngressClassParametersReference: scope not support" }}
+
+      {{- nindent 0 "" -}}scope: {{ $__scope }}
     {{- end }}
   {{- end }}
 {{- end }}

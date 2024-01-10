@@ -4,20 +4,23 @@
   - https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-seccomp-profile-for-a-container
 */ -}}
 {{- define "definitions.SeccompProfile" -}}
-  {{- $__typeList := list "Localhost" "RuntimeDefault" "Unconfined" }}
+  {{- $__typeAllowed := list "Localhost" "RuntimeDefault" "Unconfined" }}
   {{- with . }}
-    {{- if mustHas .type $__typeList }}
-      {{- nindent 0 "" -}}type: {{ .type }}
+    {{- $__type := include "base.string" .type }}
+    {{- if not (mustHas $__type $__typeAllowed) }}
+      {{- fail "definitions.SeccompProfile: type not allowed" }}
+    {{- end }}
 
+    {{- if $__type }}
+      {{- nindent 0 "" -}}type: {{ $__type }}
       {{- if eq .type "Localhost" }}
-        {{- if .localhostProfile }}
-          {{- nindent 0 "" -}}localhostProfile: {{ .localhostProfile }}
+        {{- $__localhostProfile := include "base.string" .localhostProfile }}
+        {{- if $__localhostProfile }}
+          {{- nindent 0 "" -}}localhostProfile: {{ $__localhostProfile }}
         {{- else }}
-          {{- fail "Must be set if type is \"Localhost\"" }}
+          {{- fail "definitions.SeccompProfile: Must be set if type is \"Localhost\"" }}
         {{- end }}
       {{- end }}
-    {{- else }}
-      {{- fail "seccompProfile.type not support" }}
     {{- end }}
   {{- end }}
 {{- end }}

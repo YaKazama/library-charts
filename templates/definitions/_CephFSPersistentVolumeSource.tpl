@@ -1,26 +1,38 @@
 {{- define "definitions.CephFSPersistentVolumeSource" -}}
   {{- with . }}
-    {{- if .monitors }}
+    {{- $__regexSplit := "\\s+|\\s*[\\|,]\\s*" }}
+    {{- $__monitors := include "base.fmt.slice" (dict "s" (list .monitors) "r" $__regexSplit) }}
+    {{- if $__monitors }}
       {{- nindent 0 "" -}}monitors:
-      {{- toYaml .monitors | nindent 0 }}
+      {{- $__monitors | nindent 0 }}
+    {{- end }}
+
+    {{- $__path := include "base.fmt" (dict "s" .path "r" "^/.*") }}
+    {{- if $__path }}
+      {{- nindent 0 "" -}}path: {{ coalesce $__path "/" }}
     {{- else }}
-      {{- fail "cephfs.monitors is Required" }}
+      {{- fail "definitions.CephFSVolumeSource: .path invalid or not found" }}
     {{- end }}
-    {{- if .path }}
-      {{- nindent 0 "" -}}path: {{ coalesce .path "/" }}
+
+    {{- $__readOnly := include "base.bool" .readOnly }}
+    {{- if $__readOnly }}
+      {{- nindent 0 "" -}}readOnly: {{ $__readOnly }}
     {{- end }}
-    {{- if and .readOnly (kindIs "bool" .readOnly) }}
-      {{- nindent 0 "" -}}readOnly: true
+
+    {{- $__secretFile := include "base.string" .secretFile }}
+    {{- if $__secretFile }}
+      {{- nindent 0 "" -}}secretFile: {{ coalesce $__secretFile "/etc/ceph/user.secret" }}
     {{- end }}
-    {{- if .secretFile }}
-      {{- nindent 0 "" -}}secretFile: {{ coalesce .secretFile "/etc/ceph/user.secret" }}
-    {{- end }}
-    {{- if .secretRef }}
+
+    {{- $__secretRef := include "definitions.SecretReference" .secretRef | fromYaml }}
+    {{- if $__secretRef }}
       {{- nindent 0 "" -}}secretRef:
-        {{- include "definitions.SecretReference" .secretRef | indent 2 }}
+        {{- toYaml $__secretRef | nindent 2 }}
     {{- end }}
-    {{- if .user }}
-      {{- nindent 0 "" -}}user: {{ coalesce .user "admin" }}
+
+    {{- $__user := include "base.string" .user }}
+    {{- if $__user }}
+      {{- nindent 0 "" -}}user: {{ coalesce $__user "admin" }}
     {{- end }}
   {{- end }}
 {{- end }}

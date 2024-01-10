@@ -3,406 +3,668 @@
   - https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#container-v1-core
 */ -}}
 {{- define "workloads.Container" -}}
-  {{- $__containers := ._CTX.containers }}
-  {{- if .__isInitContainer }}
-    {{- $__containers = ._CTX.initContainers }}
+  {{- with .container }}
+    {{- $__clean := list }}
+    {{- if kindIs "string" .args }}
+      {{- $__clean = mustAppend $__clean .args }}
+    {{- else if kindIs "slice" .args }}
+      {{- $__clean = concat $__clean .args }}
+    {{- end }}
+    {{- $__args := include "base.fmt.slice" (dict "s" $__clean "r" "\\s+") }}
+    {{- $__clean := list }}
+    {{- if kindIs "string" .command }}
+      {{- $__clean = mustAppend $__clean .command }}
+    {{- else if kindIs "slice" .command }}
+      {{- $__clean = concat $__clean .command }}
+    {{- end }}
+    {{- $__command := include "base.fmt.slice" (dict "s" $__clean "r" "\\s+") }}
+    {{- if and $__args $__command }}
+      {{- nindent 0 "" -}}args:
+      {{- $__args | nindent 0 }}
+      {{- nindent 0 "" -}}command:
+      {{- $__command | nindent 0 }}
+    {{- end }}
+
+    {{- $__envFilesSrc := pluck "envFiles" . $.Context $.Values }}
+    {{- $__envSrc := pluck "env" . $.Context $.Values }}
+    {{- $__env := include "workloads.Container.env" (dict "envFilesSrc" $__envFilesSrc "envSrc" $__envSrc "Files" $.Files) }}
+    {{- if $__env }}
+      {{- nindent 0 "" -}}env:
+      {{- $__env | indent 0 }}
+    {{- end }}
+
+    {{- $__envFromFilesSrc := pluck "envFromFiles" . $.Context $.Values }}
+    {{- $__envFromSrc := pluck "envFrom" . $.Context $.Values }}
+    {{- $__envFrom := include "workloads.Container.envFrom" (dict "envFromFilesSrc" $__envFromFilesSrc "envFromSrc" $__envFromSrc "Files" $.Files) }}
+    {{- if $__envFrom }}
+      {{- nindent 0 "" -}}envFrom:
+      {{- $__envFrom | indent 0 }}
+    {{- end }}
+
+    {{- $__imageFilesSrc := pluck "imageFiles" $.Values $.Context . }}
+    {{- $__imageSrc := pluck "image" $.Values $.Context . }}
+    {{- $__image := include "workloads.Container.image" (dict "imageFilesSrc" $__imageFilesSrc "imageSrc" $__imageSrc "Files" $.Files) }}
+    {{- if $__image }}
+      {{- nindent 0 "" -}}image: {{ $__image }}
+
+      {{- $__regexImageLatest := ".*:latest$" }}
+      {{- $__isLatest := mustRegexMatch $__regexImageLatest $__image }}
+      {{- $__defaultImagePullPolicy := "Always" }}
+      {{- if not $__isLatest }}
+        {{- $__defaultImagePullPolicy = "IfNotPresent" }}
+      {{- end }}
+      {{- $__imagePullPolicyAllowed := list "Always" "Never" "IfNotPresent" }}
+      {{- $__imagePullPolicy := include "base.string" .imagePullPolicy }}
+      {{- if mustHas $__imagePullPolicy $__imagePullPolicyAllowed }}
+        {{- nindent 0 "" -}}imagePullPolicy: {{ coalesce $__imagePullPolicy $__defaultImagePullPolicy }}
+      {{- end }}
+    {{- end }}
+
+    {{- $__clean := dict }}
+    {{- $__lifecycleSrc := pluck "lifecycle" . $.Context $.Values }}
+    {{- range ($__lifecycleSrc | mustUniq | mustCompact) }}
+      {{- if kindIs "map" . }}
+        {{- $__clean = mustMerge $__clean . }}
+      {{- end }}
+    {{- end }}
+    {{- $__lifecycle := include "definitions.Lifecycle" (pick $__clean "postStart" "preStop") | fromYaml }}
+    {{- if $__lifecycle }}
+      {{- nindent 0 "" -}}lifecycle:
+        {{- toYaml $__lifecycle | nindent 2 }}
+    {{- end }}
+
+    {{- $__livenessProbeSrc := pluck "livenessProbe" . $.Context $.Values }}
+    {{- $__clean := dict "__probeType" "livenessProbe" }}
+    {{- range ($__livenessProbeSrc | mustUniq | mustCompact) }}
+      {{- if kindIs "map" . }}
+        {{- $__clean = mustMerge $__clean . }}
+      {{- end }}
+    {{- end }}
+    {{- $__livenessProbe := include "definitions.Probe" $__clean | fromYaml }}
+    {{- if $__livenessProbe }}
+      {{- nindent 0 "" -}}livenessProbe:
+        {{- toYaml $__livenessProbe | nindent 2 }}
+    {{- end }}
+
+
+    {{- $__name := coalesce .name (printf "%s-%s" (include "base.fullname" $) (randAlphaNum 5)) }}
+    {{- if $__name }}
+      {{- nindent 0 "" -}}name: {{ $__name }}
+    {{- end }}
+
+    {{- $__clean := list }}
+    {{- if kindIs "string" .ports }}
+      {{- $__regexSplit := "\\s+|\\s*[\\|\\:,]\\s*" }}
+      {{- range (mustRegexSplit $__regexSplit .ports -1 | mustUniq | mustCompact) }}
+        {{- $__clean = mustAppend $__clean (dict "containerPort" .) }}
+      {{- end }}
+    {{- else if or (kindIs "int" .ports) (kindIs "float64" .ports) }}
+      {{- $__clean = mustAppend $__clean (dict "containerPort" .ports) }}
+    {{- else if kindIs "map" .ports }}
+      {{- $__clean = mustAppend $__clean .ports }}
+    {{- else if kindIs "slice" .ports }}
+      {{- range (mustCompact (mustUniq .ports)) }}
+        {{- if kindIs "string" . }}
+          {{- $__regexSplit := "\\s+|\\s*[\\|\\:,]\\s*" }}
+          {{- range (mustRegexSplit $__regexSplit . -1 | mustUniq | mustCompact) }}
+            {{- $__clean = mustAppend $__clean (dict "containerPort" .) }}
+          {{- end }}
+        {{- else if or (kindIs "int" .) (kindIs "float64" .) }}
+          {{- $__clean = mustAppend $__clean (dict "containerPort" .) }}
+        {{- else if kindIs "map" . }}
+          {{- $__clean = mustAppend $__clean . }}
+        {{- end }}
+      {{- end }}
+    {{- end }}
+    {{- $__ports := list }}
+    {{- range (mustCompact (mustUniq $__clean)) }}
+      {{- $__ports = mustAppend $__ports (include "definitions.ContainerPort" . | fromYaml) }}
+    {{- end }}
+    {{- $__ports = $__ports | mustUniq | mustCompact }}
+    {{- if $__ports }}
+      {{- nindent 0 "" -}}ports:
+      {{- toYaml $__ports | nindent 0 }}
+    {{- end }}
+
+    {{- $__readinessProbeSrc := pluck "readinessProbe" . $.Context $.Values }}
+    {{- $__clean := dict "__probeType" "readinessProbe" }}
+    {{- range ($__readinessProbeSrc | mustUniq | mustCompact) }}
+      {{- if kindIs "map" . }}
+        {{- $__clean = mustMerge $__clean . }}
+      {{- end }}
+    {{- end }}
+    {{- $__readinessProbe := include "definitions.Probe" $__clean | fromYaml }}
+    {{- if $__readinessProbe }}
+      {{- nindent 0 "" -}}readinessProbe:
+        {{- toYaml $__readinessProbe | nindent 2 }}
+    {{- end }}
+
+    {{- $__resourceNameAllowed := list "cpu" "memory" }}
+    {{- $__restartPolicyAllowed := list "NotRequired" "RestartContainer" }}
+    {{- $__clean := list }}
+    {{- $__resizePolicySrc := pluck "resizePolicy" . $.Context $.Values }}
+    {{- range ($__resizePolicySrc | mustUniq | mustCompact) }}
+      {{- if kindIs "string" . }}
+        {{- $__clean = mustAppend $__clean . }}
+      {{- else if kindIs "map" . }}
+        {{- with . }}
+          {{- if and .resourceName .restartPolicy }}
+            {{- $__clean = mustAppend $__clean (dict .resourceName .restartPolicy) }}
+          {{- end }}
+          {{- if and .name .policy }}
+            {{- $__clean = mustAppend $__clean (dict .name .policy) }}
+          {{- end }}
+          {{- range $k, $v := (omit . "resourceName" "restartPolicy" "name" "policy") }}
+            {{- if and (mustHas $k $__resourceNameAllowed) (mustHas $v $__restartPolicyAllowed) }}
+              {{- $__clean = mustAppend $__clean (dict $k $v) }}
+            {{- end }}
+          {{- end }}
+        {{- end }}
+      {{- else if kindIs "slice" . }}
+        {{- range . }}
+          {{- if kindIs "string" . }}
+            {{- $__clean = mustAppend $__clean . }}
+          {{- else if kindIs "map" . }}
+            {{- with . }}
+              {{- if and .resourceName .restartPolicy }}
+                {{- $__clean = mustAppend $__clean (dict .resourceName .restartPolicy) }}
+              {{- end }}
+              {{- if and .name .policy }}
+                {{- $__clean = mustAppend $__clean (dict .name .policy) }}
+              {{- end }}
+              {{- range $k, $v := (omit . "resourceName" "restartPolicy" "name" "policy") }}
+                {{- if and (mustHas $k $__resourceNameAllowed) (mustHas $v $__restartPolicyAllowed) }}
+                  {{- $__clean = mustAppend $__clean (dict $k $v) }}
+                {{- end }}
+              {{- end }}
+            {{- end }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
+    {{- end }}
+    {{- $__val := dict }}
+    {{- range ($__clean | mustUniq | mustCompact) }}
+      {{- with (include "definitions.ContainerResizePolicy" . | fromYaml) }}
+        {{- $__val = mustMerge $__val (dict .resourceName .restartPolicy) }}
+      {{- end }}
+    {{- end }}
+    {{- $__resizePolicy := list }}
+    {{- range $k, $v := $__val }}
+      {{- $__resizePolicy = mustAppend $__resizePolicy (dict "resourceName" $k "restartPolicy" $v) }}
+    {{- end }}
+    {{- $__resizePolicy = $__resizePolicy | mustUniq |mustCompact }}
+    {{- if $__resizePolicy }}
+      {{- nindent 0 "" -}}resizePolicy:
+      {{- toYaml $__resizePolicy | nindent 0 }}
+    {{- end }}
+
+    {{- $__clean := dict }}
+    {{- $__resourcesFilesSrc := pluck "resourcesFiles" . $.Context $.Values }}
+    {{- range ($__resourcesFilesSrc | mustUniq | mustCompact) }}
+      {{- if kindIs "map" . }}
+        {{- $__regexSplit := "\\.|\\:" }}
+        {{- range $f, $p := . }}
+          {{- $__val := $.Files.Get $f | fromYaml }}
+          {{- range (mustRegexSplit $__regexSplit $p -1) }}
+            {{- $__val = dig . "" $__val }}
+          {{- end }}
+          {{- $__clean = mustMerge $__clean $__val }}
+        {{- end }}
+      {{- else }}
+        {{- fail "workloads.Container: resourcesFiles not support, please use map" }}
+      {{- end }}
+    {{- end }}
+    {{- $__resourcesSrc := pluck "resources" . $.Context $.Values }}
+    {{- range ($__resourcesSrc | mustUniq | mustCompact) }}
+      {{- if kindIs "map" . }}
+        {{- $__clean = mustMerge $__clean . }}
+      {{- end }}
+    {{- end }}
+    {{- $__resources := include "definitions.ResourceRequirements" $__clean | fromYaml }}
+    {{- if $__resources }}
+      {{- nindent 0 "" -}}resources:
+        {{- toYaml $__resources | nindent 2 }}
+    {{- end }}
+
+    {{- $__restartPolicy := include "base.string" .restartPolicy }}
+    {{- if and $__restartPolicy .isInitContainer }}
+      {{- nindent 0 "" -}}restartPolicy: Always
+    {{- end }}
+
+    {{- $__securityContextSrc := pluck "securityContext" . $.Context $.Values }}
+    {{- $__claen := dict }}
+    {{- range ($__securityContextSrc | mustUniq | mustCompact) }}
+      {{- if kindIs "map" . }}
+        {{- $__clean = mustMerge $__clean . }}
+      {{- end }}
+    {{- end }}
+    {{- $__securityContext := include "definitions.SecurityContext" $__clean | fromYaml }}
+    {{- if $__securityContext }}
+      {{- nindent 0 "" -}}securityContext:
+        {{- toYaml $__securityContext | nindent 2 }}
+    {{- end }}
+
+    {{- $__startupProbeSrc := pluck "startupProbe" . $.Context $.Values }}
+    {{- $__clean := dict "__probeType" "startupProbe" }}
+    {{- range ($__startupProbeSrc | mustUniq | mustCompact) }}
+      {{- if kindIs "map" . }}
+        {{- $__clean = mustMerge $__clean . }}
+      {{- end }}
+    {{- end }}
+    {{- $__startupProbe := include "definitions.Probe" $__clean | fromYaml }}
+    {{- if $__startupProbe }}
+      {{- nindent 0 "" -}}startupProbe:
+        {{- toYaml $__startupProbe | nindent 2 }}
+    {{- end }}
+
+    {{- $__stdin := include "base.bool" (coalesce .stdin $.Context.stdin $.Values.stdin) }}
+    {{- if $__stdin }}
+      {{- nindent 0 "" -}}stdin: {{ $__stdin }}
+    {{- end }}
+
+    {{- $__stdinOnce := include "base.bool" (coalesce .stdinOnce $.Context.stdinOnce $.Values.stdinOnce) }}
+    {{- if $__stdinOnce }}
+      {{- nindent 0 "" -}}stdinOnce: {{ $__stdinOnce }}
+    {{- end }}
+
+    {{- $__terminationMessagePath := include "base.string" .terminationMessagePath }}
+    {{- if $__terminationMessagePath }}
+      {{- nindent 0 "" -}}terminationMessagePath: {{ $__terminationMessagePath }}
+    {{- end }}
+
+    {{- $__terminationMessagePolicy := include "base.string" .terminationMessagePolicy }}
+    {{- if $__terminationMessagePolicy }}
+      {{- nindent 0 "" -}}terminationMessagePolicy: {{ $__terminationMessagePolicy }}
+    {{- end }}
+
+    {{- $__tty := include "base.bool" (coalesce .tty $.Context.tty $.Values.tty) }}
+    {{- if $__tty }}
+      {{- nindent 0 "" -}}tty: {{ $__tty }}
+    {{- end }}
+
+    {{- $__clean := list }}
+    {{- $__volumeDevicesSrc := pluck "volumeDevices" . $.Context $.Values }}
+    {{- range ($__volumeDevicesSrc | mustUniq | mustCompact) }}
+      {{- if kindIs "string" . }}
+        {{- $__clean = mustAppend $__clean . }}
+      {{- else if kindIs "map" . }}
+        {{- with . }}
+          {{- if and .name .devicePath }}
+            {{- $__clean = mustAppend $__clean (dict .name .devicePath) }}
+          {{- end }}
+          {{- range $k, $v := (omit . "name" "devicePath") }}
+            {{- $__clean = mustAppend $__clean (dict $k $v) }}
+          {{- end }}
+        {{- end }}
+      {{- else if kindIs "slice" . }}
+        {{- range . }}
+          {{- if kindIs "string" . }}
+            {{- $__clean = mustAppend $__clean . }}
+          {{- else if kindIs "map" . }}
+            {{- with . }}
+              {{- if and .name .devicePath }}
+                {{- $__clean = mustAppend $__clean (dict .name .devicePath) }}
+              {{- end }}
+              {{- range $k, $v := (omit . "name" "devicePath") }}
+                {{- $__clean = mustAppend $__clean (dict $k $v) }}
+              {{- end }}
+            {{- end }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
+    {{- end }}
+    {{- $__val := dict }}
+    {{- range ($__clean | mustUniq | mustCompact) }}
+      {{- with (include "definitions.VolumeDevice" . | fromYaml) }}
+        {{- $__val = mustMerge $__val (dict .name .devicePath) }}
+      {{- end }}
+    {{- end }}
+    {{- $__volumeDevices := list }}
+    {{- range $k, $v := $__val }}
+      {{- $__volumeDevices = mustAppend $__volumeDevices (dict "name" $k "devicePath" $v) }}
+    {{- end }}
+    {{- $__volumeDevices = $__volumeDevices | mustUniq |mustCompact }}
+    {{- if $__volumeDevices }}
+      {{- nindent 0 "" -}}volumeDevices:
+      {{- toYaml $__volumeDevices | nindent 0 }}
+    {{- end }}
+
+    {{- $__clean := list }}
+    {{- $__volumeMountsSrc := pluck "volumeMounts" . $.Context $.Values }}
+    {{- range $__volumeMountsSrc }}
+      {{- if kindIs "string" . }}
+        {{- $__regexSplit := ":" }}
+        {{- $__val := mustRegexSplit $__regexSplit . -1 }}
+        {{- if eq (len $__val) 2 }}
+          {{- $__clean = mustAppend $__clean (dict "name" (mustFirst $__val) "mountPath" (mustLast $__val)) }}
+        {{- else if eq (len $__val) 3 }}
+          {{- $__clean = mustAppend $__clean (dict "name" (mustFirst $__val) "mountPath" (index $__val 1) "subPath" (mustLast $__val)) }}
+        {{- end }}
+      {{- else if kindIs "map" . }}
+        {{- with . }}
+          {{- if or .mountPath .mountPropagation .name .readOnly .subPath .subPathExpr }}
+            {{- $__clean = mustAppend $__clean (pick . "mountPath" "mountPropagation" "name" "readOnly" "subPath" "subPathExpr") }}
+          {{- end }}
+          {{- range $k, $v := (omit . "mountPath" "mountPropagation" "name" "readOnly" "subPath" "subPathExpr") }}
+            {{- $__clean = mustAppend $__clean (dict "name" $k "mountPath" $v) }}
+          {{- end }}
+        {{- end }}
+      {{- else if kindIs "slice" . }}
+        {{- range . }}
+          {{- if kindIs "string" . }}
+            {{- $__regexSplit := ":" }}
+            {{- $__val := mustRegexSplit $__regexSplit . -1 }}
+            {{- if eq (len $__val) 2 }}
+              {{- $__clean = mustAppend $__clean (dict "name" (mustFirst $__val) "mountPath" (mustLast $__val)) }}
+            {{- else if eq (len $__val) 3 }}
+              {{- $__clean = mustAppend $__clean (dict "name" (mustFirst $__val) "mountPath" (index $__val 1) "subPath" (mustLast $__val)) }}
+            {{- end }}
+          {{- else if kindIs "map" . }}
+            {{- with . }}
+              {{- if or .mountPath .mountPropagation .name .readOnly .subPath .subPathExpr }}
+                {{- $__clean = mustAppend $__clean (pick . "mountPath" "mountPropagation" "name" "readOnly" "subPath" "subPathExpr") }}
+              {{- end }}
+              {{- range $k, $v := (omit . "mountPath" "mountPropagation" "name" "readOnly" "subPath" "subPathExpr") }}
+                {{- $__clean = mustAppend $__clean (dict "name" $k "mountPath" $v) }}
+              {{- end }}
+            {{- end }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
+    {{- end }}
+    {{- $__val := list }}
+    {{- $__keys := list }}
+    {{- range ($__clean | mustUniq | mustCompact) }}
+      {{- if not (mustHas .mountPath $__keys) }}
+        {{- $__keys = mustAppend $__keys .mountPath }}
+        {{- $__val = mustAppend $__val . }}
+      {{- end }}
+    {{- end }}
+    {{- $__volumeMounts := list }}
+    {{- range ($__val | mustUniq | mustCompact) }}
+      {{- $__volumeMounts = mustAppend $__volumeMounts (include "definitions.VolumeMount" . | fromYaml) }}
+    {{- end }}
+    {{- $__volumeMounts = $__volumeMounts | mustUniq | mustCompact }}
+    {{- if $__volumeMounts }}
+      {{- nindent 0 "" -}}volumeMounts:
+      {{- toYaml $__volumeMounts | nindent 0 }}
+    {{- end }}
+
+
+    {{- $__workingDir := include "base.string" (coalesce .workingDir $.Context.workingDir $.Values.workingDir) }}
+    {{- if $__workingDir }}
+      {{- nindent 0 "" -}}workingDir: {{ coalesce $__workingDir "/" }}
+    {{- end }}
   {{- end }}
+{{- end }}
 
-  {{- range $__containers }}
-    {{- with . }}
-      {{- nindent 0 "" -}}- name: {{ coalesce .name (printf "%s-%s" (include "base.fullname" $) (randAlphaNum 5)) }}
 
-      {{- if and .command .args }}
-        {{- nindent 2 "" -}}command:
-        {{- toYaml .command | nindent 2 }}
-        {{- nindent 2 "" -}}args:
-        {{- toYaml .args | nindent 2 }}
-      {{- end }}
+{{- /*
+  解析 env
 
-      {{- /*
-        for env
+  descr:
+  - envFilesSrc: 所有出现的 envFiles 组成的列表，包括以下三个
+    - $.Values.envFilesSrc $.Context.envFilesSrc .envFilesSrc
+  - envSrc: 所有出现的 envFiles 组成的列表，包括以下三个
+    - $.Values.env $.Context.env .env
+  - Files: 父域中的 Files (父域中的 Files 也是从上一个父域中传入的)
+*/ -}}
+{{- define "workloads.Container.env" -}}
+  {{- with .}}
+    {{- $__clean := dict }}
+    {{- $__regexSplit := "\\.|\\:" }}
+    {{- if .r }}
+      {{- $__regexSplit = .r }}
+    {{- end }}
 
-        variables (priority):
-        - $.Values.envFiles
-        - $._CTX.envFiles
-        - .envFiles
-        - $.Values.env
-        - $._CTX.env
-        - .env
-        variables (bool):
-        - .envInitEnabled: initContainers 是否允许加载 $.Values.envFiles $.Values.env $._CTX.envFiles $.Values.env
-        descr:
-        - 变量允许出现同名，但根据 Kubernetes API 中定义的规则，后出现的会覆盖之前出现的同名变量的值
-        - 所有内容会原样输出
-      */ -}}
-      {{- if or .env $.Values.env .envFiles $.Values.envFiles }}
-        {{- $__regexEnv := "^[a-zA-Z_]+\\w*[:\\-\\|]+.*" }}
-        {{- $__regexEnvSplit := "[:\\-\\|]+" }}
-
-        {{- nindent 2 "" -}}env:
-        {{- if $.Values.envFiles }}
-          {{- if or (not $.__isInitContainer) .envInitEnabled }}
-            {{- range $f, $p := $.Values.envFiles }}
-              {{- include "base.map.getValue" (dict "m" ($.Files.Get $f | fromYaml) "k" $p) | indent 2 }}
+    {{- range (mustCompact (mustUniq .envFilesSrc)) }}
+      {{- if kindIs "map" . }}
+        {{- range $f, $p := . }}
+          {{- $__val := $.Files.Get $f | fromYaml }}
+          {{- range (mustRegexSplit $__regexSplit $p -1) }}
+            {{- $__val = dig . "" $__val }}
+          {{- end }}
+          {{- if kindIs "string" $__val }}
+            {{- $__clean = mustMerge $__clean (dict $p $__val) }}
+          {{- else if kindIs "map" $__val }}
+            {{- range $k, $v := $__val }}
+              {{- $__clean = mustMerge $__clean (dict $k $v) }}
+            {{- end }}
+          {{- else if kindIs "slice" $__val }}
+            {{- range $__val }}
+              {{- if and .name .value }}
+                {{- $__clean = mustMerge $__clean (dict .name .value) }}
+              {{- else if and .name .valueFrom (empty .value) }}
+                {{- $__clean = mustMerge $__clean (dict .name .valueFrom) }}
+              {{- end }}
             {{- end }}
           {{- end }}
         {{- end }}
+      {{- else }}
+        {{- fail "workloads.Container.env: envFiles not support, please use map." }}
+      {{- end }}
+    {{- end }}
 
-        {{- if $._CTX.envFiles }}
-          {{- if or (not $.__isInitContainer) .envInitEnabled }}
-            {{- range $f, $p := $._CTX.envFiles }}
-              {{- include "base.map.getValue" (dict "m" ($.Files.Get $f | fromYaml) "k" $p) | indent 2 }}
+    {{- range (mustCompact (mustUniq .envSrc)) }}
+      {{- if kindIs "map" . }}
+        {{- range $k, $v := . }}
+          {{- $__clean = mustMerge $__clean (dict $k $v) }}
+        {{- end }}
+      {{- else if kindIs "slice" . }}
+        {{- range . }}
+          {{- if and .name .value }}
+            {{- $__clean = mustMerge $__clean (dict .name .value) }}
+          {{- else if and .name .valueFrom (empty .value) }}
+            {{- $__clean = mustMerge $__clean (dict .name .valueFrom) }}
+          {{- end }}
+        {{- end }}
+      {{- else }}
+        {{- fail "workloads.Container.env: env not support, please use slice or map." }}
+      {{- end }}
+    {{- end }}
+
+    {{- $__env := list }}
+    {{- range $k, $v := $__clean }}
+      {{- $__var := dict }}
+      {{- if kindIs "map" $v }}
+        {{- $__var = dict "name" $k "valueFrom" $v }}
+      {{- else }}
+        {{- $__var = dict "name" $k "value" $v }}
+      {{- end }}
+      {{- $__env = mustAppend $__env (include "definitions.EnvVar" $__var | fromYaml) }}
+    {{- end }}
+    {{- if $__env }}
+      {{- toYaml $__env | nindent 0 }}
+    {{- end }}
+  {{- end }}
+{{- end }}
+
+
+{{- /*
+  解析 envFrom
+
+  descr:
+  - envFromFilesSrc: 所有出现的 envFromFiles 组成的列表，包括以下三个
+    - $.Values.envFromFilesSrc $.Context.envFromFilesSrc .envFromFilesSrc
+  - envFromSrc: 所有出现的 envFromFiles 组成的列表，包括以下三个
+    - $.Values.envFrom $.Context.envFrom .envFrom
+  - Files: 父域中的 Files (父域中的 Files 也是从上一个父域中传入的)
+*/ -}}
+{{- define "workloads.Container.envFrom" -}}
+  {{- with . }}
+    {{- $__clean := list }}
+    {{- $__regexSplit := "\\.|\\:" }}
+    {{- if .r }}
+      {{- $__regexSplit = .r }}
+    {{- end }}
+
+    {{- range (mustCompact (mustUniq .envFromFilesSrc)) }}
+      {{- if kindIs "map" . }}
+        {{- range $f, $p := . }}
+          {{- $__val := $.Files.Get $f | fromYaml }}
+          {{- range (mustRegexSplit $__regexSplit $p -1) }}
+            {{- $__val = dig . "" $__val }}
+          {{- end }}
+          {{- if kindIs "slice" $__val }}
+            {{- range $__val }}
+              {{- $__clean = mustAppend $__clean (pick . "configMapRef" "prefix" "secretRef") }}
+            {{- end }}
+          {{- else if kindIs "map" $__val }}
+            {{- $__clean = mustAppend $__clean (pick $__val "configMapRef" "prefix" "secretRef") }}
+          {{- end }}
+        {{- end }}
+      {{- else }}
+        {{- fail "workloads.Container.envFrom: envFromFiles not support, please use map." }}
+      {{- end }}
+    {{- end }}
+
+    {{- range (mustCompact (mustUniq .envFromSrc)) }}
+      {{- if kindIs "slice" . }}
+        {{- range . }}
+          {{- $__clean = mustAppend $__clean (pick . "configMapRef" "prefix" "secretRef") }}
+        {{- end }}
+      {{- else if kindIs "map" . }}
+        {{- $__clean = mustAppend $__clean (pick . "configMapRef" "prefix" "secretRef") }}
+      {{- else }}
+        {{- fail "workloads.Container.envFrom: envFrom not support, please use slice or map." }}
+      {{- end }}
+    {{- end }}
+
+    {{- $__envFrom := list }}
+    {{- range (mustCompact (mustUniq $__clean)) }}
+      {{- $__envFrom = mustAppend $__envFrom (include "definitions.EnvFromSource" . | fromYaml) }}
+    {{- end }}
+    {{- if $__envFrom }}
+      {{- toYaml $__envFrom | nindent 0 }}
+    {{- end }}
+  {{- end }}
+{{- end }}
+
+
+{{- /*
+  解析 image
+
+  descr:
+  - imageFilesSrc: 所有出现的 imageFiles 组成的列表，包括以下三个
+    - $.Values.imageFilesSrc $.Context.imageFilesSrc .imageFilesSrc
+  - imageSrc: 所有出现的 imageFiles 组成的列表，包括以下三个
+    - $.Values.image $.Context.image .image
+  - Files: 父域中的 Files (父域中的 Files 也是从上一个父域中传入的)
+*/ -}}
+{{- define "workloads.Container.image" -}}
+  {{- with . }}
+    {{- $__clean := dict }}
+    {{- $__image := "" }}
+    {{- $__regexSplit := "\\.|\\:" }}
+    {{- if .r }}
+      {{- $__regexSplit = .r }}
+    {{- end }}
+
+    {{- range (mustCompact (mustUniq .imageFilesSrc)) }}
+      {{- if kindIs "map" . }}
+        {{- range $f, $p := . }}
+          {{- $__val := $.Files.Get $f | fromYaml }}
+          {{- range (mustRegexSplit $__regexSplit $p -1) }}
+            {{- $__val = dig . "" $__val }}
+          {{- end }}
+
+          {{- $_ := set $__clean "image" $__val }}
+
+          {{- if kindIs "map" $__val }}
+            {{- $__repository := dig "repository" "" $__val }}
+            {{- if not (hasKey $__clean "repository") }}
+              {{- $_ := set $__clean "repository" $__repository }}
+            {{- end }}
+
+            {{- if kindIs "string" $__repository }}
+              {{- if $__repository }}
+                {{- $__regexSplit := "\\s+|\\s*[\\|\\:\\/\\-,]\\s*" }}
+                {{- $_ := set $__clean "repository" (include "base.fmt.slice" (dict "s" (list $__repository) "r" $__regexSplit "separators" "/")) }}
+              {{- end }}
+            {{- else if kindIs "map" $__repository }}
+              {{- if not (hasKey $__repository "name") }}
+                {{- fail "workloads.Container.image: imageFiles.repository.name must exists." }}
+              {{- end }}
+              {{- $_ := set $__clean "repository" (mustMerge $__clean.repository $__repository) }}
+            {{- else if kindIs "slice" $__repository }}
+              {{- $_ := set $__clean "repository" (mustCompact (mustUniq (concat $__clean.repository $__repository))) }}
+            {{- end }}
+
+            {{- $__tag := dig "tag" "" $__val }}
+            {{- if not (hasKey $__clean "tag") }}
+              {{- $_ := set $__clean "tag" $__tag }}
+            {{- end }}
+
+            {{- if kindIs "string" $__tag }}
+              {{- if $__tag }}
+                {{- $__regexSplit := "\\s+|\\s*[\\|\\:\\/\\-,]\\s*" }}
+                {{- $_ := set $__clean "tag" (include "base.fmt.slice" (dict "s" (list $__tag) "r" $__regexSplit "separators" "-")) }}
+              {{- end }}
+            {{- else if kindIs "map" $__tag }}
+              {{- $_ := set $__clean "tag" (mustMerge $__clean.tag $__tag) }}
+            {{- else if kindIs "slice" $__tag }}
+              {{- $_ := set $__clean "tag" (mustCompact (mustUniq (concat $__clean.tag $__tag))) }}
             {{- end }}
           {{- end }}
         {{- end }}
+      {{- else }}
+        {{- fail "workloads.Container.image: imageFiles not support, please use map." }}
+      {{- end }}
+    {{- end }}
 
-        {{- if .envFiles }}
-          {{- range $f, $p := .envFiles }}
-            {{- include "base.map.getValue" (dict "m" ($.Files.Get $f | fromYaml) "k" $p) | indent 2 }}
+    {{- range (mustCompact (mustUniq .imageSrc)) }}
+      {{- $_ := set $__clean "image" . }}
+
+      {{- if kindIs "map" . }}
+        {{- $__repository := dig "repository" "" . }}
+        {{- if not (hasKey $__clean "repository") }}
+          {{- $_ := set $__clean "repository" $__repository }}
+        {{- end }}
+
+        {{- if kindIs "string" $__repository }}
+          {{- if $__repository }}
+            {{- $__regexSplit := "\\s+|\\s*[\\|\\:\\/\\-,]\\s*" }}
+            {{- $_ := set $__clean "tag" (include "base.fmt.slice" (dict "s" (list $__repository) "r" $__regexSplit "separators" "/")) }}
           {{- end }}
-        {{- end }}
-
-        {{- if $.Values.env }}
-          {{- if or (not $.__isInitContainer) .envInitEnabled }}
-            {{- toYaml $.Values.env | nindent 2 }}
+        {{- else if kindIs "map" $__repository }}
+          {{- if not (hasKey $__repository "name") }}
+            {{- fail "workloads.Container.image: image.repository.name must exists." }}
           {{- end }}
+          {{- $_ := set $__clean "repository" (mustMerge $__clean.repository $__repository) }}
+        {{- else if kindIs "slice" $__repository }}
+          {{- $_ := set $__clean "repository" (mustCompact (mustUniq (concat $__clean.repository $__repository))) }}
         {{- end }}
 
-        {{- if $._CTX.env }}
-          {{- if or (not $.__isInitContainer) .envInitEnabled }}
-            {{- toYaml $._CTX.env | nindent 2 }}
+        {{- $__tag := dig "tag" "" . }}
+        {{- if not (hasKey $__clean "tag") }}
+          {{- $_ := set $__clean "tag" $__tag }}
+        {{- end }}
+
+        {{- if kindIs "string" $__tag }}
+          {{- if $__tag }}
+            {{- $__regexSplit := "\\s+|\\s*[\\|\\:\\/\\-,]\\s*" }}
+            {{- $_ := set $__clean "tag" (include "base.fmt.slice" (dict "s" (list $__tag) "r" $__regexSplit "separators" "-")) }}
           {{- end }}
-        {{- end }}
-
-        {{- if .env }}
-          {{- toYaml .env | nindent 2 }}
-        {{- end }}
-      {{- end }}
-
-      {{- /*
-        for envFrom
-
-        variables (priority):
-        - $.Values.envFromFiles
-        - .envFromFiles
-        - $.Values.envFrom
-        - .envFrom
-        descr:
-        - 所有内容会原样输出
-      */ -}}
-      {{- if or .envFrom $.Values.envFrom .envFromFiles $.Values.envFromFiles }}
-        {{- $__regexEnvFrom := "^[a-zA-Z_]+\\w*[:\\-\\|]+.*" }}
-        {{- $__regexEnvFromSplit := "[:\\-\\|]+" }}
-
-        {{- nindent 2 "" -}}envFrom:
-        {{- if $.Values.envFromFiles }}
-          {{- range $f, $p := $.Values.envFromFiles }}
-            {{- include "base.map.getValue" (dict "m" ($.Files.Get $f | fromYaml) "k" $p) | indent 2 }}
-          {{- end }}
-        {{- end }}
-
-        {{- if .envFromFiles }}
-          {{- range $f, $p := .envFromFiles }}
-            {{- include "base.map.getValue" (dict "m" ($.Files.Get $f | fromYaml) "k" $p) | indent 2 }}
-          {{- end }}
-        {{- end }}
-
-        {{- if $.Values.envFrom }}
-          {{- toYaml $.Values.envFrom | nindent 2 }}
-        {{- end }}
-
-        {{- if .envFrom }}
-          {{- toYaml .envFrom | nindent 2 }}
+        {{- else if kindIs "map" $__tag }}
+          {{- $_ := set $__clean "tag" (mustMerge $__clean.tag $__tag) }}
+        {{- else if kindIs "slice" $__tag }}
+          {{- $_ := set $__clean "tag" (mustCompact (mustUniq (concat $__clean.tag $__tag))) }}
         {{- end }}
       {{- end }}
+    {{- end }}
 
-      {{- /*
-        for image
-      */ -}}
-      {{- if or .image $._CTX.image $.Values.image .imageFiles $._CTX.imageFiles $.Values.imageFiles }}
-        {{- /*
-          传入 workloads.Container.containers.image 的 Map, Key 为 "image" 与 "imageFiles", 值为 Slice.
-          - Slice 中的值, 越靠前则优先级越低
-        */ -}}
-        {{- nindent 2 "" -}}image: {{ include "workloads.Container.containers.image" (dict "f" $.Files "image" (list $.Values.image $._CTX.image .image) "imageFiles" (list $.Values.imageFiles $._CTX.imageFiles .imageFiles)) | trim }}
-      {{- end }}
+    {{- with $__clean }}
+      {{- if and (kindIs "string" .image) .image }}
+        {{- .image | trim }}
+      {{- else }}
+        {{- $__repository := include "workloads.Container.image.parser" (dict "m" .repository "k" (list "url" "namespace" "name") "default" "" "separators" "/" "keyToLast" false) | trim }}
+        {{- $__tag := include "workloads.Container.image.parser" (dict "m" .tag "k" (list "build" "project" "commit" "dataCommit") "default" "latest" "separators" "-" "keyToLast" true) | trim }}
 
-      {{- /*
-        for imagePullPolicy
-
-        variables (priority):
-        - .imagePullPolicy
-        - $._CTX.imagePullPolicy
-        - $.Values.imagePullPolicy
-      */ -}}
-      {{- $__imagePullPolicyList := list "Always" "Never" "IfNotPresent" }}
-      {{- if or (mustHas .imagePullPolicy $__imagePullPolicyList) (mustHas $._CTX.imagePullPolicy $__imagePullPolicyList) (mustHas $.Values.imagePullPolicy $__imagePullPolicyList) }}
-        {{- nindent 2 "" -}}imagePullPolicy: {{ coalesce .imagePullPolicy $._CTX.imagePullPolicy $.Values.imagePullPolicy "Always" }}
-      {{- end }}
-
-      {{- /*
-        for lifecycle
-
-        variables (priority):
-        - .lifecycle
-        - $._CTX.lifecycle
-        - $.Values.lifecycle
-        reference:
-        - https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#lifecycle-v1-core
-        - https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/
-        - https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/#container-hooks
-        descr:
-        - 同时出现时, 按照优先级覆盖
-      */ -}}
-      {{- if or .lifecycle $._CTX.lifecycle $.Values.lifecycle }}
-        {{- $__lifecycle := "" }}
-
-        {{- if $.Values.lifecycle }}
-          {{- $__lifecycle = toYaml $.Values.lifecycle }}
+        {{- if and $__repository $__tag }}
+          {{- printf "%s:%s" $__repository $__tag }}
+        {{- else }}
+          {{- fail (printf "workloads.Container.image: repository or tag not found. repository: %s, tag:%s" $__repository $__tag) }}
         {{- end }}
-        {{- if $._CTX.lifecycle }}
-          {{- $__lifecycle = toYaml $._CTX.lifecycle }}
-        {{- end }}
-        {{- if .lifecycle }}
-          {{- $__lifecycle = toYaml .lifecycle }}
-        {{- end }}
-
-        {{- nindent 2 "" -}}lifecycle:
-        {{- $__lifecycle | nindent 4 }}
-      {{- end }}
-
-      {{- /*
-        for livenessProbe
-
-        variables (priority):
-        - .livenessProbe
-        - $._CTX.livenessProbe
-        - $.Values.livenessProbe
-        reference:
-        - https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#probe-v1-core
-        - https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
-        descr:
-        - 同时出现时, 按照优先级覆盖
-      */ -}}
-      {{- if or .livenessProbe $._CTX.livenessProbe $.Values.livenessProbe }}
-        {{- $__livenessProbe := "" }}
-
-        {{- if $.Values.livenessProbe }}
-          {{- $__livenessProbe = toYaml $.Values.livenessProbe }}
-        {{- end }}
-        {{- if $._CTX.livenessProbe }}
-          {{- $__livenessProbe = toYaml $._CTX.livenessProbe }}
-        {{- end }}
-        {{- if .livenessProbe }}
-          {{- $__livenessProbe = toYaml .livenessProbe }}
-        {{- end }}
-
-        {{- nindent 2 "" -}}livenessProbe:
-        {{- $__livenessProbe | nindent 4 }}
-      {{- end }}
-
-      {{- /*
-        for ports
-      */ -}}
-      {{- if .ports }}
-        {{- nindent 2 "" -}}ports:
-        {{- include "definitions.ContainerPort" .ports | indent 2 }}
-      {{- end }}
-
-      {{- /*
-        for readinessProbe
-
-        variables (priority):
-        - .readinessProbe
-        - $._CTX.readinessProbe
-        - $.Values.readinessProbe
-        reference:
-        - https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#probe-v1-core
-        descr:
-        - 同时出现时, 按照优先级覆盖
-      */ -}}
-      {{- if or .readinessProbe $._CTX.readinessProbe $.Values.readinessProbe }}
-        {{- $__readinessProbe := "" }}
-
-        {{- if $.Values.readinessProbe }}
-          {{- $__readinessProbe = toYaml $.Values.readinessProbe }}
-        {{- end }}
-        {{- if $._CTX.readinessProbe }}
-          {{- $__readinessProbe = toYaml $._CTX.readinessProbe }}
-        {{- end }}
-        {{- if .readinessProbe }}
-          {{- $__readinessProbe = toYaml .readinessProbe }}
-        {{- end }}
-
-        {{- nindent 2 "" -}}readinessProbe:
-        {{- $__readinessProbe | nindent 4 }}
-      {{- end }}
-
-      {{- /*
-        for resizePolicy
-
-        variables (priority):
-        - .resizePolicy
-        - $._CTX.resizePolicy
-        - $.Values.resizePolicy
-        descr:
-        - 按序追加
-      */ -}}
-      {{- if or .resizePolicy $._CTX.resizePolicy $.Values.resizePolicy }}
-        {{- nindent 2 "" -}}resizePolicy:
-        {{- range .resizePolicy }}
-          {{- include "definitions.ContainerResizePolicy" . | indent 2 }}
-        {{- end }}
-        {{- range $._CTX.resizePolicy }}
-          {{- include "definitions.ContainerResizePolicy" . | indent 2 }}
-        {{- end }}
-        {{- range $.Values.resizePolicy }}
-          {{- include "definitions.ContainerResizePolicy" . | indent 2 }}
-        {{- end }}
-      {{- end }}
-
-      {{- /*
-        for resources
-        variables (priority):
-        - .resources
-        - .resourcesFiles
-        descr:
-        - .resources 和 .resourcesFiles 互斥
-      */ -}}
-      {{- if or .resources .resourcesFiles }}
-        {{- nindent 2 "" -}}resources:
-        {{- if .resources }}
-          {{- toYaml .resources | nindent 4 }}
-        {{- else if .resourcesFiles }}
-          {{- range $f, $v := .resourcesFiles }}
-            {{- include "base.map.getValue" (dict "m" ($.Files.Get $f | fromYaml) "k" $v) | indent 4 }}
-          {{- end }}
-        {{- end }}
-      {{- end }}
-
-      {{- /*
-        for securityContext
-        reference:
-        - https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#securitycontext-v1-core
-      */ -}}
-      {{- if .securityContext }}
-        {{- nindent 2 "" -}}securityContext:
-        {{- include "definitions.SecurityContext" .securityContext | indent 4 }}
-      {{- end }}
-
-      {{- /*
-        for startupProbe
-
-        variables (priority):
-        - .startupProbe
-        - $._CTX.startupProbe
-        - $.Values.startupProbe
-        reference:
-        - https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#probe-v1-core
-        descr:
-        - 同时出现时, 按照优先级覆盖
-      */ -}}
-      {{- if or .startupProbe $._CTX.startupProbe $.Values.startupProbe }}
-        {{- $__startupProbe := "" }}
-
-        {{- if $.Values.startupProbe }}
-          {{- $__startupProbe = toYaml $.Values.startupProbe }}
-        {{- end }}
-        {{- if $._CTX.startupProbe }}
-          {{- $__startupProbe = toYaml $._CTX.startupProbe }}
-        {{- end }}
-        {{- if .startupProbe }}
-          {{- $__startupProbe = toYaml .startupProbe }}
-        {{- end }}
-
-        {{- nindent 2 "" -}}startupProbe:
-        {{- $__startupProbe | nindent 4 }}
-      {{- end }}
-
-      {{- /*
-        for stdin
-      */ -}}
-      {{- if or (and .stdin (kindIs "bool" .stdin)) (and $._CTX.stdin (kindIs "bool" $._CTX.stdin)) (and $.Values.stdin (kindIs "bool" $.Values.stdin)) }}
-        {{- nindent 2 "" -}}stdin: true
-      {{- end }}
-
-      {{- /*
-        for stdinOnce
-      */ -}}
-      {{- if or (and .stdinOnce (kindIs "bool" .stdinOnce)) (and $._CTX.stdinOnce (kindIs "bool" $._CTX.stdinOnce)) (and $.Values.stdinOnce (kindIs "bool" $.Values.stdinOnce)) }}
-        {{- nindent 2 "" -}}stdinOnce: true
-      {{- end }}
-
-      {{- /*
-        for terminationMessagePath
-      */ -}}
-      {{- if or .terminationMessagePath $._CTX.terminationMessagePath $.Values.terminationMessagePath }}
-        {{- nindent 2 "" -}}terminationMessagePath: {{ coalesce .terminationMessagePath $._CTX.terminationMessagePath $.Values.terminationMessagePath }}
-      {{- end }}
-
-      {{- /*
-        for terminationMessagePolicy
-      */ -}}
-      {{- if or .terminationMessagePolicy $._CTX.terminationMessagePolicy $.Values.terminationMessagePolicy }}
-        {{- nindent 2 "" -}}terminationMessagePolicy: {{ coalesce .terminationMessagePolicy $._CTX.terminationMessagePolicy $.Values.terminationMessagePolicy }}
-      {{- end }}
-
-      {{- /*
-        for tty
-      */ -}}
-      {{- if or (and .tty (kindIs "bool" .tty)) (and $._CTX.tty (kindIs "bool" $._CTX.tty)) (and $.Values.tty (kindIs "bool" $.Values.tty)) }}
-        {{- nindent 2 "" -}}tty: true
-      {{- end }}
-
-      {{- /*
-        for volumeDevices
-        variables (priority):
-        - .volumeDevices
-        - $._CTX.volumeDevices
-        - $.Values.volumeDevices
-      */ -}}
-      {{- if or .volumeDevices $._CTX.volumeDevices $.Values.volumeDevices }}
-        {{- $__volumeDevicesList := list }}
-
-        {{- nindent 2 "" -}}volumeDevices:
-        {{- range .volumeDevices }}
-          {{- $__volumeDevicesList = mustAppend $__volumeDevicesList (include "definitions.VolumeDevices" . | fromYaml) }}
-        {{- end }}
-        {{- range $._CTX.volumeDevices }}
-          {{- $__volumeDevicesList = mustAppend $__volumeDevicesList (include "definitions.VolumeDevices" . | fromYaml) }}
-        {{- end }}
-        {{- range $.Values.volumeDevices }}
-          {{- $__volumeDevicesList = mustAppend $__volumeDevicesList (include "definitions.VolumeDevices" . | fromYaml) }}
-        {{- end }}
-
-        {{- toYaml $__volumeDevicesList | nindent 2 }}
-      {{- end }}
-
-      {{- /*
-        for volumeMounts
-      */ -}}
-      {{- if or .volumeMounts $._CTX.volumeMounts $.Values.volumeMounts }}
-        {{- $__volumeMountsList := list }}
-
-        {{- nindent 2 "" -}}volumeMounts:
-        {{- range .volumeMounts }}
-          {{- $__volumeMountsList = mustAppend $__volumeMountsList (include "definitions.VolumeMount" . | fromYaml) }}
-        {{- end }}
-        {{- range $._CTX.volumeMounts }}
-          {{- $__volumeMountsList = mustAppend $__volumeMountsList (include "definitions.VolumeMount" . | fromYaml) }}
-        {{- end }}
-        {{- range $.Values.volumeMounts }}
-          {{- $__volumeMountsList = mustAppend $__volumeMountsList (include "definitions.VolumeMount" . | fromYaml) }}
-        {{- end }}
-
-        {{- toYaml $__volumeMountsList | nindent 2 }}
-      {{- end }}
-
-      {{- /*
-        for workingDir
-      */ -}}
-      {{- if or .workingDir $._CTX.workingDir $.Values.workingDir }}
-        {{- nindent 2 "" -}}workingDir: {{ coalesce .workingDir $._CTX.workingDir $.Values.workingDir "/" }}
       {{- end }}
     {{- end }}
   {{- end }}
@@ -410,187 +672,63 @@
 
 
 {{- /*
-  variables (priority): 逻辑处理时会进行反序处理, 以适配优先级
-  - .image
-  - $._CTX.image
-  - $.Values.image
-  - .imageFiles
-  - $._CTX.imageFiles
-  - $.Values.imageFiles
-  variables (image):
-  - repository:
-    - url: 域名 + 端口号
-    - namespace: 存放路径
-    - name: 名称
-  - tag (以下变量可以替换 tag): 默认值 latest
-    - project: 工程代码 / 工程分支代码
-    - buildId: Jenkins 出档编号
-    - commit: 提交 ID
-    - data_commit: 数据档提交 ID
+  解析 images.repository image.tag
+
   descr:
-  - 当 image 为 string 时, 被视为完整的镜像名称
-  - 当 image 为 map 时, 会根据不同的变量名进行拼接
-    - repository 和 tag 使用 ":" 号拼接为完整的镜像名称
-      - 当 repository 为 map 时, 使用 url、namespace、name 拼接镜像名称
-      - 当 repository 为 slice 时, 会将列表中的所有元素依次拼接为镜像名称
-      - repository 使用斜杠 "/" 进行拼接
-      - 当 tag 为 map 时, 使用 project、commit、data_commit 拼接 tag 名称
-      - 当 tag 为 slice 时, 会将列表中的所有元素依次拼接为 tag 名称
-      - tag 使用连字符 "-" 进行拼接
-  - 相同变量的数据类型不可混用
+  - m: map 需要解析的数据
+  - k: slice 需要从数据中单独取值并移除的 key (按照传入列表的顺序依次取值). 当 .m 为 Map 时有效
+  - default: string 默认值，默认为空字符串
+  - separators: string 分隔符，默认为 ""
+  - keyToLast: bool 是否将按 .k 列表取的值放到 $__val 列表的最后 (为 false 时会将值插入到列表的倒数第 2 个位置), 当 .m 为 Map 时有效. 默认 false
 */ -}}
-{{- define "workloads.Container.containers.image" -}}
-  {{- $__image := dict }}
-  {{- $__imagetList := list }}
-
-  {{- /*
-    设置 $__image.image $__imagetList
-  */ -}}
-  {{- range .imageFiles }}
-    {{- range $p, $k := . }}
-      {{- $__imageVal := include "base.map.getValue" (dict "m" ($.f.Get $p | fromYaml) "k" $k) | fromYaml }}
-      {{- /*
-        报错时, 视为 string, 此时不使用 fromYaml 函数转换
-      */ -}}
-      {{- if hasKey $__imageVal "Error" }}
-        {{- $__imageVal = include "base.map.getValue" (dict "m" ($.f.Get $p | fromYaml) "k" $k) | trim }}
-      {{- end }}
-      {{- $__imagetList = mustAppend $__imagetList $__imageVal }}
+{{- define "workloads.Container.image.parser" -}}
+  {{- with . }}
+    {{- if not .default }}
+      {{- $_ := set . "default" "" }}
     {{- end }}
-  {{- end }}
-
-  {{- $__imagetList = concat $__imagetList .image }}
-
-  {{- /*
-    解析 $__imagetList
-  */ -}}
-  {{- range $__imagetList }}
-    {{- if . }}
-      {{- if not $__image.image }}
-        {{- $_ := set $__image "image" . }}
-      {{- else }}
-        {{- if not (eq (kindOf .) (kindOf $__image.image)) }}
-          {{- $_ := set $__image "image" . }}
-        {{- end }}
-        {{- if kindIs "map" . }}
-          {{- if not $__image.image.repository }}
-            {{- $_ := set $__image.image "repository" .repository }}
-          {{- else }}
-            {{- if kindIs "map" .repository }}
-              {{- range $k, $v := .repository }}
-                {{- $_ := set $__image.image.repository $k $v }}
-              {{- end }}
-            {{- else if kindIs "slice" .repository }}
-              {{- $_ := set $__image.image "repository" (concat $__image.image.repository .repository) }}
-            {{- else if kindIs "string" .repository }}
-              {{- $_ := set $__image.image "repository" .repository }}
-            {{- else if or (kindIs "int" .repository) (kindIs "float64" .repository) }}
-              {{- $_ := set $__image.image "repository" (int .repository | toString) }}
-            {{- end }}
-          {{- end }}
-
-          {{- if not $__image.image.tag }}
-            {{- $_ := set $__image.image "tag" .tag }}
-          {{- else }}
-            {{- if kindIs "map" .tag }}
-              {{- range $k, $v := .tag }}
-                {{- $_ := set $__image.image.tag $k $v }}
-              {{- end }}
-            {{- else if kindIs "slice" .tag }}
-              {{- $_ := set $__image.image "tag" (concat .tag $__image.image.tag) }}
-            {{- else if kindIs "string" .tag }}
-              {{- $_ := set $__image.image "tag" .tag }}
-            {{- else if or (kindIs "int" .tag) (kindIs "float64" .tag) }}
-              {{- $_ := set $__image.image "tag" (int .tag | toString) }}
-            {{- end }}
-          {{- end }}
-        {{- else }}
-          {{- $_ := set $__image "image" . }}
-        {{- end }}
-      {{- end }}
+    {{- if not .separators }}
+      {{- $_ := set . "separators" "" }}
     {{- end }}
-  {{- end }}
 
-  {{- /*
-    解析 $__image.image
-  */ -}}
-  {{- if kindIs "string" $__image.image }}
-    {{- $__image.image | trim }}
-  {{- else if kindIs "map" $__image.image }}
-    {{- $__repository := "" }}
-    {{- $__tag := "latest" }}
+    {{- if kindIs "string" .m }}
+      {{- coalesce .m .default | trim }}
+    {{- else if kindIs "slice" .m }}
+      {{- join .separators .m | trim }}
+    {{- else if or (kindIs "int" .m) (kindIs "float64" .m) }}
+      {{- int .m | toString | trim }}
+    {{- else if kindIs "map" .m }}
+      {{- $__val := list }}
+      {{- range .k }}
+        {{- $__k := get $.m . }}
+        {{- /*
+          namespace 可以输入字符串或列表
+        */ -}}
+        {{- if eq . "namespace" }}
+          {{- $__regexSplit := "\\s+|\\s*[\\|\\:\\/,]\\s*" }}
+          {{- $__k = include "base.fmt.slice" (dict "s" (list $__k) "separators" "/" "r" $__regexSplit) | trim }}
+        {{- end }}
+        {{- $__val = mustAppend $__val $__k }}
+        {{- $_ := unset $.m . }}
+      {{- end }}
 
-    {{- with $__image.image }}
       {{- /*
         - .repository 移除 url namespace name 后, 如果还有其他值, 则使用 values 函数生成的列表中的值作为 namespace 的补充拼接到 namespace 和 name 之间
         - .tag 移除 project buildId commit dataCommit 后, 如果还有其他值, 则使用 values 函数生成的列表中的值作为后缀拼接到 tag 上
         - values 函数取出的列表, 使用 sortAlpha 进行排序
       */ -}}
-      {{- $__repository = include "workloads.Container.containers.image.parser" (dict "m" .repository "k" (list "url" "namespace" "name") "default" "" "separators" "/" "keyToLast" false) | trim }}
-      {{- $__tag = include "workloads.Container.containers.image.parser" (dict "m" .tag "k" (list "buildId" "project" "commit" "dataCommit") "default" "latest" "separators" "-" "keyToLast" true) | trim }}
-    {{- end }}
-
-    {{- if and $__repository $__tag }}
-      {{- printf "%s:%s" $__repository $__tag }}
-    {{- else }}
-      {{- fail "image.repository not found" }}
-    {{- end }}
-  {{- else }}
-    {{- fail "image not support" }}
-  {{- end }}
-{{- end }}
-
-
-{{- /*
-  .m: map 需要解析的数据
-  .k: slice 需要从数据中单独取值并移除的 key (按照传入列表的顺序依次取值). 当 .m 为 Map 时有效
-  .default: string 默认值, 默认为空字符串
-  .separators: string 分隔符, 默主为连字符 "-"
-  .keyToLast: bool 是否将按 .k 列表取的值放到 $__fields 列表的最后 (为 false 时会将值插入到列表的倒数第 2 个位置), 当 .m 为 Map 时有效. 默认 false
-*/ -}}
-{{- define "workloads.Container.containers.image.parser" -}}
-  {{- if not .default }}
-    {{- $_ := set . "default" "" }}
-  {{- end }}
-  {{- if not .separators }}
-    {{- $_ := set . "separators" "-" }}
-  {{- end }}
-
-  {{- if kindIs "map" .m }}
-    {{- $__fields := list }}
-
-    {{- range .k }}
-      {{- if get $.m . }}
-        {{- $__fields = mustAppend $__fields (get $.m .) }}
-      {{- end }}
-      {{- $_ := unset $.m . }}
-    {{- end }}
-
-    {{- /*
-      - .repository 移除 url namespace name 后, 如果还有其他值, 则使用 values 函数生成的列表中的值作为 namespace 的补充拼接到 namespace 和 name 之间
-      - .tag 移除 project buildId commit dataCommit 后, 如果还有其他值, 则使用 values 函数生成的列表中的值作为后缀拼接到 tag 上
-      - values 函数取出的列表, 使用 sortAlpha 进行排序
-    */ -}}
-    {{- if .m }}
-      {{- if kindIs "bool" .keyToLast }}
-        {{- if .keyToLast }}
-          {{- $__fields = concat $__fields (values .m | sortAlpha) }}
+      {{- if .m }}
+        {{- $__keyToLast := include "base.bool" .keyToLast }}
+        {{- $__otherVal := values .m | sortAlpha | mustUniq | mustCompact }}
+        {{- if $__keyToLast }}
+          {{- $__val = concat $__val $__otherVal }}
         {{- else }}
-          {{- $__fields = mustAppend (concat (mustInitial $__fields) (values .m | sortAlpha)) (mustLast $__fields) }}
+          {{- $__val = mustAppend (concat (mustInitial $__val) $__otherVal (mustLast $__val)) }}
         {{- end }}
-      {{- else }}
-        {{- fail ".suffix must be true or false" }}
       {{- end }}
-    {{- end }}
-    {{- join .separators $__fields | nindent 0 }}
 
-  {{- else if kindIs "slice" .m }}
-    {{- join .separators .m | nindent 0 }}
-  {{- else if kindIs "string" .m }}
-    {{- .m | nindent 0 }}
-  {{- else if or (kindIs "int" .m) (kindIs "float64" .m) }}
-    {{- int .m | toString | nindent 0 }}
-  {{- else }}
-    {{- .default | nindent 0 }}
+      {{- join .separators ($__val | mustUniq | mustCompact) | trim }}
+    {{- else }}
+      {{- .default | trim }}
+    {{- end }}
   {{- end }}
 {{- end }}

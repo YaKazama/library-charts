@@ -1,5 +1,0 @@
-{{- $_ := set . "_CTX" .Values.ClusterRoleBinding }}
-
-{{- if or ._CTX.helmTesting .Values.helmTesting ._CTX.enabled }}
-  {{- include "cluster.ClusterRoleBinding" . }}
-{{- end }}

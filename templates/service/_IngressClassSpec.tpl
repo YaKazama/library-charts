@@ -1,22 +1,25 @@
 {{- define "service.IngressClassSpec" -}}
-  {{- if or ._CTX.controller .Values.controller }}
-    {{- nindent 0 "" -}}controller: {{ coalesce ._CTX.controller .Values.controller }}
+  {{- $__controller := include "base.string" (coalesce .Context.controller .Values.controller) }}
+  {{- if $__controller }}
+    {{- nindent 0 "" -}}controller: {{ $__controller }}
   {{- end }}
 
-  {{- if or ._CTX.parameters .Values.parameters }}
-    {{- $__parametersDict := dict }}
-
-    {{- if ._CTX.parameters }}
-      {{- $__parametersDict = mustMerge $__parametersDict ._CTX.parameters }}
+  {{- $__clean := dict }}
+  {{- $__parametersSrc := pluck "parameters" .Context .Values }}
+  {{- range ($__parametersSrc | mustUniq | mustCompact) }}
+    {{- if kindIs "map" . }}
+      {{- $__clean = mustMerge $__clean . }}
+    {{- else if kindIs "slice" . }}
+      {{- range . }}
+        {{- if kindIs "map" . }}
+          {{- $__clean = mustMerge $__clean . }}
+        {{- end }}
+      {{- end }}
     {{- end }}
-    {{- if .Values.parameters }}
-      {{- $__parametersDict = mustMerge $__parametersDict .Values.parameters }}
-    {{- end }}
-
-    {{- $__parameters := include "definitions.IngressClassParametersReference" $__parametersDict | fromYaml }}
-    {{- if $__parameters }}
-      {{- nindent 0 "" -}}parameters:
-        {{- toYaml $__parameters | nindent 2 }}
-    {{- end }}
+  {{- end }}
+  {{- $__parameters := include "definitions.IngressClassParametersReference" $__clean | fromYaml }}
+  {{- if $__parameters }}
+    {{- nindent 0 "" -}}parameters:
+      {{- toYaml $__parameters | nindent 2 }}
   {{- end }}
 {{- end }}

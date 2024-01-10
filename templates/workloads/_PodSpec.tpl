@@ -1,251 +1,230 @@
 {{- /*
-reference: https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#podspec-v1-core
+reference:
+- https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#podspec-v1-core
+
+(dig "template" "spec" "activeDeadlineSeconds" 0 .Context)
 */ -}}
 {{- define "workloads.PodSpec" -}}
-{{- if or (gt (int ._CTX.activeDeadlineSeconds) 0) (gt (int .Values.activeDeadlineSeconds) 0) }}
-  {{- nindent 0 "" -}}activeDeadlineSeconds: {{ int (coalesce ._CTX.activeDeadlineSeconds .Values.activeDeadlineSeconds) }}
-{{- end }}
-
-{{- if or (kindIs "bool" ._CTX.automountServiceAccountToken) (kindIs "bool" .Values.automountServiceAccountToken) }}
-  {{- nindent 0 "" -}}automountServiceAccountToken: {{ coalesce (toString ._CTX.automountServiceAccountToken) (toString .Values.automountServiceAccountToken) }}
-{{- end }}
-
-{{- if or ._CTX.dnsPolicy .Values.dnsPolicy }}
-  {{- $__dnsPolicyList := list "ClusterFirstWithHostNet" "ClusterFirst" "Default" "None" }}
-
-  {{- if or (mustHas ._CTX.dnsPolicy $__dnsPolicyList) (mustHas .Values.dnsPolicy $__dnsPolicyList) }}
-    {{- nindent 0 "" -}}dnsPolicy: {{ coalesce ._CTX.dnsPolicy .Values.dnsPolicy "ClusterFirst" }}
+  {{- $__activeDeadlineSeconds := include "base.int" (coalesce .Context.podActiveDeadlineSeconds .Values.podActiveDeadlineSeconds .Context.activeDeadlineSeconds .Values.activeDeadlineSeconds) }}
+  {{- if $__activeDeadlineSeconds }}
+    {{- nindent 0 "" -}}activeDeadlineSeconds: {{ $__activeDeadlineSeconds }}
   {{- end }}
-{{- end }}
 
-{{- if or ._CTX.hostname .Values.hostname }}
-  {{- nindent 0 "" -}}hostname: {{ coalesce ._CTX.hostname .Values.hostname }}
-{{- end }}
+  {{- $__automountServiceAccountToken := include "base.bool.false" (pluck "automountServiceAccountToken" .Context .Values) }}
+  {{- if $__automountServiceAccountToken }}
+    {{- nindent 0 "" -}}automountServiceAccountToken: {{ $__automountServiceAccountToken }}
+  {{- end }}
 
-{{- if or ._CTX.imagePullSecrets .Values.imagePullSecrets }}
-  {{- $__imagePullSecretsList := list }}
-  {{- if ._CTX.imagePullSecrets }}
-    {{- $__imagePullSecretsList = concat ._CTX.imagePullSecrets }}
+  {{- $__dnsPolicyAllowed := list "ClusterFirstWithHostNet" "ClusterFirst" "Default" "None" }}
+  {{- if mustHas (coalesce .Context.dnsPolicy .Values.dnsPolicy) $__dnsPolicyAllowed }}
+    {{- nindent 0 "" -}}dnsPolicy: {{ coalesce .Context.dnsPolicy .Values.dnsPolicy "ClusterFirst" }}
   {{- end }}
-  {{- if .Values.imagePullSecrets }}
-    {{- $__imagePullSecretsList = concat $__imagePullSecretsList .Values.imagePullSecrets }}
+
+  {{- $__hostname := include "base.string" (coalesce .Context.hostname .Values.hostname) }}
+  {{- if $__hostname }}
+    {{- nindent 0 "" -}}hostname: {{ $__hostname }}
   {{- end }}
-  {{- if $__imagePullSecretsList }}
+
+  {{- $__imagePullSecrets := include "base.fmt.slice" (dict "s" (pluck "imagePullSecrets" .Context .Values) "define" "definitions.LocalObjectReference") }}
+  {{- if $__imagePullSecrets }}
     {{- nindent 0 "" -}}imagePullSecrets:
-      {{- range $v := $__imagePullSecretsList | uniq }}
-        {{- nindent 0 "" -}}- {{ include "definitions.LocalObjectReference" $v | trim }}
-      {{- end }}
+    {{- $__imagePullSecrets | nindent 0 }}
   {{- end }}
-{{- end }}
 
-{{- if or ._CTX.nodeName .Values.nodeName }}
-  {{- nindent 0 "" -}}nodeName: {{ coalesce ._CTX.nodeName .Values.nodeName }}
-{{- end }}
-
-{{- if or ._CTX.nodeSelector .Values.nodeSelector }}
-  {{- nindent 0 "" -}}nodeSelector:
-    {{- toYaml (coalesce ._CTX.nodeSelector .Values.nodeSelector) | nindent 2 }}
-{{- end }}
-
-{{- if or ._CTX.restartPolicy .Values.restartPolicy }}
-  {{- $__restartPolicyList := list "Always" "OnFailure" "Never" }}
-  {{- if or (mustHas ._CTX.restartPolicy $__restartPolicyList) (mustHas .Values.restartPolicy $__restartPolicyList) }}
-    {{- nindent 0 "" -}}restartPolicy: {{ coalesce ._CTX.restartPolicy .Values.restartPolicy "Always" }}
+  {{- $__nodeName := include "base.string" (coalesce .Context.nodeName .Values.nodeName) }}
+  {{- if $__nodeName }}
+    {{- nindent 0 "" -}}nodeName: {{ $__nodeName }}
   {{- end }}
-{{- end }}
 
-{{- if or ._CTX.schedulerName .Values.schedulerName }}
-  {{- nindent 0 "" -}}schedulerName: {{ coalesce ._CTX.schedulerName .Values.schedulerName "default-scheduler" }}
-{{- end }}
+  {{- $__nodeSelector := dict }}
+  {{- $__clean := dict }}
+  {{- $__validOnly := false }}
+  {{- if kindIs "map" .Context.nodeSelector }}
+    {{- $__validOnly = dig "validOnly" false .Context.nodeSelector }}
+    {{- $__clean = mustMerge $__clean (omit .Context.nodeSelector "validOnly") }}
+  {{- end }}
+  {{- if kindIs "map" .Values.nodeSelector }}
+    {{- if not $__validOnly }}
+      {{- $__clean = mustMerge $__clean (omit .Values.nodeSelector "validOnly") }}
+    {{- end }}
+  {{- end }}
+  {{- if $__clean }}
+    {{- nindent 0 "" -}}nodeSelector:
+      {{- toYaml $__clean | nindent 2 }}
+  {{- end }}
 
-{{- if or ._CTX.serviceAccountName .Values.serviceAccountName }}
-  {{- nindent 0 "" -}}serviceAccountName: {{ coalesce ._CTX.serviceAccountName .Values.serviceAccountName "default" }}
-{{- end }}
+  {{- $__restartPolicyAllowed := list "Always" "OnFailure" "Never" }}
+  {{- $__restartPolicyForJobAllowed := list "OnFailure" "Never" }}
+  {{- $__restartPolicy := include "base.toa" (coalesce .Context.restartPolicy .Values.restartPolicy) }}
+  {{- if eq ._kind "Job" }}
+    {{- if mustHas $__restartPolicy $__restartPolicyForJobAllowed }}
+      {{- nindent 0 "" -}}restartPolicy: {{ coalesce $__restartPolicy "Always"  }}
+    {{- end }}
+  {{- else }}
+    {{- if mustHas $__restartPolicy $__restartPolicyAllowed }}
+      {{- nindent 0 "" -}}restartPolicy: {{ coalesce $__restartPolicy "Always"  }}
+    {{- end }}
+  {{- end }}
 
-{{- if or ._CTX.hostPID .Values.hostPID ._CTX.shareProcessNamespace .Values.shareProcessNamespace }}
-  {{- if or (kindIs "bool" ._CTX.hostPID) (kindIs "bool" .Values.hostPID) (kindIs "bool" ._CTX.shareProcessNamespace) (kindIs "bool" .Values.shareProcessNamespace) }}
-    {{- if and (or ._CTX.hostPID .Values.hostPID) (not (or ._CTX.shareProcessNamespace .Values.shareProcessNamespace)) }}
-      {{- nindent 0 "" -}}hostPID: true
-    {{- else if and (or ._CTX.shareProcessNamespace .Values.shareProcessNamespace) (not (or ._CTX.hostPID .Values.hostPID)) }}
-      {{- nindent 0 "" -}}shareProcessNamespace: true
+  {{- $__schedulerName := include "base.string" (coalesce .Context.schedulerName .Values.schedulerName) }}
+  {{- if $__schedulerName }}
+    {{- nindent 0 "" -}}schedulerName: {{ coalesce $__schedulerName "default-scheduler" }}
+  {{- end }}
+
+  {{- $__serviceAccountName := include "base.string" (coalesce .Context.serviceAccountName .Values.serviceAccountName) }}
+  {{- if $__serviceAccountName }}
+    {{- nindent 0 "" -}}serviceAccountName: {{ $__serviceAccountName }}
+  {{- end }}
+
+  {{- $__hostPID := include "base.bool" (coalesce .Context.hostPID .Values.hostPID) }}
+  {{- $__shareProcessNamespace := include "base.bool" (coalesce .Context.shareProcessNamespace .Values.shareProcessNamespace) }}
+  {{- if or $__hostPID $__shareProcessNamespace }}
+    {{- if and $__hostPID (not $__shareProcessNamespace) }}
+      {{- nindent 0 "" -}}hostPID: {{ $__hostPID }}
+    {{- else if and $__shareProcessNamespace (not $__hostPID) }}
+      {{- nindent 0 "" -}}shareProcessNamespace: {{ $__shareProcessNamespace }}
     {{- else }}
       {{- fail "HostPID and ShareProcessNamespace cannot both be set" }}
     {{- end }}
-  {{- else }}
-    {{- fail "HostPID and ShareProcessNamespace must be true or false" }}
-  {{- end }}
-{{- end }}
-
-{{- if or ._CTX.subdomain .Values.subdomain }}
-  {{- nindent 0 "" -}}subdomain: {{ coalesce ._CTX.subdomain .Values.subdomain }}
-{{- end }}
-
-{{- if or (gt (int ._CTX.terminationGracePeriodSeconds) 0) (gt (int .Values.terminationGracePeriodSeconds) 0) }}
-  {{- nindent 0 "" -}}terminationGracePeriodSeconds: {{ int (coalesce ._CTX.terminationGracePeriodSeconds .Values.terminationGracePeriodSeconds 30) }}
-{{- end }}
-
-{{- if or ._CTX.nodeAffinity .Values.nodeAffinity ._CTX.podAffinity .Values.podAffinity ._CTX.podAntiAffinity .Values.podAntiAffinity }}
-  {{- $__affinityDict := dict "nodeAffinity" "" "podAffinity" "" "podAntiAffinity" "" }}
-
-  {{- $__nodeAffinityDict := dict }}
-  {{- $__podAffinityDict := dict }}
-  {{- $__podAntiAffinityDict := dict }}
-
-  {{- if ._CTX.nodeAffinity }}
-    {{- $__nodeAffinityDict = merge $__nodeAffinityDict ._CTX.nodeAffinity }}
-  {{- end }}
-  {{- if .Values.nodeAffinity }}
-    {{- $__nodeAffinityDict = merge $__nodeAffinityDict .Values.nodeAffinity }}
-  {{- end }}
-  {{- if $__nodeAffinityDict }}
-    {{- $_ := set $__affinityDict "nodeAffinity" (include "definitions.NodeAffinity" $__nodeAffinityDict) }}
   {{- end }}
 
-  {{- if ._CTX.podAffinity }}
-    {{- $__podAffinityDict = merge $__podAffinityDict ._CTX.podAffinity }}
-  {{- end }}
-  {{- if .Values.podAffinity }}
-    {{- $__podAffinityDict = merge $__podAffinityDict .Values.podAffinity }}
-  {{- end }}
-  {{- if $__podAffinityDict }}
-    {{- $_ := set $__affinityDict "podAffinity" (include "definitions.PodAffinity" $__podAffinityDict) }}
+  {{- $__subdomain := include "base.string" (coalesce .Context.subdomain .Values.subdomain) }}
+  {{- if $__subdomain }}
+    {{- nindent 0 "" -}}subdomain: {{ $__subdomain }}
   {{- end }}
 
-  {{- if ._CTX.podAntiAffinity }}
-    {{- $__podAntiAffinityDict = merge $__podAntiAffinityDict ._CTX.podAntiAffinity }}
-  {{- end }}
-  {{- if .Values.podAntiAffinity }}
-    {{- $__podAntiAffinityDict = merge $__podAntiAffinityDict .Values.podAntiAffinity }}
-  {{- end }}
-  {{- if $__podAntiAffinityDict }}
-    {{- $_ := set $__affinityDict "podAntiAffinity" (include "definitions.PodAntiAffinity" $__podAntiAffinityDict) }}
+  {{- $__terminationGracePeriodSeconds := include "base.int.zero" (pluck "terminationGracePeriodSeconds" .Context .Values) }}
+  {{- if $__terminationGracePeriodSeconds }}
+    {{- nindent 0 "" -}}terminationGracePeriodSeconds: {{ coalesce $__terminationGracePeriodSeconds 30 }}
   {{- end }}
 
-  {{- if or $__affinityDict.nodeAffinity $__affinityDict.podAffinity $__affinityDict.podAntiAffinity }}
+  {{- $__nodeAffinity := dict }}
+  {{- $__nodeAffinitySrc := pluck "nodeAffinity" .Context .Values }}
+  {{- range ($__nodeAffinitySrc | mustUniq | mustCompact) }}
+    {{- if kindIs "map" . }}
+      {{- $__nodeAffinity = mustMerge $__nodeAffinity . }}
+    {{- end }}
+  {{- end }}
+  {{- $__podAffinity := dict }}
+  {{- $__podAffinitySrc := pluck "podAffinity" .Context .Values }}
+  {{- range ($__podAffinitySrc | mustUniq | mustCompact) }}
+    {{- if kindIs "map" . }}
+      {{- $__podAffinity = mustMerge $__podAffinity . }}
+    {{- end }}
+  {{- end }}
+  {{- $__podAntiAffinity := dict }}
+  {{- $__podAntiAffinitySrc := pluck "podAntiAffinity" .Context .Values }}
+  {{- range ($__podAntiAffinitySrc | mustUniq | mustCompact) }}
+    {{- if kindIs "map" . }}
+      {{- $__podAntiAffinity = mustMerge $__podAntiAffinity . }}
+    {{- end }}
+  {{- end }}
+  {{- $__affinity := include "definitions.Affinity" (dict "nodeAffinity" $__nodeAffinity "podAffinity" $__podAffinity "podAntiAffinity" $__podAntiAffinity) }}
+  {{- if $__affinity }}
     {{- nindent 0 "" -}}affinity:
-    {{- if $__affinityDict.nodeAffinity }}
-      {{- nindent 2 "" -}}  nodeAffinity:
-        {{- get $__affinityDict "nodeAffinity" | indent 4 }}
-    {{- end }}
-    {{- if $__affinityDict.podAffinity }}
-      {{- nindent 2 "" -}}  podAffinity:
-        {{- get $__affinityDict "podAffinity" | indent 4 }}
-    {{- end }}
-    {{- if $__affinityDict.podAntiAffinity }}
-      {{- nindent 2 "" -}}  podAntiAffinity:
-        {{- get $__affinityDict "podAntiAffinity" | indent 4 }}
-    {{- end }}
-  {{- end }}
-{{- end }}
-
-{{- if or ._CTX.hostAliases .Values.hostAliases }}
-  {{- $__regexHostList := "^((2(5[0-5]|[0-4]\\d))|[0-1]?\\d{1,2})(\\.((2(5[0-5]|[0-4]\\d))|[0-1]?\\d{1,2})){3}(\\s+[a-zA-Z0-9][-a-zA-Z0-9]{0,62}(\\.[a-zA-Z0-9][-a-zA-Z0-9]{0,62})+)+$" }}
-
-  {{- $__hostList := list }}
-  {{- $__hostDict := dict }}
-
-  {{- if ._CTX.hostAliases }}
-    {{- if kindIs "slice" ._CTX.hostAliases }}
-      {{- $__hostList = concat $__hostList ._CTX.hostAliases }}
-    {{- else if kindIs "map" ._CTX.hostAliases }}
-      {{- $__hostDict = mustMergeOverwrite $__hostDict ._CTX.hostAliases }}
-    {{- else if kindIs "string" ._CTX.hostAliases }}
-      {{- if not (mustRegexMatch $__regexHostList ._CTX.hostAliases) }}
-        {{- fail "Not a standard format, refer to the /etc/hosts file - 1" }}
-      {{- end }}
-      {{- $__hostList = mustAppend $__hostList ._CTX.hostAliases }}
-    {{- end }}
+      {{- $__affinity | indent 2 }}
   {{- end }}
 
-  {{- if .Values.hostAliases }}
-    {{- if kindIs "slice" .Values.hostAliases }}
-      {{- $__hostList = concat $__hostList .Values.hostAliases }}
-    {{- else if kindIs "map" .Values.hostAliases }}
-      {{- $__hostDict = mustMergeOverwrite $__hostDict .Values.hostAliases }}
-    {{- else if kindIs "string" .Values.hostAliases }}
-      {{- if not (mustRegexMatch $__regexHostList .Values.hostAliases) }}
-        {{- fail "Not a standard format, refer to the /etc/hosts file - 2" }}
-      {{- end }}
-      {{- $__hostList = mustAppend $__hostList .Values.hostAliases }}
+  {{- $__hostAlias := list }}
+  {{- $__clean := list }}
+  {{- $__cleanDict := dict }}
+  {{- $__hostAliasesSrc := pluck "hostAliases" .Context .Values }}
+  {{- range ($__hostAliasesSrc | mustUniq | mustCompact) }}
+    {{- if kindIs "string" . }}
+      {{- $__clean = mustAppend $__clean . }}
+    {{- else if kindIs "slice" . }}
+      {{- $__clean = concat $__clean . }}
+    {{- else if kindIs "map" . }}
+      {{- $__cleanDict = mustMerge $__cleanDict . }}
     {{- end }}
   {{- end }}
-
-  {{- if or $__hostList $__hostDict }}
+  {{- range $k, $v := $__cleanDict }}
+    {{- $__clean = mustAppend $__clean (dict $k $v) }}
+  {{- end }}
+  {{- range $__clean | mustUniq | mustCompact }}
+    {{- $__hostAlias = mustAppend $__hostAlias (include "definitions.HostAlias" . | fromYaml) }}
+  {{- end }}
+  {{- if $__hostAlias }}
     {{- nindent 0 "" -}}hostAliases:
-    {{- if $__hostList }}
-      {{- include "definitions.HostAlias" ($__hostList | uniq) | indent 2 }}
+    {{- toYaml $__hostAlias | nindent 0 }}
+  {{- end }}
+
+  {{- $__clean := dict }}
+  {{- $__securityContextSrc := pluck "securityContext" .Context .Values }}
+  {{- range ($__securityContextSrc | mustUniq | mustCompact) }}
+    {{- if kindIs "map" . }}
+      {{- $__clean = mustMerge $__clean . }}
     {{- end }}
-    {{- if $__hostDict }}
-      {{- include "definitions.HostAlias" $__hostDict | indent 2 }}
-    {{- end }}
   {{- end }}
-{{- end }}
-
-{{- if or ._CTX.securityContext .Values.securityContext }}
-  {{- $__securityContextDict := dict }}
-
-  {{- if .Values.securityContext }}
-    {{- $__securityContextDict = mustMergeOverwrite $__securityContextDict .Values.securityContext }}
-  {{- end }}
-
-  {{- if ._CTX.securityContext }}
-    {{- $__securityContextDict = mustMergeOverwrite $__securityContextDict ._CTX.securityContext }}
-  {{- end }}
-
-  {{- $__securityContext := include "definitions.PodSecurityContext" $__securityContextDict }}
+  {{- $__securityContext := include "definitions.PodSecurityContext" $__clean }}
   {{- if $__securityContext }}
     {{- nindent 0 "" -}}securityContext:
     {{- $__securityContext | indent 2 }}
   {{- end }}
-{{- end }}
 
-{{- if or ._CTX.tolerations .Values.tolerations }}
-  {{- $__tolerationsList := list }}
-
-  {{- if ._CTX.tolerations }}
-    {{- $__tolerationsList = concat $__tolerationsList ._CTX.tolerations }}
+  {{- $__tolerations := list }}
+  {{- $__clean := list }}
+  {{- $__tolerationsSrc := pluck "tolerations" .Context .Values }}
+  {{- range ($__tolerationsSrc | mustUniq | mustCompact) }}
+    {{- if kindIs "slice" . }}
+      {{- $__clean = concat $__clean . }}
+    {{- end }}
   {{- end }}
-
-  {{- if .Values.tolerations }}
-    {{- $__tolerationsList = concat $__tolerationsList .Values.tolerations }}
+  {{- range $__clean | mustUniq | mustCompact }}
+    {{- $__tolerations = mustAppend $__tolerations (include "definitions.Toleration" . | fromYaml) }}
   {{- end }}
-
-  {{- $__tolerations := include "definitions.Toleration" ($__tolerationsList | uniq) }}
   {{- if $__tolerations }}
     {{- nindent 0 "" -}}tolerations:
-    {{- $__tolerations | indent 0 }}
-  {{- end }}
-{{- end }}
-
-{{- if or ._CTX.volumes .Values.volumes }}
-  {{- $__volumesDict := dict }}
-
-  {{- if ._CTX.volumes }}
-    {{- $__volumesDict = mustMergeOverwrite $__volumesDict ._CTX.volumes }}
+    {{- toYaml $__tolerations | nindent 0 }}
   {{- end }}
 
-  {{- if .Values.volumes }}
-    {{- $__volumesDict = mustMergeOverwrite $__volumesDict .Values.volumes }}
+  {{- $__volumes := list }}
+  {{- $__clean := list }}
+  {{- $__volumesSrc := pluck "volumes" .Context .Values }}
+  {{- range ($__volumesSrc | mustUniq | mustCompact) }}
+    {{- if kindIs "slice" . }}
+      {{- $__clean = concat $__clean . }}
+    {{- else if kindIs "map" . }}
+      {{- range $k, $v := . }}
+        {{- $__clean = mustAppend $__clean (dict $k $v) }}
+      {{- end }}
+    {{- end }}
   {{- end }}
-
-  {{- $__volumes := include "configStorage.Volume" $__volumesDict }}
+  {{- range $__clean | mustUniq | mustCompact }}
+    {{- $__volumes = mustAppend $__volumes (include "configStorage.Volume" . | fromYaml) }}
+  {{- end }}
   {{- if $__volumes }}
     {{- nindent 0 "" -}}volumes:
-    {{- $__volumes | indent 0 }}
+    {{- toYaml $__volumes | nindent 0 }}
   {{- end }}
-{{- end }}
 
-{{- if and ._CTX.containers (kindIs "slice" ._CTX.containers) }}
-  {{- $_ := set . "__isInitContainer" false }}
+  {{- $__containers := list }}
+  {{- $__clean := list }}
+  {{- if kindIs "slice" .Context.containers }}
+    {{- $__clean = concat $__clean .Context.containers }}
+  {{- else if kindIs "map" .Context.containers }}
+    {{- $__clean = mustAppend $__clean .Context.containers }}
+  {{- end }}
+  {{- range $__clean | mustUniq | mustCompact }}
+    {{- $__containers = mustAppend $__containers (include "workloads.Container" (dict "container" . "isInitContainer" false "Values" $.Values "Files" $.Files "Chart" $.Chart "Release" $.Release "Context" $.Context) | fromYaml) }}
+  {{- end }}
+  {{- if $__containers }}
+    {{- nindent 0 "" -}}containers:
+    {{- toYaml $__containers | nindent 0 }}
+  {{- end }}
 
-  {{- nindent 0 "" -}}containers:
-  {{- include "workloads.Container" . | indent 0 }}
-{{- end }}
-
-{{- if and ._CTX.initContainers (kindIs "slice" ._CTX.initContainers) }}
-  {{- $_ := set . "__isInitContainer" true }}
-
-  {{- nindent 0 "" -}}initContainers:
-  {{- include "workloads.Container" . | indent 0 }}
-{{- end }}
+  {{- $__initContainers := list }}
+  {{- $__clean := list }}
+  {{- if kindIs "slice" .Context.initContainers }}
+    {{- $__clean = concat $__clean .Context.initContainers }}
+  {{- else if kindIs "map" .Context.initContainers }}
+    {{- $__clean = mustAppend $__clean .Context.initContainers }}
+  {{- end }}
+  {{- range $__clean | mustUniq | mustCompact }}
+    {{- $__initContainers = mustAppend $__initContainers (include "workloads.Container" (dict "container" . "isInitContainer" true "Values" $.Values "Files" $.Files "Chart" $.Chart "Release" $.Release "Context" $.Context) | fromYaml) }}
+  {{- end }}
+  {{- if $__initContainers }}
+    {{- nindent 0 "" -}}initContainers:
+    {{- toYaml $__initContainers | nindent 0 }}
+  {{- end }}
 {{- end }}

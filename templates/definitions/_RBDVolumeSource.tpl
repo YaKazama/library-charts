@@ -4,37 +4,51 @@
   - https://github.com/kubernetes/examples/tree/master/volumes/rbd
 */ -}}
 {{- define "definitions.RBDVolumeSource" -}}
-  {{- $__fsTypeList := list "ext4" "xfs" "ntfs" }}
-
   {{- with . }}
-    {{- if .monitors }}
+    {{- $__fsTypeAllowed := list "ext4" "xfs" "ntfs" }}
+    {{- $__fsType := include "base.string" .fsType }}
+    {{- if mustHas $__fsType $__fsTypeAllowed }}
+      {{- nindent 0 "" -}}fsType: {{ coalesce $__fsType "ext4" }}
+    {{- else }}
+      {{- fail "definitions.RBDVolumeSource .fsType not found" }}
+    {{- end }}
+
+    {{- $__image := include "base.string" .image }}
+    {{- if $__image }}
+      {{- nindent 0 "" -}}image: {{ $__image }}
+    {{- end }}
+
+    {{- $__keyring := include "base.fmt" (dict "s" .keyring "r" "^/.*") }}
+    {{- if $__keyring }}
+      {{- nindent 0 "" -}}keyring: {{ coalesce $__keyring "/etc/ceph/keyring" }}
+    {{- end }}
+
+    {{- $__regexSplit := "\\s+|\\s*[\\|,]\\s*" }}
+    {{- $__monitors := include "base.fmt.slice" (dict "s" (list .monitors) "r" $__regexSplit) }}
+    {{- if $__monitors }}
       {{- nindent 0 "" -}}monitors:
-      {{- toYaml .monitors | nindent 0 }}
-    {{- else }}
-      {{- fail "rbd.monitors is Required" }}
+      {{- $__monitors | nindent 0 }}
     {{- end }}
-    {{- if mustHas .fsType $__fsTypeList }}
-      {{- nindent 0 "" -}}fsType: {{ coalesce .fsType "ext4" }}
-    {{- else }}
-      {{- fail "rbd.fsType not found" }}
+
+    {{- $__pool := include "base.string" .pool }}
+    {{- if $__pool }}
+      {{- nindent 0 "" -}}pool: {{ coalesce $__pool "rbd" }}
     {{- end }}
-    {{- if .image }}
-      {{- nindent 0 "" -}}image: {{ .image }}
+
+    {{- $__readOnly := include "base.bool" .readOnly }}
+    {{- if $__readOnly }}
+      {{- nindent 0 "" -}}readOnly: {{ $__readOnly }}
     {{- end }}
-    {{- if .pool }}
-      {{- nindent 0 "" -}}pool: {{ coalesce .pool "rbd" }}
-    {{- end }}
-    {{- if and .readOnly (kindIs "bool" .readOnly) }}
-      {{- nindent 0 "" -}}readOnly: true
-    {{- end }}
-    {{- if .keyring }}
-      {{- nindent 0 "" -}}keyring: {{ coalesce .keyring "/etc/ceph/keyring" }}
-    {{- else if .secretRef }}
+
+    {{- $__secretRef := include "definitions.LocalObjectReference" .secretRef | fromYaml }}
+    {{- if $__secretRef }}
       {{- nindent 0 "" -}}secretRef:
-      {{- include "definitions.LocalObjectReference" .secretRef | indent 2 }}
+        {{- toYaml $__secretRef | nindent 2 }}
     {{- end }}
-    {{- if .user }}
-      {{- nindent 0 "" -}}user: {{ coalesce .user "admin" }}
+
+    {{- $__user := include "base.string" .user }}
+    {{- if $__user }}
+      {{- nindent 0 "" -}}user: {{ coalesce $__user "admin" }}
     {{- end }}
   {{- end }}
 {{- end }}

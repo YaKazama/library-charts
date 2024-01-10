@@ -1,5 +1,58 @@
 {{- define "configStorage.PersistentVolumeClaimSpec" -}}
-  {{- $__accessModesList := list "ReadWriteOnce" "ReadOnlyMany" "ReadWriteMany" "ReadWriteOncePod" }}
+  {{- with . }}
+    {{- $__accessModesAllowed := list "ReadWriteOnce" "ReadOnlyMany" "ReadWriteMany" "ReadWriteOncePod" }}
+    {{- $__regexCheck := "(ReadWriteOnce|ReadOnlyMany|ReadWriteMany|ReadWriteOncePod)" }}
+    {{- $__accessModes := include "base.fmt.slice" (dict "s" (list .accessModes) "c" $__regexCheck) }}
+    {{- if $__accessModes }}
+      {{- nindent 0 "" -}}accessModes:
+      {{- $__accessModes | nindent 0 }}
+    {{- end }}
+
+    {{- $__dataSource := include "definitions.TypedLocalObjectReference" .dataSource | fromYaml }}
+    {{- if $__dataSource }}
+      {{- nindent 0 "" -}}dataSource:
+        {{- toYaml $__dataSource | nindent 2 }}
+    {{- end }}
+
+    {{- $__dataSourceRef := include "definitions.TypedObjectReference" .dataSourceRef | fromYaml }}
+    {{- if $__dataSourceRef }}
+      {{- nindent 0 "" -}}dataSourceRef:
+        {{- toYaml $__dataSourceRef | nindent 2 }}
+    {{- end }}
+
+    {{- $__resources := include "definitions.ResourceRequirements" .resources | fromYaml }}
+    {{- if $__resources }}
+      {{- nindent 0 "" -}}resources:
+        {{- toYaml $__resources | nindent 2 }}
+    {{- end }}
+
+    {{- $__selector := include "definitions.LabelSelector" .selector | fromYaml }}
+    {{- if $__selector }}
+      {{- nindent 0 "" -}}selector:
+        {{- toYaml $__selector | nindent 2 }}
+    {{- end }}
+
+    {{- $__storageClassName := include "base.string.empty" (dict "s" .storageClassName "empty" true) }}
+    {{- if $__storageClassName }}
+      {{- nindent 0 "" -}}storageClassName: {{ $__storageClassName }}
+    {{- end }}
+
+    {{- $__volumeModeAllowed := list "Filesystem" "Block" }}
+    {{- $__volumeMode := include "base.string" .volumeMode }}
+    {{- if mustHas $__volumeMode $__volumeModeAllowed }}
+      {{- nindent 0 "" -}}volumeMode: {{ $__volumeMode }}
+    {{- end }}
+
+    {{- $__volumeName := include "base.string" .volumeName }}
+    {{- if $__volumeName }}
+      {{- nindent 0 "" -}}volumeName: {{ $__volumeName }}
+    {{- end }}
+  {{- end }}
+{{- end }}
+
+
+{{- define "configStorage.PersistentVolumeClaimSpec.old" -}}
+  {{- $__accessModesAllowed := list "ReadWriteOnce" "ReadOnlyMany" "ReadWriteMany" "ReadWriteOncePod" }}
 
   {{- with . }}
     {{- if .accessModes }}
@@ -7,7 +60,7 @@
 
       {{- if kindIs "slice" .accessModes }}
         {{- range .accessModes }}
-          {{- if mustHas . $__accessModesList }}
+          {{- if mustHas . $__accessModesAllowed }}
             {{- $__accessModes = mustAppend $__accessModes . }}
           {{- end }}
         {{- end }}

@@ -1,0 +1,36 @@
+
+PersistentVolumeClaim:
+  helmTesting: true
+  helmLabels: false
+  namespace: xxx
+  nameAlias: name-alias
+  annotations:
+    validOnly: true
+    app.example.com: 123
+  labels:
+    name: ccc
+  persistentVolumeClaim:
+    accessModes: ReadWriteOnce ReadWriteOncePod ReadWriteOncePod
+    storageClassName: "xx"
+    volumeMode: Filesystem
+    volumeName: xxx
+    selector:
+      matchExpressions:
+      - podAffinity3 = 333
+      matchLabels:
+        podAffinity4: 444
+    dataSource:
+      apiGroup: xxx
+      kind: xxx
+      name: xxx
+    dataSourceRef:
+      apiGroup: xxx
+      kind: xxx
+      name: xxx
+      namespace: xxx
+    resources:
+      claims: xxxx
+      limits:
+        storage: 10Gi
+      requests:
+        storage: 10Gi

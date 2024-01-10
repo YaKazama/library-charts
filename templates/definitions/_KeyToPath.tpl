@@ -2,17 +2,22 @@
   reference: https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#keytopath-v1-core
 */ -}}
 {{- define "definitions.KeyToPath" -}}
-  {{- range . }}
-    {{- if .key }}
-      {{- nindent 0 "" -}}- key: {{ .key }}
+  {{- with . }}
+    {{- $__key := include "base.string" .key }}
+    {{- if $__key }}
+      {{- nindent 0 "" -}}key: {{ $__key }}
     {{- else }}
-      {{- fail "KeyToPath.key not found" }}
+      {{- fail "definitions.KeyToPath: key must be exists" }}
     {{- end }}
-    {{- if .mode }}
-      {{- nindent 2 "" -}}  mode: {{ (coalesce .mode 0644) | toString }}
+
+    {{- $__mode := include "base.fmt" (dict "s" (toString .mode) "r" "^(0[0124]{3}|[1-9]?[0-9]|[1-4][0-9]{2}|50[0-9]|51[01])$") }}
+    {{- if $__mode }}
+      {{- nindent 0 "" -}}mode: {{ coalesce $__mode "0644" }}
     {{- end }}
-    {{- if .path }}
-      {{- nindent 2 "" -}}  path: {{ .path }}
+
+    {{- $__path := include "base.string" .path }}
+    {{- if $__path }}
+      {{- nindent 0 "" -}}path: {{ $__path }}
     {{- end }}
   {{- end }}
 {{- end }}

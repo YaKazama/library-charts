@@ -5,17 +5,24 @@
 */ -}}
 {{- define "definitions.SELinuxOptions" -}}
   {{- with . }}
-    {{- if .level }}
-      {{- nindent 0 "" -}}level: {{ .level }}
+    {{- $__level := include "base.string" .level }}
+    {{- if $__level }}
+      {{- nindent 0 "" -}}level: {{ $__level }}
     {{- end }}
-    {{- if .role }}
-      {{- nindent 0 "" -}}role: {{ .role }}
+
+    {{- $__role := include "base.string" .role }}
+    {{- if $__role }}
+      {{- nindent 0 "" -}}role: {{ $__role }}
     {{- end }}
-    {{- if .type }}
-      {{- nindent 0 "" -}}type: {{ .type }}
+
+    {{- $__type := include "base.string" .type }}
+    {{- if $__type }}
+      {{- nindent 0 "" -}}type: {{ $__type }}
     {{- end }}
-    {{- if .user }}
-      {{- nindent 0 "" -}}user: {{ .user }}
+
+    {{- $__user := include "base.string" .user }}
+    {{- if $__user }}
+      {{- nindent 0 "" -}}user: {{ $__user }}
     {{- end }}
   {{- end }}
 {{- end }}

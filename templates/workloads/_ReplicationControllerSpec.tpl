@@ -1,15 +1,51 @@
 {{- define "workloads.ReplicationControllerSpec" -}}
-  {{- if or ._CTX.minReadySeconds (kindIs "float64" ._CTX.minReadySeconds) .Values.minReadySeconds (kindIs "float64" .Values.minReadySeconds) }}
-    {{- nindent 0 "" -}}minReadySeconds: {{ coalesce (toString ._CTX.minReadySeconds) (toString .Values.minReadySeconds) (toString 0) }}
+  {{- $__minReadySeconds := include "base.int" (coalesce .Context.minReadySeconds .Values.minReadySeconds) }}
+  {{- if $__minReadySeconds }}
+    {{- nindent 0 "" -}}minReadySeconds: {{ $__minReadySeconds }}
   {{- end }}
 
-  {{- if or or ._CTX.replicas (kindIs "float64" ._CTX.replicas) .Values.replicas (kindIs "float64" .Values.replicas) }}
-    {{- nindent 0 "" -}}replicas: {{ coalesce (toString ._CTX.replicas) (toString .Values.replicas) (toString 1) }}
+  {{- $__replicas := include "base.int" (coalesce .Context.replicas .Values.replicas) }}
+  {{- if $__replicas }}
+    {{- nindent 0 "" -}}replicas: {{ $__replicas }}
   {{- end }}
 
-  {{- nindent 0 "" -}}selector:
-    {{- include "definitions.LabelSelector" . | indent 2 }}
+  {{- $__clean := dict "matchExpressions" list "matchLabels" dict }}
+  {{- $__selectorSrc := pluck "selector" .Context .Values }}
+  {{- range ($__selectorSrc | mustUniq | mustCompact) }}
+    {{- $__valMatchExpressions := list }}
+    {{- $__valMatchLabels := dict }}
 
-  {{- nindent 0 "" -}}template:
-    {{- include "metadata.PodTemplateSpec" . | indent 2 }}
+    {{- if kindIs "map" . }}
+      {{- if kindIs "slice" .matchExpressions }}
+        {{- $__valMatchExpressions = concat $__valMatchExpressions .matchExpressions }}
+      {{- end }}
+      {{- if kindIs "map" .matchLabels }}
+        {{- $__valMatchLabels = mustMerge $__valMatchLabels .matchLabels }}
+      {{- end }}
+    {{- else if kindIs "slice" . }}
+      {{- range . }}
+        {{- if kindIs "map" . }}
+          {{- if kindIs "slice" .matchExpressions }}
+            {{- $__valMatchExpressions = concat $__valMatchExpressions .matchExpressions }}
+          {{- end }}
+          {{- if kindIs "map" .matchLabels }}
+            {{- $__valMatchLabels = mustMerge $__valMatchLabels .matchLabels }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
+    {{- end }}
+    {{- $_ := set $__clean "matchExpressions" (concat $__clean.matchExpressions $__valMatchExpressions) }}
+    {{- $_ := set $__clean "matchLabels" (mustMerge $__clean.matchLabels $__valMatchLabels) }}
+  {{- end }}
+  {{- $__selector := include "definitions.LabelSelector" $__clean | fromYaml }}
+  {{- if $__selector }}
+    {{- nindent 0 "" -}}selector:
+      {{- toYaml $__selector | nindent 2 }}
+  {{- end }}
+
+  {{- $__template := include "metadata.PodTemplateSpec" . | fromYaml }}
+  {{- if $__template }}
+    {{- nindent 0 "" -}}template:
+      {{- toYaml $__template | nindent 2 }}
+  {{- end }}
 {{- end }}

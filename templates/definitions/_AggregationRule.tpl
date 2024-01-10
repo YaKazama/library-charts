@@ -1,10 +1,11 @@
 {{- define "definitions.AggregationRule" -}}
-  {{- $__aggregationRule := list }}
-
-  {{- $__aggregationRule = mustAppend $__aggregationRule (include "definitions.LabelSelector" . | fromYaml) }}
-  {{- $__aggregationRule = mustCompact (mustUniq $__aggregationRule) }}
-  {{- if $__aggregationRule }}
-    {{- nindent 0 "" -}}clusterRoleSelectors:
-    {{- toYaml $__aggregationRule | nindent 0 }}
+  {{- with . }}
+    {{- $__clusterRoleSelectors := list }}
+    {{- $__clusterRoleSelectors = mustAppend $__clusterRoleSelectors (include "definitions.LabelSelector" .clusterRoleSelectors | fromYaml) }}
+    {{- $__clusterRoleSelectors = $__clusterRoleSelectors | mustUniq | mustCompact }}
+    {{- if $__clusterRoleSelectors }}
+      {{- nindent 0 "" -}}clusterRoleSelectors:
+      {{- toYaml $__clusterRoleSelectors | nindent 0 }}
+    {{- end }}
   {{- end }}
 {{- end }}

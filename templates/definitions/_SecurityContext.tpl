@@ -1,51 +1,62 @@
 {{- define "definitions.SecurityContext" -}}
   {{- with . }}
-    {{- if and .allowPrivilegeEscalation (kindIs "bool" .allowPrivilegeEscalation) }}
-      {{- nindent 0 "" -}}allowPrivilegeEscalation: true
+    {{- $__allowPrivilegeEscalation := include "base.bool" .allowPrivilegeEscalation }}
+    {{- if $__allowPrivilegeEscalation }}
+      {{- nindent 0 "" -}}allowPrivilegeEscalation: {{ $__allowPrivilegeEscalation }}
     {{- end }}
 
-    {{- if .capabilities }}
+    {{- $__capabilities := include "definitions.Capabilities" .capabilities | fromYaml }}
+    {{- if $__capabilities }}
       {{- nindent 0 "" -}}capabilities:
-      {{- toYaml .capabilities | nindent 2 }}
+        {{- toYaml $__capabilities | nindent 2 }}
     {{- end }}
 
-    {{- if and .privileged (kindIs "bool" .privileged) }}
-      {{- nindent 0 "" -}}privileged: true
+    {{- $__privileged := include "base.bool" .privileged }}
+    {{- if $__privileged }}
+      {{- nindent 0 "" -}}privileged: {{ $__privileged }}
     {{- end }}
 
-    {{- if .procMount }}
-      {{- nindent 0 "" -}}procMount: {{ coalesce .procMount "DefaultProcMount" }}
+    {{- $__procMount := include "base.string" .procMount }}
+    {{- if $__procMount }}
+      {{- nindent 0 "" -}}procMount: {{ coalesce $__procMount "DefaultProcMount" }}
     {{- end }}
 
-    {{- if and .readOnlyRootFilesystem (kindIs "bool" .readOnlyRootFilesystem) }}
-      {{- nindent 0 "" -}}readOnlyRootFilesystem: true
+    {{- $__readOnlyRootFilesystem := include "base.bool" .readOnlyRootFilesystem }}
+    {{- if $__readOnlyRootFilesystem }}
+      {{- nindent 0 "" -}}readOnlyRootFilesystem: {{ $__readOnlyRootFilesystem }}
     {{- end }}
 
-    {{- if and .runAsGroup (ge (int .runAsGroup) 0) }}
-      {{- nindent 0 "" -}}runAsGroup: {{ int .runAsGroup }}
+    {{- $__runAsGroup := include "base.int.zero" (list .runAsGroup) }}
+    {{- if $__runAsGroup }}
+      {{- nindent 0 "" -}}runAsGroup: {{ $__runAsGroup }}
     {{- end }}
 
-    {{- if and .runAsNonRoot (kindIs "bool" .runAsNonRoot) }}
-      {{- nindent 0 "" -}}runAsNonRoot: true
+    {{- $__runAsNonRoot := include "base.bool" .runAsNonRoot }}
+    {{- if $__runAsNonRoot }}
+      {{- nindent 0 "" -}}runAsNonRoot: {{ $__runAsNonRoot }}
     {{- end }}
 
-    {{- if and .runAsUser (ge (int .runAsUser) 0) }}
-      {{- nindent 0 "" -}}runAsUser: {{ int .runAsUser }}
+    {{- $__runAsUser := include "base.int.zero" (list .runAsUser) }}
+    {{- if $__runAsUser }}
+      {{- nindent 0 "" -}}runAsUser: {{ $__runAsUser }}
     {{- end }}
 
-    {{- if .seLinuxOptions }}
+    {{- $__seLinuxOptions := include "definitions.SELinuxOptions" .seLinuxOptions | fromYaml }}
+    {{- if $__seLinuxOptions }}
       {{- nindent 0 "" -}}seLinuxOptions:
-      {{- include "definitions.SELinuxOptions" .seLinuxOptions | indent 2 }}
+        {{- toYaml $__seLinuxOptions | nindent 2 }}
     {{- end }}
 
-    {{- if .seccompProfile }}
+    {{- $__seccompProfile := include "definitions.SeccompProfile" .seccompProfile | fromYaml }}
+    {{- if $__seccompProfile }}
       {{- nindent 0 "" -}}seccompProfile:
-      {{- include "definitions.SeccompProfile" .seccompProfile | indent 2 }}
+        {{- toYaml $__seccompProfile | nindent 2 }}
     {{- end }}
 
-    {{- if .windowsOptions }}
+    {{- $__windowsOptions := include "definitions.WindowsSecurityContextOptions" .windowsOptions | fromYaml }}
+    {{- if $__windowsOptions }}
       {{- nindent 0 "" -}}windowsOptions:
-      {{- include "definitions.WindowsSecurityContextOptions" .windowsOptions | indent 2 }}
+      {{- toYaml $__windowsOptions | nindent 2 }}
     {{- end }}
   {{- end }}
 {{- end }}

@@ -1,34 +1,39 @@
 {{- define "definitions.PolicyRule" -}}
   {{- with . }}
-    {{- if .apiGroups }}
+    {{- $__apiGroups := include "base.fmt.slice" (dict "s" (list .apiGroups) "empty" true) }}
+    {{- if $__apiGroups }}
       {{- nindent 0 "" -}}apiGroups:
-      {{- toYaml .apiGroups | nindent 0 }}
+      {{- $__apiGroups | nindent 0 }}
     {{- else }}
-      {{- fail "definitions.PolicyRule: .apiGroups not found" }}
+      {{- fail "definitions.PolicyRule: apiGroups not found." }}
     {{- end }}
 
-    {{- if .resources }}
-      {{- nindent 0 "" -}}resources:
-      {{- toYaml .resources | nindent 0 }}
-    {{- else }}
-      {{- fail "definitions.PolicyRule: .resources not found" }}
-    {{- end }}
-
-    {{- if .verbs }}
-      {{- nindent 0 "" -}}verbs:
-      {{- toYaml .verbs | nindent 0 }}
-    {{- else }}
-      {{- fail "definitions.PolicyRule: .verbs not found" }}
-    {{- end }}
-
-    {{- if .nonResourceURLs }}
+    {{- $__nonResourceURLs := include "base.fmt.slice" (dict "s" (list .nonResourceURLs)) }}
+    {{- if $__nonResourceURLs }}
       {{- nindent 0 "" -}}nonResourceURLs:
-      {{- toYaml .nonResourceURLs | nindent 0 }}
+      {{- $__nonResourceURLs | nindent 0 }}
     {{- end }}
 
-    {{- if .resourceNames }}
+    {{- $__resourceNames := include "base.fmt.slice" (dict "s" (list .resourceNames)) }}
+    {{- if $__resourceNames }}
       {{- nindent 0 "" -}}resourceNames:
-      {{- toYaml .resourceNames | nindent 0 }}
+      {{- $__resourceNames | nindent 0 }}
+    {{- end }}
+
+    {{- $__resources := include "base.fmt.slice" (dict "s" (list .resources)) }}
+    {{- if $__resources }}
+      {{- nindent 0 "" -}}resources:
+      {{- $__resources | nindent 0 }}
+    {{- else }}
+      {{- fail "definitions.PolicyRule: resources not found." }}
+    {{- end }}
+
+    {{- $__verbs := include "base.fmt.slice" (dict "s" (list .verbs)) }}
+    {{- if $__verbs }}
+      {{- nindent 0 "" -}}verbs:
+      {{- $__verbs | nindent 0 }}
+    {{- else }}
+      {{- fail "definitions.PolicyRule: verbs not found." }}
     {{- end }}
   {{- end }}
 {{- end }}

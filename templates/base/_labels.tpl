@@ -1,43 +1,46 @@
 {{- /*
-  variables (priority):
-  - ._CTX.labels .Values.labels
-  variables (bool):
-  - ._CTX.helmLabels .Values.helmLabels: 是否展示内置的 HELM 相关的 Labels
-    - true
-    - false (默认值)
-  reference: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+  此处没有对标签键和值进行正则判断，需用户自行遵守
+
   descr:
-  - 默认会统一添加 name 标签
-  - ._CTX.labels .Values.labels 会进行追加处理，但会覆盖同名 Key 的内容
-  - HELM 相关的 Labels 同样会覆盖 ._CTX.labels .Values.labels 中出现的同名 Key 的内容
+  - 如果用户传入的键值对中存在 name 这个键，则会覆盖默认值（固定的 name 标签）
+  reference:
+  - https://kubernetes.io/zh-cn/docs/concepts/overview/working-with-objects/labels/
 */ -}}
 {{- define "base.labels" -}}
-  {{- $_ := set . "__baseLabels" dict }}
+  {{- $__labels := dict }}
 
-    {{- range $k, $v := ._CTX.labels }}
-      {{- $_ := set $.__baseLabels $k $v }}
+  {{- /*
+    添加固定 Labels
+    descr:
+    - 当 ._kind = "Namespace" 时，默认的 name 标签令依次调用 base.namespace, base.fullname
+  */ -}}
+  {{- if eq ._kind "Namespace" }}
+    {{- $_ := set $__labels "name" (coalesce (include "base.namespace" .) (include "base.fullname" .)) }}
+  {{- else }}
+    {{- $_ := set $__labels "name" (include "base.fullname" .) }}
+  {{- end }}
+
+  {{- /*
+    处理用户传入。键 name 的值会覆盖默认的值
+  */ -}}
+  {{- $__labelsSrc := pluck "labels" .Context .Values }}
+  {{- range $__labelsSrc | mustUniq | mustCompact }}
+    {{- if kindIs "map" . }}
+      {{- $__labels = mustMerge $__labels . }}
     {{- end }}
+  {{- end }}
 
-    {{- range $k, $v := .Values.labels }}
-      {{- $_ := set $.__baseLabels $k $v }}
-    {{- end }}
+  {{- /*
+    添加 HELM 相关的 Labels
+    会覆盖已出现的同名 Key 的内容
+  */ -}}
+  {{- if or .Context.helmLabels .Values.helmLabels }}
+    {{- $_ := set $__labels "helm.sh/chart" (include "base.chart" .) }}
+    {{- $_ := set $__labels "app.kubernetes.io/version" .Chart.AppVersion }}
+    {{- $_ := set $__labels "app.kubernetes.io/managed-by" .Release.Service }}
+  {{- end }}
 
-    {{- /*
-      添加 HELM 相关的 Labels
-      会覆盖已出现的同名 Key 的内容
-    */ -}}
-    {{- if or ._CTX.helmLabels .Values.helmLabels }}
-      {{- $_ := set .__baseLabels "helm.sh/chart" (include "base.chart" .) }}
-      {{- $_ := set .__baseLabels "app.kubernetes.io/version" (.Chart.AppVersion | quote) }}
-      {{- $_ := set .__baseLabels "app.kubernetes.io/managed-by" .Release.Service }}
-    {{- end }}
-
-    {{- nindent 0 "" -}}name: {{ include "base.fullname" . }}
-    {{- if .__baseLabels }}
-      {{- range $k, $v := .__baseLabels }}
-        {{- $k | nindent 0 }}: {{ $v }}
-      {{- end }}
-    {{- end }}
-
-  {{- $_ := unset . "__baseLabels" }}
+  {{- if $__labels }}
+    {{- toYaml $__labels | nindent 0 }}
+  {{- end }}
 {{- end }}
