@@ -8,9 +8,9 @@
   {{- indent 0 "" -}}metadata:
     {{- include "definitions.ObjectMeta" . | trim | nindent 2 }}
 
-  {{- $__spec := include "workloads.JobSpec" . | trim }}
+  {{- $__spec := include "workloads.JobSpec" . | fromYaml }}
   {{- if $__spec }}
     {{- nindent 0 "" -}}spec:
-      {{- $__spec | nindent 2 }}
+      {{- toYaml $__spec | nindent 2 }}
   {{- end }}
 {{- end }}
