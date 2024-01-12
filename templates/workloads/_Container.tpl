@@ -279,7 +279,11 @@
     {{- $__volumeDevicesSrc := pluck "volumeDevices" . $.Context $.Values }}
     {{- range ($__volumeDevicesSrc | mustUniq | mustCompact) }}
       {{- if kindIs "string" . }}
-        {{- $__clean = mustAppend $__clean . }}
+        {{- $__regexSplit := "\\s+" }}
+        {{- $__val := mustRegexSplit $__regexSplit . -1 }}
+        {{- range ($__val | mustUniq | mustCompact) }}
+          {{- $__clean = mustAppend $__clean . }}
+        {{- end }}
       {{- else if kindIs "map" . }}
         {{- with . }}
           {{- if and .name .devicePath }}
@@ -292,7 +296,11 @@
       {{- else if kindIs "slice" . }}
         {{- range . }}
           {{- if kindIs "string" . }}
-            {{- $__clean = mustAppend $__clean . }}
+            {{- $__regexSplit := "\\s+" }}
+            {{- $__val := mustRegexSplit $__regexSplit . -1 }}
+            {{- range ($__val | mustUniq | mustCompact) }}
+              {{- $__clean = mustAppend $__clean . }}
+            {{- end }}
           {{- else if kindIs "map" . }}
             {{- with . }}
               {{- if and .name .devicePath }}
