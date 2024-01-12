@@ -559,6 +559,9 @@
   - unUniq: 是否列表去重. 默认为 false
     - false, 表示不去重
     - true, 表示需要去重
+  - sliceRedirect: 列表是否直接展示. 默认为 false
+  - tom: 是否将结果放到 map 中
+    - 返回的 map 的键固定为 "__tom"
   descr:
   - 应对 string array 格式
   - 返回 join 后的字符串
@@ -571,6 +574,8 @@
   {{- $__atoi := false }}
   {{- $__empty := false }}
   {{- $__unUniq := false }}
+  {{- $__sliceRedirect := false }}
+  {{- $__tom := false }}
 
   {{- $__val := list }}
   {{- $__clean := list }}
@@ -596,16 +601,26 @@
   {{- if .unUniq }}
     {{- $__unUniq = .unUniq }}
   {{- end }}
+  {{- if .sliceRedirect }}
+    {{- $__sliceRedirect = .sliceRedirect }}
+  {{- end }}
+  {{- if .tom }}
+    {{- $__tom = .tom }}
+  {{- end }}
 
   {{- range .s }}
     {{- if kindIs "string" . }}
       {{- $__clean = concat $__clean (mustRegexSplit $__regexSplit . -1) }}
     {{- else if kindIs "slice" . }}
-      {{- range . }}
-        {{- if kindIs "string" . }}
-          {{- $__clean = concat $__clean (mustRegexSplit $__regexSplit . -1) }}
-        {{- else }}
-          {{- $__clean = concat $__clean . }}
+      {{- if $__sliceRedirect }}
+        {{- $__clean = . }}
+      {{- else }}
+        {{- range . }}
+          {{- if kindIs "string" . }}
+            {{- $__clean = concat $__clean (mustRegexSplit $__regexSplit . -1) }}
+          {{- else }}
+            {{- $__clean = concat $__clean . }}
+          {{- end }}
         {{- end }}
       {{- end }}
     {{- else if kindIs "map" . }}
@@ -660,6 +675,9 @@
         {{- $__val = $__valTmp }}
       {{- end }}
 
+      {{- if $__tom }}
+        {{- nindent 0 "" -}}__tom:
+      {{- end }}
       {{- toYaml $__val | nindent 0 }}
     {{- end }}
   {{- end }}
