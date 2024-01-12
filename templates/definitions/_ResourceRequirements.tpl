@@ -22,13 +22,21 @@
     {{- end }}
 
     {{- if .limits }}
-      {{- nindent 0 "" -}}limits:
-        {{- toYaml .limits | nindent 2 }}
+      {{- if kindIs "map" .limits }}
+        {{- nindent 0 "" -}}limits:
+          {{- toYaml .limits | nindent 2 }}
+      {{- else }}
+        {{- fail "definitions.ResourceRequirements: limits not support, please use map." }}
+      {{- end }}
     {{- end }}
 
     {{- if .requests }}
-      {{- nindent 0 "" -}}requests:
-        {{- toYaml .requests | nindent 2 }}
+      {{- if kindIs "map" .requests }}
+        {{- nindent 0 "" -}}requests:
+          {{- toYaml .requests | nindent 2 }}
+      {{- else }}
+        {{- fail "definitions.ResourceRequirements: requests not support, please use map." }}
+      {{- end }}
     {{- end }}
   {{- end }}
 {{- end }}
