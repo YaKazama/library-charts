@@ -4,8 +4,9 @@
 */ -}}
 {{- define "workloads.Container" -}}
   {{- with .container }}
-    {{- $__args := include "base.fmt.slice" (dict "s" (list .args) "r" "\\s+" "sliceRedirect" true) }}
-    {{- $__command := include "base.fmt.slice" (dict "s" (list .command) "r" "\\s+" "sliceRedirect" true) }}
+    {{- $__regexSplit := "\\s+" }}
+    {{- $__args := include "base.fmt.slice" (dict "s" (list .args) "r" $__regexSplit "sliceRedirect" true) }}
+    {{- $__command := include "base.fmt.slice" (dict "s" (list .command) "r" $__regexSplit "sliceRedirect" true) }}
     {{- if and $__args $__command }}
       {{- nindent 0 "" -}}args:
       {{- $__args | nindent 0 }}
