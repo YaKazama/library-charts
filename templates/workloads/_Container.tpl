@@ -188,25 +188,29 @@
     {{- end }}
 
     {{- $__clean := dict }}
+    {{- $__resourcesSrc := pluck "resources" . $.Context $.Values }}
+    {{- range ($__resourcesSrc | mustUniq | mustCompact) }}
+      {{- if kindIs "map" . }}
+        {{- $__clean = mustMerge $__clean . }}
+      {{- end }}
+    {{- end }}
     {{- $__resourcesFilesSrc := pluck "resourcesFiles" . $.Context $.Values }}
     {{- range ($__resourcesFilesSrc | mustUniq | mustCompact) }}
       {{- if kindIs "map" . }}
         {{- $__regexSplit := "\\.|\\:" }}
         {{- range $f, $p := . }}
           {{- $__val := $.Files.Get $f | fromYaml }}
-          {{- range (mustRegexSplit $__regexSplit $p -1) }}
-            {{- $__val = dig . "" $__val }}
+          {{- if $__val }}
+            {{- range (mustRegexSplit $__regexSplit $p -1) }}
+              {{- $__val = dig . "" $__val }}
+            {{- end }}
           {{- end }}
-          {{- $__clean = mustMerge $__clean $__val }}
+          {{- if $__val }}
+            {{- $__clean = mustMerge $__clean $__val }}
+          {{- end }}
         {{- end }}
       {{- else }}
         {{- fail "workloads.Container: resourcesFiles not support, please use map" }}
-      {{- end }}
-    {{- end }}
-    {{- $__resourcesSrc := pluck "resources" . $.Context $.Values }}
-    {{- range ($__resourcesSrc | mustUniq | mustCompact) }}
-      {{- if kindIs "map" . }}
-        {{- $__clean = mustMerge $__clean . }}
       {{- end }}
     {{- end }}
     {{- $__resources := include "definitions.ResourceRequirements" $__clean | fromYaml }}
