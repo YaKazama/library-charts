@@ -556,6 +556,9 @@
   - atoi: 是否将数字字符串转为整型
   - empty: 是否允许出现空字符串 ""
   - separators: 分隔符，用于将列表转为字符串时使用
+  - unUniq: 是否列表去重. 默认为 false
+    - false, 表示不去重
+    - true, 表示需要去重
   descr:
   - 应对 string array 格式
   - 返回 join 后的字符串
@@ -567,6 +570,7 @@
   {{- $__define := "base.slice" }}
   {{- $__atoi := false }}
   {{- $__empty := false }}
+  {{- $__unUniq := false }}
 
   {{- $__val := list }}
   {{- $__clean := list }}
@@ -580,14 +584,17 @@
   {{- if .define }}
     {{- $__define = .define }}
   {{- end }}
+  {{- if .separators }}
+    {{- $__separators = .separators }}
+  {{- end }}
   {{- if .atoi }}
     {{- $__atoi = .atoi }}
   {{- end }}
   {{- if .empty }}
     {{- $__empty = .empty }}
   {{- end }}
-  {{- if .separators }}
-    {{- $__separators = .separators }}
+  {{- if .unUniq }}
+    {{- $__unUniq = .unUniq }}
   {{- end }}
 
   {{- range .s }}
@@ -628,7 +635,9 @@
     {{- $__val = mustAppend $__val $__v }}
   {{- end }}
 
-  {{- $__val = $__val | mustUniq }}
+  {{- if not $__unUniq }}
+    {{- $__val = $__val | mustUniq }}
+  {{- end }}
   {{- if not $__empty }}
     {{- $__val = $__val | mustCompact }}
   {{- end }}
