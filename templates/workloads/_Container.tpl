@@ -401,7 +401,7 @@
 
 
     {{- $__workingDir := include "base.string" (coalesce .workingDir $.Context.workingDir $.Values.workingDir) }}
-    {{- if $__workingDir }}
+    {{- if isAbs $__workingDir }}
       {{- nindent 0 "" -}}workingDir: {{ coalesce $__workingDir "/" }}
     {{- end }}
   {{- end }}
