@@ -261,7 +261,7 @@
     {{- end }}
 
     {{- $__terminationMessagePath := include "base.string" .terminationMessagePath }}
-    {{- if $__terminationMessagePath }}
+    {{- if isAbs $__terminationMessagePath }}
       {{- nindent 0 "" -}}terminationMessagePath: {{ $__terminationMessagePath }}
     {{- end }}
 
