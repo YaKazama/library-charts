@@ -35,10 +35,14 @@
         {{- end }}
       {{- end }}
     {{- else if kindIs "string" .httpHeaders }}
-      {{- $__regexSplit := ":" }}
-      {{- $__val := mustRegexSplit $__regexSplit .httpHeaders -1 }}
-      {{- if eq (len $__val) 2 }}
-        {{- $__clean = mustMerge $__clean (dict (mustFirst $__val) (mustLast $__val)) }}
+      {{- $__regexSplit := "\\s+" }}
+      {{- $__valHeaders := mustRegexSplit $__regexSplit .httpHeaders -1 }}
+      {{- range ($__valHeaders | mustUniq | mustCompact) }}
+        {{- $__regexSplit := ":" }}
+        {{- $__val := mustRegexSplit $__regexSplit . -1 }}
+        {{- if eq (len $__val) 2 }}
+          {{- $__clean = mustMerge $__clean (dict (mustFirst $__val) (mustLast $__val)) }}
+        {{- end }}
       {{- end }}
     {{- end }}
     {{- $__httpHeaders := list }}
