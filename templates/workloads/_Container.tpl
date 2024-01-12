@@ -4,20 +4,8 @@
 */ -}}
 {{- define "workloads.Container" -}}
   {{- with .container }}
-    {{- $__clean := list }}
-    {{- if kindIs "string" .args }}
-      {{- $__clean = mustAppend $__clean .args }}
-    {{- else if kindIs "slice" .args }}
-      {{- $__clean = concat $__clean .args }}
-    {{- end }}
-    {{- $__args := include "base.fmt.slice" (dict "s" $__clean "r" "\\s+" "sliceRedirect" true) }}
-    {{- $__clean := list }}
-    {{- if kindIs "string" .command }}
-      {{- $__clean = mustAppend $__clean .command }}
-    {{- else if kindIs "slice" .command }}
-      {{- $__clean = concat $__clean .command }}
-    {{- end }}
-    {{- $__command := include "base.fmt.slice" (dict "s" $__clean "r" "\\s+" "sliceRedirect" true) }}
+    {{- $__args := include "base.fmt.slice" (dict "s" (list .args) "r" "\\s+" "sliceRedirect" true) }}
+    {{- $__command := include "base.fmt.slice" (dict "s" (list .command) "r" "\\s+" "sliceRedirect" true) }}
     {{- if and $__args $__command }}
       {{- nindent 0 "" -}}args:
       {{- $__args | nindent 0 }}
