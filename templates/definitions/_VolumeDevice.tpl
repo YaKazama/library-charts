@@ -5,7 +5,6 @@
 
     {{- if kindIs "string" . }}
       {{- $__regexSplit := ":" }}
-
       {{- $__val := mustRegexSplit $__regexSplit . -1 }}
       {{- if eq (len $__val) 2 }}
         {{- $__name = mustFirst $__val }}
@@ -30,7 +29,6 @@
       {{- range . }}
         {{- if kindIs "string" . }}
           {{- $__regexSplit := ":" }}
-
           {{- $__val := mustRegexSplit $__regexSplit . -1 }}
           {{- if eq (len $__val) 2 }}
             {{- $__name = mustFirst $__val }}
