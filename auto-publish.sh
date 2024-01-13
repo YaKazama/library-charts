@@ -38,10 +38,12 @@ function publish() {
                 ${cmd_helm} repo index . --url ${index_url}
             fi
 
-            [[ "${ngx_upload}" == "True" ]] && helm_upload_url="${index_url}/upload"
+            if [[ "${ngx_upload}" == "True" ]]; then
+                helm_upload_url="${index_url}/upload"
 
-            curl -XPUT ${helm_upload_url}/${name}-${version}.tgz --data-binary @${name}-${version}.tgz
-            curl -XPUT ${helm_upload_url}/index.yaml --data-binary @index.yaml
+                curl -XPUT ${helm_upload_url}/${name}-${version}.tgz --data-binary @${name}-${version}.tgz
+                curl -XPUT ${helm_upload_url}/index.yaml --data-binary @index.yaml
+            fi
         fi
 
         rm -rf ${name}-${version}.tgz index.yaml
