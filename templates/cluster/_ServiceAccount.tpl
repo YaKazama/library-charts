@@ -14,7 +14,7 @@
   {{- $__imagePullSecrets := include "base.fmt.slice" (dict "s" (pluck "imagePullSecrets" .Context .Values) "define" "definitions.LocalObjectReference") }}
   {{- if $__imagePullSecrets }}
     {{- nindent 0 "" -}}imagePullSecrets:
-    {{- $__imagePullSecrets | nindent 0 }}
+    {{- $__imagePullSecrets | indent 0 }}
   {{- end }}
 
   {{- $__clean := list }}

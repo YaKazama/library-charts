@@ -38,7 +38,7 @@
   {{- $__mountOptions := include "base.fmt.slice" (dict "s" $__mountOptionsSrc) }}
   {{- if $__mountOptions }}
     {{- nindent 0 "" -}}mountOptions:
-    {{- $__mountOptions | nindent 0 }}
+    {{- $__mountOptions | indent 0 }}
   {{- else }}
     {{- fail "configStorage.StorageClass: mountOptions not found" }}
   {{- end }}
