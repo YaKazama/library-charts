@@ -28,12 +28,12 @@
   {{- $__clean := list }}
   {{- $__rulesSrc := pluck "rules" .Context .Values }}
   {{- range ($__rulesSrc | mustUniq | mustCompact) }}
-    {{- if kindIs "slice" . }}
-      {{- $__clean = concat $__clean . }}
+    {{- if kindIs "map" . }}
+      {{- $__clean = mustAppend $__clean (pick . "apiGroups" "resources" "verbs") }}
     {{- else if kindIs "slice" . }}
       {{- range . }}
         {{- if kindIs "map" . }}
-          {{- $__clean = mustMerge $__clean . }}
+          {{- $__clean = mustAppend $__clean (pick . "apiGroups" "resources" "verbs") }}
         {{- end }}
       {{- end }}
     {{- end }}
