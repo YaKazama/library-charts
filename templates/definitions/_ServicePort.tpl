@@ -5,7 +5,6 @@
       {{- nindent 0 "" -}}appProtocol: {{ $__appProtocol }}
     {{- end }}
 
-# name
     {{- $__name := include "base.string" (coalesce .name (printf "svc-%s" (randAlphaNum 8))) }}
     {{- if $__name }}
       {{- nindent 0 "" -}}name: {{ $__name }}
