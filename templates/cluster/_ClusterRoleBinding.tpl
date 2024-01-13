@@ -28,10 +28,14 @@
   {{- range ($__subjectsSrc | mustUniq | mustCompact) }}
     {{- if kindIs "string" . }}
       {{- $__regexStr := "^(User|Group)\\s*\\|.*" }}
-      {{- $__regexSplit := "\\s*\\|\\s*" }}
-      {{- $__val := mustRegexSplit $__regexSplit . -1 }}
-      {{- if eq (len $__val) 2 }}
-        {{- $__clean = mustAppend $__clean (dict "kind" (mustFirst $__val) "name" (mustLast $__val)) }}
+      {{- if mustRegexMatch $__regexStr . }}
+        {{- $__regexSplit := "\\s*\\|\\s*" }}
+        {{- $__val := mustRegexSplit $__regexSplit . -1 }}
+        {{- if eq (len $__val) 2 }}
+          {{- $__clean = mustAppend $__clean (dict "kind" (mustFirst $__val) "name" (mustLast $__val)) }}
+        {{- end }}
+      {{- else }}
+        {{- fail (printf "cluster.ClusterRoleBinding: subjects invalid, Values: %s, Regex: %s" . $__regexStr) }}
       {{- end }}
     {{- else if kindIs "slice" . }}
       {{- $__clean = concat $__clean . }}
