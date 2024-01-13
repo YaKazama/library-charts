@@ -7,7 +7,7 @@
     {{- include "definitions.ObjectMeta" . | trim | nindent 2 }}
 
   {{- $__clean := dict }}
-  {{- $__persistentVolumeSrc := list .Context.spec .Context.persistentVolume .Values.spec .Values.persistentVolume }}
+  {{- $__persistentVolumeSrc := list .Context .Context.spec .Context.persistentVolume .Values .Values.spec .Values.persistentVolume }}
   {{- range $__persistentVolumeSrc | mustUniq | mustCompact }}
     {{- if kindIs "map" . }}
       {{- $__clean = mustMerge $__clean . }}
