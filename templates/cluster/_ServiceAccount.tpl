@@ -23,7 +23,11 @@
     {{- if kindIs "map" . }}
       {{- $__clean = mustAppend $__clean . }}
     {{- else if kindIs "slice" . }}
-      {{- $__clean = concat $__clean . }}
+      {{- range . }}
+        {{- if kindIs "map" . }}
+          {{- $__clean = mustAppend $__clean . }}
+        {{- end }}
+      {{- end }}
     {{- end }}
   {{- end }}
   {{- $__secrets := list }}
