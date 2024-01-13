@@ -1,0 +1,20 @@
+
+ClusterRole:
+  # 相同 Key 会进行合并
+  # slice, map
+  aggregationRule:
+    clusterRoleSelectors:
+      # map
+    - matchLabels:
+        rbac.example.com/aggregate-to-monitoring: "true"
+  rules:
+    # string 分隔符：空格, "|",  ":",  ","
+    # string, slice
+    # 有 * 号，字符串需显示指定双引号
+  - apiGroups: "*"
+    # string 分隔符：空格, "|",  ":",  ","
+    # string, slice
+    resources: pods services
+    # string 分隔符：空格, "|",  ":",  ","
+    # string, slice
+    verbs: get watch list

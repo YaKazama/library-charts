@@ -1,0 +1,4 @@
+
+Pod:
+  # https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#podspec-v1-core
+  # 参考 CronJob.yaml

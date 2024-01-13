@@ -1,0 +1,13 @@
+
+Binding:
+  # 其中的参数，有一些可能会与全局变量冲突，故此处只能使用 target 传值
+  # 相同 Key 会被合并
+  # slice, map
+  target:
+    apiVersion: aaaaff
+    fieldPath: fpff
+    kind: bbbff
+    name: xxxff
+    namespace: default
+    resourceVersion: sssff
+    uid: xxx-xx

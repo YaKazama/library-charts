@@ -1,17 +1,9 @@
 
 StatefulSet:
-  helmTesting: true
-  helmLabels: false
-  namespace: xxx
-  nameAlias: name-alias
-  annotations:
-    validOnly: true
-    app.example.com: 123
-  labels:
-    name: ccc
+  # https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#statefulsetspec-v1-apps
   minReadySeconds: 10
   revisionHistoryLimit: 10
-  # matchExpressions
+  # slice, map
   selector:
     # slice
   - matchExpressions:
@@ -21,12 +13,14 @@ StatefulSet:
   - matchLabels:
      podAntiAffinity2: 222
   activeDeadlineSeconds: 10
+  # map
   strategy:
     rollingUpdate:
       maxSurge: 10%
       maxUnavailable: 1
   start: 0
   ordinals: 10
+  # slice, map
   volumeClaimTemplates:
     name: vct-name1
     accessModes: ReadWriteOnce
@@ -41,6 +35,10 @@ StatefulSet:
       - ReadWriteOnce
       storageClassName: storage-class-name
       storage: 2Gi
+
+  # https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#podspec-v1-core
+  # 参考 CronJob.yaml
+
 volumeClaimTemplates:
 - name: vct-name1
   accessModes: ReadWriteOnce

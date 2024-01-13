@@ -1,0 +1,60 @@
+
+PersistentVolume:
+  # https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#persistentvolumespec-v1-core
+  # persistentVolume 可使用 spec 进行替换，也可以不使用 spec 和 persistentVolume 键直接在 .Context 和 .Values 中定义
+  # 生效顺序：.Context .Context.spec .Context.persistentVolume .Values .Values.spec .Values.persistentVolume
+  # map
+  persistentVolume:
+    accessModes: ReadWriteOnce ReadWriteOncePod ReadWriteOncePod
+    mountOptions: hard nfsvers=4.1 cc,33
+    storageClassName: ""
+    capacity:
+      storage: 10Gi
+    # 参考 CronJob.yaml
+    nodeAffinity:
+      required:
+      - nodeSelectorTerms:
+        - key: xxx
+          operator: In
+          values: a b c
+      - matchFields:
+        - key: xxx
+          operator: In
+          values: a b c
+    cephfs:
+      monitors: 1.1.1.1:6789 1.1.1.2:6789, 1.1.1.3:6789
+      # monitors:
+      # - 1.1.1.1:6789
+      # - 1.1.1.2:6789
+      # - 1.1.1.3:6789
+      path: /
+      readOnly: true
+      secretFile: /etc/ceph/user.secret
+      secretRef:
+        name: aaa
+        namespace: xxx
+      user: admin
+    fc:
+      fsType: ext4
+      lun: 123
+      readOnly: true
+      targetWWNs:
+      - aaa
+    hostPath:
+      type: DirectoryOrCreate
+      path: /aaa
+    nfs:
+      path: /aaa
+      readOnly: true
+      server: x.x.x.x
+    rbd:
+      fsType: ext4
+      image: aaa
+      keyring: /aaaaaa
+      monitors: 1.1.1.1:6789 1.1.1.2:6789 1.1.1.3:6789
+      pool: bbb
+      readOnly: true
+      secretRef:
+        name: sss
+        namespace: xxx
+      user: admin

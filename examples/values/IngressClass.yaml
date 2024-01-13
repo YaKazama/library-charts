@@ -1,15 +1,8 @@
 
 IngressClass:
-  helmTesting: true
-  helmLabels: false
-  namespace: xxx
-  nameAlias: name-alias
-  annotations:
-    validOnly: true
-    app.example.com: 123
-  labels:
-    name: ccc
   controller: xxx
+  # 相同 Key 全直接进行合并
+  # slice, map
   parameters:
   - kind: xx
     name: xx

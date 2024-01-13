@@ -1,14 +1,5 @@
 
 BackendConfig:
-  helmTesting: true
-  helmLabels: false
-  namespace: xxx
-  nameAlias: name-alias
-  annotations:
-    validOnly: true
-    app.example.com: 123
-  labels:
-    name: ccc
   timeoutSec: 40
   connectionDraining:
     drainingTimeoutSec: 60

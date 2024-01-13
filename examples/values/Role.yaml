@@ -1,0 +1,17 @@
+
+Role:
+  # slice, map
+  rules:
+    # string 可用的分隔符：空格, ",", ":", "|"
+    # string, slice
+  - apiGroups: "*"
+    # string 可用的分隔符：空格, ",", ":", "|"
+    # string, slice
+    resources: pods services
+    # string 可用的分隔符：空格, ",", ":", "|"
+    # string, slice
+    verbs: get watch list
+rules:
+  apiGroups: "xx"
+  resources: xxx
+  verbs: xxx

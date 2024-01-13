@@ -1,32 +1,44 @@
 
 Service:
-  helmTesting: true
-  helmLabels: false
-  namespace: xxx
-  nameAlias: name-alias
-  annotations:
-    validOnly: true
-    app.example.com: 123
-  labels:
-    name: ccc
+  # https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#servicespec-v1-core
   allocateLoadBalancerNodePorts: false
   clusterIP: 2.2.2.2
+  # string, slice
   clusterIPs: ""
+  # string, slice
   externalIPs: 1.1.1.1
   externalName: xxx
+  # "Local" "Cluster"
+  # string
   externalTrafficPolicy: Cluster
   healthCheckNodePort: 1
+  # "Local" "Cluster"
+  # string
   internalTrafficPolicy: Local
+  # string, slice
   ipFamilies: 1.1.1.1
-  loadBalancerSourceRanges: 1.1.1.1/32
+  # "SingleStack" "PreferDualStack" "RequireDualStack"
+  # string
+  ipFamilyPolicy: ""
+  # "LoadBalancer"
+  # string
+  loadBalancerClass: ""
+  # string
+  loadBalancerIP: 1.1.1.1
+  # string, slice
+  loadBalancerSourceRanges: 1.1.1.1/32 2.2.2.3/32
   publishNotReadyAddresses: true
   type: ClusterIP
+  # map
   selector:
     a: a
   sessionAffinity: ClientIP
+  # map
   sessionAffinityConfig:
     clientIP: 300
       # timeoutSeconds: 0
+  # 以 port 为键进行合并
+  # map, slice
   ports:
   - appProtocol: xx
     name: xx1

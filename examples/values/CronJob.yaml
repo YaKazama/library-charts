@@ -1,0 +1,1135 @@
+
+CronJob:
+  # name: Context 名称
+  # string
+  name: xxx
+  # fullname: Context 完整名称，会覆盖 name
+  # string
+  fullname: xxx
+  # namespace: 命名空间
+  # string
+  namespace: xxx
+  # annotations: 注释
+  # map
+  annotations:
+    # * validOnly: 是否仅在此处生效，为 true 时不加载全局变量中的 annotations
+    # bool
+    validOnly: false
+    keyN: valueN
+  # ignoreLabels: 是否忽略 labels 。此值会从结果中移除
+  # bool
+  ignoreLabels: false
+  # labels: 标签
+  # map
+  # 会自动添加固定标签 name
+  # 当 kind = "Namespace" 时，配合 ignoreLabels = true 可以忽略固定标签
+  labels:
+    keyN: valueN
+  # helmLabels: 是否加载内置的 HELM 相关的 labels
+  # bool
+  helmLabels: false
+  # helmTesting: 是否允许启用调试，生成 YAML 文件。主要在修复 BUG 或新增功能调试时使用，需要配合 Chart.yaml 中的 type: application 配置一起使用。建议在非正式环境使用
+  # bool
+  helmTesting: false
+  # enable: 是否允许生成 YAML 文件。建议在正式环境使用
+  # bool
+  enable: false
+  # * 别名。用于重命名 fullname、name
+  # string
+  nameAlias: xxx
+
+  # https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#jobtemplatespec-v1-batch
+  # string "Allow" "Forbid" "Replace"
+  concurrencyPolicy: Allow
+  # int
+  failedJobsHistoryLimit: 1
+  # string
+  schedule: "1/12 *,4-9/3 */03,31 * *"
+  # int
+  startingDeadlineSeconds: 1
+  # int
+  successfulJobsHistoryLimit: 3
+  # CronJobSpec JobSpec 都存在，cronJobSuspend 和 jobSuspend 用于消除歧义
+  # bool
+  suspend: false
+  cronJobSuspend: false
+  jobSuspend: false
+  # string
+  timeZone: "UTC"
+
+  # https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#jobspec-v1-batch
+  # JobSpec PodSpec 都存在，jobActiveDeadlineSeconds 和 podActiveDeadlineSeconds 用于消除歧义
+  # int
+  activeDeadlineSeconds: 1
+  # JobSpec 中生效且优先级更高
+  jobActiveDeadlineSeconds: 1
+  # PodSpec 中生效且优先级更高
+  podActiveDeadlineSeconds: 1
+  # int
+  backoffLimit: 6
+  # int
+  backoffLimitPerIndex:
+  # selector 不进行合并，而是合并其中的 matchExpressions 和 matchLabels
+  # 仅识别 matchExpressions 和 matchLabels，其他参数不处理
+  # map, slice
+  selector:
+    # slice
+    matchExpressions:
+    # 基于等值 / 不等值
+    - environment = production
+    - environment1 == production1
+    - tier != frontend
+    # 基于集合
+    - environment2 in (production2, qa2)
+    - tier2 notin (frontend2, backend2)
+    - partition
+    - "!partition1"
+    # 原生
+    - key: key
+      operator: In  # In/NotIn/Exists/DoesNotExist
+      values:
+      - value1
+      - value2
+    # map
+    matchLabels:
+      keyN: valueN
+  # int
+  ttlSecondsAfterFinished: 1
+
+  # https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#podspec-v1-core
+  # affinity:
+  # 仅处理 nodeAffinity podAffinity podAntiAffinity
+  # map
+  nodeAffinity:
+    # map
+    preferred:
+      # weight 为固定关键字，后面的数字表示其权重
+      # map
+      weight1:
+        # 同 selector
+        # slice
+        matchExpressions:
+        - nodeAffinity1 = 111
+        # 同 matchExpressions
+        # slice
+        matchFields:
+        - nodeAffinity2 = 222
+    # map
+    required:
+      matchExpressions:
+      - nodeAffinity1 = 111
+      matchFields:
+      - nodeAffinity2 = 222
+  podAffinity:
+    required:
+      # string
+      topologyKey: kubernetes.io/hostname
+      labelSelector:
+        # 同 selector
+        # map
+        matchExpressions:
+        - podAffinity1 = 111
+        # map
+        matchLabels:
+          podAffinity2: 222
+      namespaceSelector:
+        matchExpressions:
+        - podAffinity3 = 333
+        matchLabels:
+          podAffinity4: 444
+      # string 分隔符：空格, ",", ":", "|"
+      # string, slice
+      namespaces:
+      - aaa
+    preferred:
+      weight1:
+        topologyKey: kubernetes.io/hostname
+        labelSelector:
+          matchExpressions:
+          - podAffinityW1 = W111
+          matchLabels:
+            podAffinityW2: W222
+        namespaceSelector:
+          matchExpressions:
+          - podAffinityW3 = W333
+          matchLabels:
+            podAffinityW4: W444
+        namespaces:
+        - Waaa
+  # 同 podAffinity
+  podAntiAffinity:
+    required:
+      topologyKey: kubernetes.io/hostname
+      labelSelector:
+        matchExpressions:
+        - podAntiAffinity1 = 111
+        matchLabels:
+          podAntiAffinity2: 222
+      namespaceSelector:
+        matchExpressions:
+        - podAntiAffinity3 = 333
+        matchLabels:
+          podAntiAffinity4: 444
+      namespaces:
+      - Antiaaa
+      - Antibbb
+    preferred:
+      weight1:
+        topologyKey: kubernetes.io/hostname
+        labelSelector:
+          matchExpressions:
+          - podAntiAffinityW1 = W111
+          matchLabels:
+            podAntiAffinityW2: W222
+        namespaceSelector:
+          matchExpressions:
+          - podAntiAffinityW3 = W333
+          matchLabels:
+            podAntiAffinityW4: W444
+        namespaces:
+        - AntiWaaa
+        - AntiWbbb
+  # bool
+  automountServiceAccountToken: false
+  # string
+  # "ClusterFirstWithHostNet" "ClusterFirst" "Default" "None"
+  dnsPolicy: ClusterFirst
+  # string 分隔符为空格，且第一段必需是 IP 地址，后续所有以空格分隔的内容都会作为域名被识别
+  #   - 参考 /etc/hosts 文件
+  # string, map, slice
+  # hostAliases:
+  # # 原生
+  # - ip: 5.5.5.5
+  #   hostnames:
+  #   - 5.example.com
+  #   - 55.example.com
+  # # linux /etc/hosts format
+  # - 1.1.1.1 1.example.com 11.example.com
+  # - 2.2.2.2 2.example.com 22.example.com
+  # - 3.3.3.3:
+  #   - 3.example.com
+  #   - 33.example.com
+  # dict
+  #   4.4.4.4:
+  #   - 4.example.com
+  #   - 44.example.com
+  hostAliases: 1.1.1.1 1.example.com 2.example.com
+  # 与 shareProcessNamespace 互斥，不能同时为 true
+  # bool
+  hostPID: false
+  # 与 hostPID 互斥，不能同时为 true
+  # bool
+  shareProcessNamespace: false
+  # string
+  hostname: xxx
+  # string 可用的分隔符：空格, ",", ":", "|"
+  # slice, string
+  # imagePullSecrets:
+  # - xxx
+  # - bbb
+  imagePullSecrets: xxx aaaa
+  # string
+  nodeName: xxx
+  # 无法找到对应的 Node 标签则不会生效
+  # map
+  nodeSelector:
+    keyN: valueN
+  # string
+  # "Always" "OnFailure" "Never"
+  restartPolicy: Always
+  # string
+  schedulerName: xxx
+  # map
+  securityContext:
+    fsGroup: 2000
+    fsGroupChangePolicy: OnRootMismatch
+    runAsGroup: 3000
+    runAsNonRoot: true
+    runAsUser: 1000
+    seLinuxOptions:
+      level: s0:c123,c456
+      role: default
+      type: xxxx
+      user: root
+    seccompProfile:
+      localhostProfile: my-profiles/profile-allow.json
+      type: Localhost
+    supplementalGroups:
+    - 1001
+    - 1002
+    sysctls: # net.ipv4.ip_forward = 1
+    - name: xxx
+      value: 123
+    - net.ipv4.ip_forward = 0
+      # xxx: 321
+      # aaa: 111
+    windowsOptions:
+      gmsaCredentialSpec: xxx
+      gmsaCredentialSpecName: xxx
+      hostProcess: true
+      runAsUserName: aaa
+  # string
+  serviceAccountName: xxx
+  # string
+  subdomain: xxx
+  # int
+  terminationGracePeriodSeconds: 30
+  # slice
+  tolerations:
+  - key: aaa
+    operator: Exists
+    value: "123"
+    effect: NoSchedule
+    tolerationSeconds: 3600
+  - key: bbb
+    operator: Equal
+    value: "123"
+    effect: NoExecute
+    tolerationSeconds: 0
+  # map, slice
+  # - 已支持 cephfs, configMap / cm, emptyDir, fc, hostPath, nfs, persistentVolumeClaim / pvc, secret, rbd (ceph)
+  #   - 这些值也作为固定前缀值
+  volumes:
+    # cephfs为固定前缀值，表示 cephfs 选项，后续的内容会作为 volumes 的 name
+    # - volumes.name 会增加固定前缀 "vol-"
+    # - volumes.name 为空则会使用一个 8 位的随机字符串替换
+    # 分隔符：空格, "|", ":", "-", ","
+    # map
+    cephfs:name-cephfs:
+      # string 分隔符：空格, ",", "|"
+      # string, slice
+      monitors: 1.1.1.1:6789 1.1.1.2:6789
+      path: /
+      readOnly: true
+      secretFile: /etc/ceph/user.secret
+      secretRef: ""
+      user: admin
+    configMap:name-configMap:
+      name: cm-config.yaml
+      defaultMode: 0644
+      # slice, map
+      items:
+      - key: log-level
+        mode: 0644
+        path: path/to/item/file
+      - key: log-level11
+        mode: 0644
+        path: path/to/item/file
+      optional: true
+    emptyDir:
+      medium: Memory
+      sizeLimit: 10Gi
+    fc:aaa:
+      fsType: ext4
+      lun: 123
+      readOnly: true
+      # string, slice
+      targetWWNs:
+      - aaa
+    fc:bbb:
+      fsType: ext4
+      readOnly: true
+      # string, slice
+      wwids: aaa bbb
+    hostPath:
+      path: /data
+      type:
+    hostPath:name-hostPath:
+      path: /data
+      type: Directory
+    nfs:
+      server: nfs.example.com
+      path: /data
+      readOnly: true
+    nfs-aaaaaa:
+      server: nfs.example.com
+      path: /data
+      readOnly: true
+    persistentVolumeClaim:
+      claimName: claimName1
+      readOnly: true
+    pvcpvc-123123:
+      claimName: "123123"
+    rbd:  # 使用前需要安装 ceph-common 组件
+      fsType: ext4
+      image: foo
+      keyring: /etc/ceph/keyring
+      monitors:
+      - 1.1.1.1:6789
+      - 1.1.1.2:6789
+      - 1.1.1.3:6789
+      pool: rbd
+      readOnly: true
+      user: admin
+    secret:
+      defaultMode: 0644
+      # slice, map
+      items:
+      - key: secret-file
+        mode: 0644
+        path: path/to/item/file
+      optional:
+      secretName: sssss  # 可用 name 替换，但 secretName 会优先生效
+    rbdrbd-123123123123:  # 使用前需要安装 ceph-common 组件
+  #     fsType: ext4
+  #     image: foo
+  #     monitors:
+  #     - 1.1.1.1:6789
+  #     - 1.1.1.2:6789
+  #     - 1.1.1.3:6789
+  #     pool: rbd
+  #     readOnly: true
+  #     # string, map
+  #     # secretRef:
+  #     #   name: xxx
+  #     secretRef: xxx
+  #     user: admin
+
+  # https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#container-v1-core
+  # map, slice
+  # 其中的参数，都可以在 containers $.Context $.Values 中定义
+  containers:
+    # args 与 command 需要同时配置
+    # string 分隔符：空格
+    # string, slice
+    args:
+    - "/bin/bash"
+    - "-c"
+    # string 分隔符：空格
+    # string, slice
+    command:
+    - "echo"
+    - "xxxx aaa 111"
+    - "123"
+    # env 先于 envFiles 生效
+    # slice, map
+    env:
+    # 原生
+    - name: xxx
+      value: xxx
+    # 此情况下
+    # - 若 Value 为 string 类型，Key 会作为 env.name，Value 会作为 env.value 存在
+    # - 若 Value 为 map 类型，Key 会作为 env.name，Value 会作为 env.valueFrom 存在
+    # - xxx2:
+    #     configMapKeyRef:
+    #     fieldRef:
+    #     resourceFieldRef:
+    #     secretKeyRef:
+    - xxx1: value1
+    # 文件中的内容，
+    # map
+    envFiles:
+      # <path 相对路径>: <path.to.key 以 "." 或 ":" 分隔的字符串>
+      # 其中的内容可以是 string, slice, map
+      configs/envs.yaml: x.xx
+    # 只取 "configMapRef" "prefix" "secretRef" 三个关键字
+    # slice, map
+    envFrom:
+      configMapRef:
+        name: xx
+        optional: true
+      prefix: xx
+      secretRef:
+        name: xx
+        optional: true
+    # 只取 "configMapRef" "prefix" "secretRef" 三个关键字
+    # slice, map
+    envFromFiles:
+      config/envs.yaml: x.xx
+    # string, map
+    # image: xxx
+    image:
+      # string 分隔符：空格, "|", ":", "/", "-", ","。最后会由 "/" 合并为字符串
+      # slice 会使用 "/" 合并为字符串。建议 slice 的值全为 string 类型
+      # string, slice, map
+      repository:
+        # string
+        url: x
+        # string, slice
+        namespace: xx
+        # string
+        name: xxx
+        # keyN: valueN
+      # string 分隔符：空格, "|", ":", "/", "-", ","。最后会由 "-" 合并为字符串
+      # slice 会使用 "/" 合并为字符串。建议 slice 的值全为 string 类型
+      # string, slice, map
+      # 若不指定，则使用默认值 latest
+      tag: 1 x 1 1
+        # build: 1
+        # project: x
+        # commit: 1
+        # dataCommit: 1
+        # keyN: valueN
+    # map
+    imageFiles:
+      config/envs.yaml: x.xx
+    # string
+    imagePullPolicy: Always
+    # map
+    lifecycle:
+      # map
+      postStart:
+        # map
+        exec:
+          # string 分隔符：空格, ","
+          # string, slice
+          command: ["/bin/sh", "-c", "echo \"Hello from the postStart handler\" > /usr/share/message"]
+      preStop:
+        exec:
+          # 同上
+          command:
+          - "/bin/sh"
+          - "-c"
+          - "nginx -s quit; while killall -0 nginx; do sleep 1; done"
+          - "111"
+    # string, int, map, slice
+    # ports: 1, 2 3
+    # ports: 4
+    ports:
+    - containerPort: 100
+      hostIP: 1.1.1.1
+      hostPort: 100
+      name: name-ports
+      protocol: TCP
+    # map
+    readinessProbe:
+      tcpSocket:
+        port: 8080
+      initialDelaySeconds: 15
+      periodSeconds: 10
+    # string 分隔符：":"
+    # map, slice, string
+    # - resourceName: "memory"
+    #   restartPolicy: "RestartContainer"
+    # - name: "cpu"
+    #   policy: "NotRequired"
+    resizePolicy: cpu:NotRequired
+    # map
+    resourcesFiles:
+      config/envs.yaml: x.xx
+    # map
+    resources:
+      # string, map, slice
+      claims:
+        name: xxx
+      # map
+      limits:
+        cpu: 1
+        memory: 1Gi
+      # map
+      requests:
+        cpu: 0.25
+        memory: 1Gi
+    # map
+    securityContext:
+      allowPrivilegeEscalation: true
+      capabilities:
+        # string, slice
+        add: xxx sss
+        # string, slice
+        drop: vvv ff
+      privileged: true
+      procMount: aaa
+      readOnlyRootFilesystem: true
+      runAsGroup: 0
+      runAsNonRoot: true
+      runAsUser: 0
+      seLinuxOptions:
+        level: a
+        role: b
+        type: s
+        user: f
+      seccompProfile:
+        seccompProfile: aaaa
+        type: RuntimeDefault
+      windowsOptions:
+        gmsaCredentialSpec: adf
+        gmsaCredentialSpecName: ffff
+        hostProcess: true
+        runAsUserName: sss
+    startupProbe:
+      exec:
+        # string 分隔符：空格
+        # string, slice
+        command:
+        - aaa
+        - ccc fff
+      failureThreshold: 2
+      # string 分隔符：":" 格式固定为 <ip>:<port>
+      # string, slice, map
+      grpc: x.x.x.x:1234
+      httpGet:
+        host: x.x.x.x
+        port: 12345
+        path: "/path"
+        scheme: HTTP
+        # string 分隔符：":" 格式固定为 <key>:<value> 多组则使用空格进行分隔
+        # string, slice, map
+        httpHeaders: h6:v6 h1:v1
+      # string 分隔符：":" 格式固定为 <ip>:<port>
+      # string, slice, map
+      tcpSocket: x.x.x.x:11111
+      initialDelaySeconds: 12
+      periodSeconds: 12
+      successThreshold: 12
+      terminationGracePeriodSeconds: 12
+      timeoutSeconds: 1
+    # bool
+    stdin: true
+    # bool
+    stdinOnce: true
+    # string
+    terminationMessagePath: xxx
+    # string
+    terminationMessagePolicy: sss
+    # bool
+    tty: true
+    # string 分隔符：":" 格式固定为 <key>:<value> 多组则使用空格进行分隔
+    # string, slice, map
+    # name 相同，会被合并
+    # volumeDevices:
+    #   name: xxx2
+    #   devicePath: /path/to/data2
+    #   xxx6: /path/to/data6
+    # volumeDevices:
+    # - name: xxx3
+    #   devicePath: /path/to/data3
+    # - xxx4:/path/to/data4
+    # - xxx5: /path/to/data5
+    volumeDevices: xxx1:/path/to/data1 xxx2:/path/to/data22
+    # string 分隔符：":" 格式固定为 <key>:<value> 多组则使用空格进行分隔
+    # string, slice, map
+    # mountPath 相同，会被合并
+    # volumeMounts:
+    # - name: xxx2
+    #   mountPath: /path/to/data2
+    #   xxx2: /path/to/data2
+    # - xxx4:/path/to/data2
+    # - xxx3: /path/to/data3
+    # volumeMounts:
+    #   name: xxx5
+    #   mountPath: /path/to/data5
+    volumeMounts: xxx1:/path/to/data1:/subpath xxx2:/path/to/data2:/subpath
+    # string
+    workingDir: /
+
+  # 参考 containers
+  # map, slice
+  initContainers:
+    # 仅在 initContainers 中可设置且值只能为 Always
+    # 仅允许在 initContaerins 中定义
+    # string
+    restartPolicy: "Always"
+    image: init-xxx
+
+
+# # #### 旧有的调试记录 ####
+
+# CronJob-1:
+#   helmTesting: true
+#   helmLabels: false
+#   namespace: xxx
+#   nameAlias: name-alias
+#   annotations:
+#     validOnly: true
+#     app.example.com: 123
+#   labels:
+#     name: ccc
+#   concurrencyPolicy: "Replace"
+#   failedJobsHistoryLimit: 1
+#   startingDeadlineSeconds: 10
+#   successfulJobsHistoryLimit: 10
+#   # CronJobSpec JobSpec 都存在，cronJobSuspend 和 jobSuspend 用于消除歧义
+#   suspend: true
+#   cronJobSuspend: true
+#   jobSuspend: true
+#   timeZone: "UTC"
+#   schedule: "1/12 *,4-9/3 */03,31 * *"
+#   # JobSpec PodSpec 都存在，jobActiveDeadlineSeconds 和 podActiveDeadlineSeconds 用于消除歧义
+#   activeDeadlineSeconds: 2
+#   jobActiveDeadlineSeconds: 5
+#   podActiveDeadlineSeconds: 3
+#   backoffLimit: 2
+#   ttlSecondsAfterFinished: 0
+#   automountServiceAccountToken: false
+#   dnsPolicy: "ClusterFirst"
+#   hostname: hostname
+#   # format:
+#   #   1. split regex "\\,?\\s*"
+#   #   2. []string or []map[string]string
+#   imagePullSecrets: a, b,c d
+#   # imagePullSecrets:
+#   # - a
+#   # - b
+#   # - c
+#   # - name: a
+#   # - name: ba
+#   nodeName: 10.10.10.1
+#   nodeSelector:
+#     validOnly: true
+#     node: 10.10.10.1
+#   schedulerName: defulat-scheduler-1
+#   hostPID: true
+#   shareProcessNamespace: false
+#   subdomain: subdomain
+#   terminationGracePeriodSeconds: 60
+#   initContainers:
+#   - args: aaa bbb $(ABC)
+#     command: ["/bin/bash", "-c"]
+#     image: aaa
+#     imageFiles:
+#       config/envs.yaml: image
+#     imagePullPolicy: Never
+#     name: ssxs
+#     ports: 1 2
+#     stdin: false
+#     stdinOnce: false
+#     terminationMessagePath: /path/to/message
+#     terminationMessagePolicy: aaa
+#     tty: false
+#     volumeMounts: xxx1:/path/to/data1:/subpath
+#   containers:
+#   - args: aaa bbb $(ABC)
+#     command: ["/bin/bash", "-c"]
+#     image: aaa
+#     imageFiles:
+#       config/envs.yaml: image
+#     imagePullPolicy: Never
+#     name: ssxs
+#     ports: 1 2
+#     stdin: false
+#     stdinOnce: false
+#     terminationMessagePath: /path/to/message
+#     terminationMessagePolicy: aaa
+#     tty: false
+#     volumeMounts: xxx1:/path/to/data1:/subpath
+#     # volumeMounts:
+#     # - name: xxx2
+#     #   mountPath: /path/to/data2
+#     #   xxx2: /path/to/data2
+#     # - xxx4:/path/to/data2
+#     # - xxx3: /path/to/data3
+#     # volumeMounts:
+#     #   name: xxx5
+#     #   mountPath: /path/to/data5
+#     # workingDir: /path/to/work/dir
+#     # volumeDevices: xxx1:/path/to/data1
+#     # volumeDevices:
+#     #   name: xxx2
+#     #   devicePath: /path/to/data2
+#     #   xxx6: /path/to/data6
+#     # volumeDevices:
+#     # - name: xxx3
+#     #   devicePath: /path/to/data3
+#     # - xxx4:/path/to/data4
+#     # - xxx5: /path/to/data5
+#     # securityContext:
+#     #   allowPrivilegeEscalation: true
+#     #   capabilities:
+#     #     add:
+#     #     drop:
+#     #   privileged: true
+#     #   procMount: aaa
+#     #   readOnlyRootFilesystem: true
+#     #   runAsGroup: 0
+#     #   runAsNonRoot: true
+#     #   runAsUser: 0
+#     #   seLinuxOptions:
+#     #     level: a
+#     #     role: b
+#     #     type: s
+#     #     user: f
+#     #   seccompProfile:
+#     #     seccompProfile: aaaa
+#     #     type: RuntimeDefault
+#     #   windowsOptions:
+#     #     gmsaCredentialSpec: adf
+#     #     gmsaCredentialSpecName: ffff
+#     #     hostProcess: true
+#     #     runAsUserName: sss
+#     # resourcesFiles:
+#     #   config/envs.yaml: resources
+#     # resources:
+#     #   # claims: name1, name2
+#     #   # claims:
+#     #   # - name: name2
+#     #   # - name3 name5
+#     #   claims:
+#     #     name: name4
+#     #   limits:
+#     #     cpu: xxx
+#     #     memory: xxx
+#     #   requests:
+#     #     cpu: xxx
+#     #     memory: xxx
+#     # resizePolicy: cpu:RestartContainer
+#     # resizePolicy:
+#     #   cpu: NotRequired
+#     #   memory: NotRequired
+#     #   name: cpu
+#     #   policy: RestartContainer
+#     # resizePolicy:
+#     # - resourceName: cpu
+#     #   restartPolicy: NotRequired
+#     #   cpu: RestartContainer
+#     #   memory: RestartContainer
+#     # - name: memory
+#     #   policy: NotRequired
+#     # - cpu: NotRequired
+#     # - memory:NotRequired
+#     # ports:
+#     #   containerPort: 123
+#     #   hostIP: 1.1.1.1
+#     #   hostPort: 123
+#     #   name: xxx
+#     #   protocol: tcp
+#     # ports:
+#     # - 4, 5
+#     # - containerPort: 123
+#     #   hostIP: x.x.x.x
+#     #   hostPort: 123
+#     #   name: xxx
+#     #   protocol: tcp
+#     # startupProbe:
+#     #   exec:
+#     #     command: a b,c
+#     #   failureThreshold: 2
+#     #   grpc: x.x.x.x:1234
+#     #   httpGet:
+#     #     host: x.x.x.x
+#     #     port: 12345
+#     #     path: "/path"
+#     #     scheme: HTTP
+#     #     httpHeaders: h6:v6
+#     #   tcpSocket: x.x.x.x:11111
+#     #   initialDelaySeconds: 12
+#     #   periodSeconds: 12
+#     #   successThreshold: 12
+#     #   terminationGracePeriodSeconds: 12
+#     #   timeoutSeconds: 1
+#     # readinessProbe:
+#     #   exec:
+#     #     command: a b,c
+#     #   failureThreshold: 2
+#     #   grpc: x.x.x.x:1234
+#     #   httpGet:
+#     #     host: x.x.x.x
+#     #     port: 12345
+#     #     path: "/path"
+#     #     scheme: HTTP
+#     #     httpHeaders: h6:v6
+#     #   tcpSocket: x.x.x.x:11111
+#     #   initialDelaySeconds: 12
+#     #   periodSeconds: 12
+#     #   successThreshold: 12
+#     #   terminationGracePeriodSeconds: 12
+#     #   timeoutSeconds: 1
+#     # livenessProbe:
+#     #   exec:
+#     #     command: a b,c
+#     #   failureThreshold: 2
+#     #   grpc: x.x.x.x:1234
+#     #   httpGet:
+#     #     host: x.x.x.x
+#     #     port: 12345
+#     #     path: "/path"
+#     #     scheme: HTTP
+#     #     httpHeaders: h6:v6
+#     #   tcpSocket: x.x.x.x:11111
+#     #   initialDelaySeconds: 12
+#     #   periodSeconds: 12
+#     #   successThreshold: 12
+#     #   terminationGracePeriodSeconds: 12
+#     #   timeoutSeconds: 1
+#     # lifecycle:
+#     #   preStop:
+#     #     exec:
+#     #       command: a b , c d
+#     #     httpGet:
+#     #       host: x.x.x.x
+#     #       port: 12345
+#     #       path: "/path"
+#     #       scheme: HTTP
+#     #       httpHeaders: h6:v6
+#     #         # h1: v1
+#     #         # name: h4
+#     #         # value: v4
+#     #       # - h2: v2
+#     #       # - name: h3
+#     #       #   value: v3
+#     #       # - h5:v5
+#     #     tcpSocket: x.x.x.x:11111
+#     #       # host: x.x.x.x
+#     #       # port: 1234
+#     #       # x.x.x.x: 333
+#     #     # - x.x.x.x:12334
+#     # image: aaa
+#   # image:
+#   #   repository: example.com/a/b
+#   #   tag: tag1
+#   # image:
+#   #   repository:
+#   #     url: a.com
+# # image:
+# #   repository:
+# #     url: example.com
+# #     namespace: a, b|c/aaa
+# #     name: d
+# #   tag:
+# #   - 89
+# #   - main_branch
+# #   - 12345
+# #   - 67890
+#     # env:
+#     # - name: env11
+#     #   value: env11
+#     # envFiles:
+#     #   config/envs.yaml: cccc
+#     # envFrom:
+#     # - prefix: envFrom111
+#     #   configMapRef:
+#     #     name: cm111
+#     #     optional: true
+#   # envFrom:
+#   #   prefix: envFrom222
+#   #   configMapRef:
+#   #     name: cm222
+#   #     optional: true
+#   # envFromFiles:
+#   #   config/envs.yaml: envFrom.aaa
+# #   env:
+# #     env22: env22
+# #   envFiles:
+# #     config/envs1.yaml: env:bbbb
+# # envFiles:
+# #   config/envs.yaml: env.aaaa
+# #   config/envs1.yaml: cccc
+#   # tolerations:
+#   # - key: aaa
+#   #   operator: Exists
+#   #   value: "123"
+#   #   effect: NoSchedule
+#   #   tolerationSeconds: 3600
+#   # - key: bbb
+#   #   operator: Equal
+#   #   value: "123"
+#   #   effect: NoExecute
+#   #   tolerationSeconds: 3600
+#   # volumes:
+#     # secret:
+#     #   defaultMode: 0644
+#     #   items:
+#     #   - key: secret-file
+#     #     mode: 0644
+#     #     path: path/to/item/file
+#     #   optional:
+#     #   secretName: sssss # 可用 name 替换，但 secretName 会优先生效
+#     # rbd:
+#     #   fsType: ext4
+#     #   image: foo
+#     #   keyring: /etc/ceph/keyring
+#     #   monitors:
+#     #   - 1.1.1.1:6789
+#     #   - 1.1.1.2:6789
+#     #   - 1.1.1.3:6789
+#     #   pool: rbd
+#     #   readOnly: true
+#     #   user: admin
+#     # persistentVolumeClaim:
+#     #   claimName: claimName1
+#     #   readOnly: true
+#     # pvc-123123-ffff:
+#     #   claimName: "123123"
+#     # nfs:aaaaaa:
+#     #   server: nfs.example.com
+#     #   path: /data
+#     #   readOnly: true
+#     # hostPath:
+#     #   path: /data
+#     #   type:
+#     # hostPath:name-hostPath:
+#     #   path: /data
+#     #   type: Directory
+#     # fc:aaa:
+#     #   fsType: ext4
+#     #   lun: 123
+#     #   readOnly: true
+#     #   targetWWNs:
+#     #   - aaa
+#     # fc:bbb:
+#     #   fsType: ext4
+#     #   readOnly: true
+#     #   wwids: bbb-123 ccc-123,ddd|fff:aaa
+#     # emptyDir:
+#     #   medium: Memory
+#     #   sizeLimit: 10Gi
+#     # configMap:
+#     #   name: cm-config.yaml
+#     #   defaultMode: 0644
+#     #   items:
+#     #     key: log-level
+#     #     mode: 0644
+#     #     path: path/to/item/file
+#     #   optional: true
+#     # cephfs:
+#     #   # monitors: 1.1.1.1:6789 1.1.1.2:6789, 1.1.1.3:6789|1.1.1.4:6789
+#     #   monitors:
+#     #   - 1.1.1.1:6789
+#     #   - 1.1.1.2:6789
+#     #   - 1.1.1.3:6789
+#     #   path: /
+#     #   readOnly: true
+#     #   secretFile: /etc/ceph/user.secret
+#     #   secretRef: "aaaa"
+#     #   user: admin
+#   # securityContext:
+#   #   fsGroup: 2000
+#   #   fsGroupChangePolicy: OnRootMismatch
+#   #   runAsGroup: 3000
+#   #   runAsNonRoot: true
+#   #   runAsUser: 1000
+#   #   seLinuxOptions:
+#   #     level: s0:c123,c456
+#   #     role: default
+#   #     type: xxxx
+#   #     user: root
+#   #   seccompProfile:
+#   #     localhostProfile: my-profiles/profile-allow.json
+#   #     type: Localhost
+#   #   # supplementalGroups: 1, 2,3 4|5:6
+#   #   supplementalGroups:
+#   #   - 1, 2
+#   #   - 3
+#   #   # sysctls: net.ipv4.ip_forward = 1 12
+#   #   # sysctls:
+#   #   # - name: xxx
+#   #   #   value: 123
+#   #   # - net.ipv4.ip_forward = 0
+#   #   # - xxx: vvv
+#   #   # sysctls:
+#   #   #   xxx: 321
+#   #   #   aaa: 111
+#   #   windowsOptions:
+#   #     gmsaCredentialSpec: "123"
+#   #     gmsaCredentialSpecName: "333"
+#   #     hostProcess: true
+#   #     runAsUserName: aaa
+#   # hostAliases: 1.1.1.1 1.a.com 1.b.com
+#   # - 2.2.2.2 2.a.com 2.b.com
+#   # - ip: 5.5.5.5
+#   #   hostnames: 5.a.com 51.a.com
+#   # - ip: 7.7.7.7
+#   #   hostnames:
+#   #   - 7.a.com
+#   #   - 7.b.com
+#   # - 6.6.6.6:
+#   #   - 6.a.com
+#     # 3.3.3.3:
+#     # - 3.a.com
+#     # 4.4.4.4: 4.a.com 4.b.com
+#   nodeAffinity:
+#     required:
+#     - matchExpressions:
+#       - nodeAffinity1 = aaa
+#     - matchExpressions:
+#       - nodeAffinity2 = fff
+#     - matchFields:
+#       - nodeAffinity3 = ddd
+#     - matchFields:
+#       - nodeAffinity4 = ggg
+#     - matchExpressions:
+#       - key: key
+#         operator: In  # In/NotIn/Exists/DoesNotExist
+#         # values: v1, v2,v3 v4
+#         values:
+#         - value1
+#         - value2
+#     # preferred:
+#     #   weight1:
+#     #     matchExpressions:
+#     #     - nodeAffinity1 = 111
+#     #     matchFields:
+#     #     - nodeAffinity2 = 222
+#     #   weight2:
+#     #   - matchExpressions:
+#     #     - nodeAffinity1 = 111
+#     #   - matchFields:
+#     #     - nodeAffinity2 = 222
+#   # podAffinity:
+#     # required:
+#     # - topologyKey: kubernetes.io/hostname
+#     #   labelSelector:
+#     #   - matchExpressions:
+#     #     - podAffinity1 = 111
+#     #   - matchExpressions:
+#     #     - podAffinity4 = aaa
+#     #   - matchLabels:
+#     #       podAffinity2: 222
+#     #   - matchLabels:
+#     #       podAffinity2: ddd
+#     #       podAffinity3: fff
+#     #   namespaceSelector:
+#     #     matchExpressions:
+#     #     - podAffinity3 = 333
+#     #     matchLabels:
+#     #       podAffinity4: 444
+#     #   namespaces: a1, b2,c3 d|e
+#     #   # namespaces:
+#     #   # - aaa
+#     #   # - bbb
+#     # preferred:
+#     # - weight1:
+#     #     topologyKey: kubernetes.io/hostname
+#     #     labelSelector:
+#     #       matchExpressions:
+#     #       - podAffinityW1 = W111
+#     #       matchLabels:
+#     #         podAffinityW2: W222
+#     #     namespaceSelector:
+#     #     - matchExpressions:
+#     #       - podAffinityW3 = W333
+#     #     - matchLabels:
+#     #         podAffinityW4: W444
+#     #     - matchLabels:
+#     #         podAffinityW4: aaaa
+#     #         podAffinityW45: ffff
+#     #     namespaces:
+#     #     - Waaa
+#     #     - Wbbb
+#   # podAntiAffinity:
+#   #   required:
+#   #   - topologyKey: kubernetes.io/hostname
+#   #     labelSelector:
+#   #     - matchExpressions:
+#   #       - podAntiAffinity1 = 111
+#   #     - matchExpressions:
+#   #       - podAntiAffinity2 = aaa
+#   #     - matchLabels:
+#   #         podAntiAffinity2: 222
+#   #     - matchLabels:
+#   #         podAntiAffinity2: ddd
+#   #         podAntiAffinity22: fffff
+#   #     namespaceSelector:
+#   #       matchExpressions:
+#   #       - podAntiAffinity3 != 333
+#   #       matchLabels:
+#   #         podAntiAffinity4: 444
+#   #     namespaces:
+#   #     - Antiaaa
+#   #     - Antibbb
+#   #   preferred:
+#   #     weight1:
+#   #       topologyKey: kubernetes.io/hostname
+#   #       labelSelector:
+#   #         matchExpressions:
+#   #         - podAntiAffinityW1 = W111
+#   #         matchLabels:
+#   #           podAntiAffinityW2: W222
+#   #       namespaceSelector:
+#   #         matchExpressions:
+#   #         - podAntiAffinityW3 = W333
+#   #         matchLabels:
+#   #           podAntiAffinityW4: W444
+#   #       namespaces:
+#   #       - AntiWaaa
+#   #       - AntiWbbb

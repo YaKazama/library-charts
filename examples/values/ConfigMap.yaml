@@ -1,21 +1,19 @@
 
 ConfigMap:
-  helmTesting: true
-  helmLabels: false
-  namespace: xxx
-  nameAlias: name-alias
-  annotations:
-    validOnly: true
-    app.example.com: 123
-  labels:
-    name: ccc
+  # bool
   immutable: true
+  # slice, map
   binaryData:
     a: b
+  # map 类型，Key 会作为新的文件名
+  # slice, map
   binaryDataFiles:
     aaa: config/envs.yaml
+  # slice, map
   data:
     c: xxx
+  # map 类型，Key 会作为新的文件名
+  # string, slice, map
   dataFiles:
   - cc: config/envs.yaml
 dataFiles: config/envs.yaml

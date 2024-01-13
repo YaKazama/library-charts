@@ -1,0 +1,7 @@
+
+Job:
+  # https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#jobspec-v1-batch
+  # 参考 CronJob.yaml
+
+  https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#podspec-v1-core
+  # 参考 CronJob.yaml

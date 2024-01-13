@@ -1,28 +1,45 @@
 # # 关于 Values.yaml 中的一些约定
 # - 注释中若出现标识：*，表示在 上下文 (Context) 生效，反之表示在 全局 (Values) 也同样生效
+# - 上下文的变量优先级比全局的更高，优先生效
+# - 默认情况下 ( 无特殊说明的情况下 )，变量覆盖规则 ( 在遵循优先级的情况下 )为：
+#   - string：优先级高的覆盖优先级低的
+#   - slice：合并为一个新的 slice
+#   - map：合并为一个新的 map，同名键会进行覆盖
+#   - 若变量同时允许使用 string 和 slice，则会合并成一个新的 slice
+#   - 若变量同时允许使用 slice 和 map，则会合并成一个新的 slice
 
 # # #### 全局 (Values) 变量配置 ####
 # apiVersion: 暂未使用
+# string
 apiVersion: ""
 # kind: 暂未使用
+# string
 kind: ""
 # name: Chart 名称
+# string
 name: ""
 # fullname: Chart 完整名称，会覆盖 name
+# string
 fullname: ""
 # namespace: K8S 命名空间。需要符合 RFC1123 规则
+# string
 # - 参考: https://kubernetes.io/zh-cn/docs/concepts/overview/working-with-objects/names/#dns-label-names
 namespace: ""
 # annotations: 注释
+# map
 # - 特殊变量 validOnly 如果定义，不会出现在结果集中。非全局变量配置时生效（此处不生效）
 annotations: {}
 # labels: 标签
+# map
 labels: {}
 # helmLabels: 是否在 labels 中注入内置的与 HELM 相关的标签
+# bool
 helmLabels: false
 # helmTesting: 是否允许生成 YAML 文件，不建议在非开发环境使用
+# bool
 helmTesting: false
 # enable: 是否允许生成 YAML 文件，建议在正式环境使用
+# bool
 enable: false
 # #### 全局变量 ####
 

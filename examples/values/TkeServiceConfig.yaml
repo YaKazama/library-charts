@@ -1,15 +1,7 @@
 
 TkeServiceConfig:
-  helmTesting: true
-  helmLabels: false
-  namespace: xxx
-  nameAlias: name-alias
-  annotations:
-    validOnly: true
-    app.example.com: 123
-  labels:
-    name: ccc
-  # slice
+  # protocol 相同会进行合并
+  # slice, map
   l4Listeners:
   - protocol: TCP # 协议端口锚定Service的四层规则。必填，枚举值：TCP|UDP。
     port: 80 # 必填，可选值：1~65535。
@@ -24,7 +16,8 @@ TkeServiceConfig:
       unHealthNum: 3 # 不健康阈值，表示当连续探测几次健康则表示该转发异常。选填，默认值：3，可选值：2~10，单位：次。
       timeout: 10 # 健康检查的响应超时时间，响应超时时间要小于检查间隔时间。选填，默认值：2，可选值：2~60，单位：秒。
     scheduler: WRR # 请求转发方式配置。WRR、LEAST_CONN 分别表示按权重轮询、最小连接数。选填，枚举值：WRR|LEAST_CONN。
-  # slice
+  # protocol 相同会进行合并
+  # slice, map
   l7Listeners:
   - protocol: HTTP
     port: 80

@@ -1,21 +1,21 @@
 
 StorageClass:
-  helmTesting: true
-  helmLabels: false
-  namespace: xxx
-  nameAlias: name-alias
-  annotations:
-    validOnly: true
-    app.example.com: 123
-  labels:
-    name: ccc
+  # https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#storageclass-v1-storage-k8s-io
   allowVolumeExpansion: true
+  # string 可用的分隔符：空格, ",", ":", "|"
+  # string, slice
   mountOptions: xxxx
+  # map
   parameters:
     x: xx
   provisioner: ccc
+  # "Retain" "Delete"
+  # string
   reclaimPolicy: Retain
+  # "Immediate" "WaitForFirstConsumer"
+  # string
   volumeBindingMode: WaitForFirstConsumer
+  # slice, map
   allowedTopologies:
     matchLabelExpressions:
       key: a
