@@ -11,6 +11,12 @@
   {{- range ($__aggregationRuleSrc | mustUniq | mustCompact) }}
     {{- if kindIs "map" . }}
       {{- $__clean = mustMerge $__clean . }}
+    {{- else if kindIs "slice" . }}
+      {{- range . }}
+        {{- if kindIs "map" . }}
+          {{- $__clean = mustMerge $__clean . }}
+        {{- end }}
+      {{- end }}
     {{- end }}
   {{- end }}
   {{- $__aggregationRule := include "definitions.AggregationRule" $__clean | fromYaml }}
