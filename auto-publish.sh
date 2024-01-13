@@ -12,6 +12,7 @@ function publish() {
     local ngx_upload="$3"
     local merge="$4"
     local nexus_login_info="$5"
+    local pkg_noclean="$6"
     local cmd_helm
     local name
     local version
@@ -46,7 +47,9 @@ function publish() {
             fi
         fi
 
-        rm -rf ${name}-${version}.tgz index.yaml
+        if [[ "${pkg_noclean}" != "True" ]]; then
+            rm -rf ${name}-${version}.tgz index.yaml
+        fi
     else
         echo "Chart.yaml missing."
         exit 1
@@ -61,6 +64,7 @@ function usage() {
     echo "  --nexus-login <USER:PASS>:      Nexus 提供的 HELM Chart 仓库的 username and password。此时 --merge、-N 参数会失效"
     echo "  --merge:                        将生成的索引合并到给定的索引中"
     echo "  -N, --nginx-upload:             使用 Nginx 上传 / 下载站点时需要指定此参数"
+    echo "  --no-clean:                     是否清理生成的 tgz 文件. 默认为 False 表示会清理"
     exit 0
 }
 
@@ -69,7 +73,7 @@ function main() {
 
     local ARGS
     local ARGS_SHORT='h,i:,N'
-    local ARGS_LONG='help,index-url:,merge,nexus-login:,nginx-upload'
+    local ARGS_LONG='help,index-url:,merge,nexus-login:,nginx-upload,no-clean'
     ARGS=$(getopt -o ${ARGS_SHORT} --long ${ARGS_LONG} -n "$0" -- "$@")
     eval set -- "${ARGS}"
 
@@ -80,6 +84,7 @@ function main() {
             --merge)            local MERGE_STATUS="True";  shift 1 ;;
             --nexus-login)      local _NEXUS_LOGIN="$2";    shift 2 ;;
             -N|--nginx-upload)  local _NGX_UPLOAD="True";   shift 1 ;;
+            --no-clean)         local _NO_CLEAN="True";     shift 1 ;;
             --)                 shift;                      break   ;;
             *)                  usage                               ;;
         esac
@@ -89,8 +94,9 @@ function main() {
     [[ -z "${INDEX_URL}" ]] && echo "HELM Chart 仓库未找到，--index-url 参数未指定！"
     [[ "${MERGE_STATUS}" != "True" ]] && MERGE_STATUS="False"
     [[ "${_NGX_UPLOAD}" != "True" ]] && _NGX_UPLOAD="False"
+    [[ "${_NO_CLEAN}" != "True" ]] && _NO_CLEAN="False"
     [[ -z "$1" ]] && usage
-    publish "$1" "${INDEX_URL}" "${_NGX_UPLOAD}" "${MERGE_STATUS}" "${_NEXUS_LOGIN}"
+    publish "$1" "${INDEX_URL}" "${_NGX_UPLOAD}" "${MERGE_STATUS}" "${_NEXUS_LOGIN}" "${_NO_CLEAN}"
 }
 
 # main
