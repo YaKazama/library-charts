@@ -11,6 +11,12 @@
   {{- range ($__targetSrc | mustUniq | mustCompact) }}
     {{- if kindIs "map" . }}
       {{- $__clean = mustMerge $__clean . }}
+    {{- else if kindIs "slice" . }}
+      {{- range . }}
+        {{- if kindIs "map" . }}
+          {{- $__clean = mustMerge $__clean . }}
+        {{- end }}
+      {{- end }}
     {{- end }}
   {{- end }}
   {{- $__target := include "definitions.ObjectReference" $__clean | fromYaml }}
