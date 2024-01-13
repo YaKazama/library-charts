@@ -10,7 +10,13 @@
   {{- $__rulesSrc := pluck "rules" .Context .Values }}
   {{- range ($__rulesSrc | mustUniq | mustCompact) }}
     {{- if kindIs "slice" . }}
-      {{- $__clean = concat $__clean . }}
+      {{- range . }}
+        {{- if kindIs "map" . }}
+          {{- $__clean = mustAppend $__clean . }}
+        {{- end }}
+      {{- end }}
+    {{- else if kindIs "map" . }}
+      {{- $__clean = mustAppend $__clean . }}
     {{- end }}
   {{- end }}
   {{- $__rules := list }}
