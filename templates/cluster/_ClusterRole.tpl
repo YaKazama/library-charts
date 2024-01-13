@@ -30,6 +30,12 @@
   {{- range ($__rulesSrc | mustUniq | mustCompact) }}
     {{- if kindIs "slice" . }}
       {{- $__clean = concat $__clean . }}
+    {{- else if kindIs "slice" . }}
+      {{- range . }}
+        {{- if kindIs "map" . }}
+          {{- $__clean = mustMerge $__clean . }}
+        {{- end }}
+      {{- end }}
     {{- end }}
   {{- end }}
   {{- $__rules := list }}
