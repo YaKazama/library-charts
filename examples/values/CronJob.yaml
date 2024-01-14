@@ -597,7 +597,7 @@ CronJob:
     # - xxx4:/path/to/data4
     # - xxx5: /path/to/data5
     volumeDevices: xxx1:/path/to/data1 xxx2:/path/to/data22
-    # string 分隔符：":" 格式固定为 <key>:<value> 多组则使用空格进行分隔
+    # string 分隔符：":"，多组之间可使用空格、"|"、"," 进行分隔
     # string, slice, map
     # mountPath 相同，会被合并
     # volumeMounts:
