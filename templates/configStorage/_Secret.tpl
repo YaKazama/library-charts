@@ -117,7 +117,7 @@
         {{- $__needKeys := list "server" "username" "password" }}
         {{- range ($__needKeys | mustUniq | mustCompact) }}
           {{- if not (hasKey $__clean .) }}
-            {{- fail (printf "configStorage.Secret: docker %s not found" .) }}
+            {{- fail (printf "configStorage.Secret.data.parser: docker %s not found" .) }}
           {{- end }}
         {{- end }}
 
@@ -148,7 +148,7 @@
       {{- $__needKeys := list "username" "password" }}
       {{- range ($__needKeys | mustUniq | mustCompact) }}
         {{- if not (hasKey $__clean .) }}
-          {{- fail (printf "configStorage.Secret: basic-auth %s not found" .) }}
+          {{- fail (printf "configStorage.Secret.data.parser: basic-auth %s not found" .) }}
         {{- end }}
       {{- end }}
     {{- end }}
@@ -170,7 +170,7 @@
       {{- $__needKeys := list "ssh-privatekey" }}
       {{- range ($__needKeys | mustUniq | mustCompact) }}
         {{- if not (hasKey $__clean .) }}
-          {{- fail (printf "configStorage.Secret: ssh-auth %s not found" .) }}
+          {{- fail (printf "configStorage.Secret.data.parser: ssh-auth %s not found" .) }}
         {{- end }}
       {{- end }}
 
@@ -195,7 +195,7 @@
       {{- $__needKeys := list "tls.crt" "tls.keys" }}
       {{- range ($__needKeys | mustUniq | mustCompact) }}
         {{- if not (hasKey $__clean .) }}
-          {{- fail (printf "configStorage.Secret: tls %s not found" .) }}
+          {{- fail (printf "configStorage.Secret.data.parser: tls %s not found" .) }}
         {{- end }}
       {{- end }}
 
@@ -216,7 +216,7 @@
       {{- $__needKeys := list "token-id" "token-secret" }}
       {{- range ($__needKeys | mustUniq | mustCompact) }}
         {{- if not (hasKey $__clean .) }}
-          {{- fail (printf "configStorage.Secret: token %s not found" .) }}
+          {{- fail (printf "configStorage.Secret.data.parser: token %s not found" .) }}
         {{- end }}
       {{- end }}
     {{- end }}
