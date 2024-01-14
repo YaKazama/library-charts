@@ -79,7 +79,7 @@
   {{- with . }}
     {{- $__s := .s }}
     {{- $__name := coalesce .name (randAlpha 8 | lower) | trim | trimPrefix "vol-" }}
-    {{- $__s = mustMerge $__s (dict "name" .name) }}
+    {{- $__s = mustMerge $__s (dict "name" $__name) }}
     {{- $__vs := include .define $__s | fromYaml }}
     {{- if $__vs }}
       {{- nindent 0 "" -}}name: vol-{{ $__name }}

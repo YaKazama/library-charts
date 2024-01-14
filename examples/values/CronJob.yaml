@@ -305,6 +305,7 @@ CronJob:
       secretRef: ""
       user: admin
     configMap:name-configMap:
+      # 此处显示定义的 name 会替换在 Key 中过滤出来的值
       name: cm-config.yaml
       defaultMode: 0644
       # slice, map
