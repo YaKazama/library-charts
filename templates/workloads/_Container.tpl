@@ -225,7 +225,7 @@
     {{- end }}
 
     {{- $__securityContextSrc := pluck "securityContext" . $.Context $.Values }}
-    {{- $__claen := dict }}
+    {{- $__clean := dict }}
     {{- range ($__securityContextSrc | mustUniq | mustCompact) }}
       {{- if kindIs "map" . }}
         {{- $__clean = mustMerge $__clean . }}
