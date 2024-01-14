@@ -51,21 +51,23 @@
     {{- if eq $__clusterIP "\"\"" }}
       {{- $__clusterIP = "" }}
     {{- end }}
-    {{- $__val := list }}
-    {{- $__valTmp := index $__clusterIPsSrc 0 }}
-    {{- if kindIs "slice" $__valTmp }}
-      {{- $__val = concat $__val $__valTmp }}
-    {{- else if kindIs "string" $__valTmp }}
-      {{- $__val = mustAppend $__val $__valTmp }}
-    {{- end }}
-    {{- if not (eq (index $__val 0) $__clusterIP) }}
-      {{- $__clusterIPsSrc = list $__clusterIP }}
-    {{- end }}
-    {{- $__regexClusterIPs := "^$|\"\"|^None|((2(5[0-5]|[0-4]\\d))|[0-1]?\\d{1,2})(\\.((2(5[0-5]|[0-4]\\d))|[0-1]?\\d{1,2})){3}(\\/\\d+)?$" }}
-    {{- $__clusterIPs := include "base.fmt.slice" (dict "s" $__clusterIPsSrc "c" $__regexClusterIPs "empty" true) }}
-    {{- if $__clusterIPs }}
-      {{- nindent 0 "" -}}clusterIPs:
-      {{- $__clusterIPs | nindent 0 }}
+    {{- if $__clusterIPsSrc }}
+      {{- $__val := list }}
+      {{- $__valTmp := index $__clusterIPsSrc 0 }}
+      {{- if kindIs "slice" $__valTmp }}
+        {{- $__val = concat $__val $__valTmp }}
+      {{- else if kindIs "string" $__valTmp }}
+        {{- $__val = mustAppend $__val $__valTmp }}
+      {{- end }}
+      {{- if not (eq (index $__val 0) $__clusterIP) }}
+        {{- $__clusterIPsSrc = list $__clusterIP }}
+      {{- end }}
+      {{- $__regexClusterIPs := "^$|\"\"|^None|((2(5[0-5]|[0-4]\\d))|[0-1]?\\d{1,2})(\\.((2(5[0-5]|[0-4]\\d))|[0-1]?\\d{1,2})){3}(\\/\\d+)?$" }}
+      {{- $__clusterIPs := include "base.fmt.slice" (dict "s" $__clusterIPsSrc "c" $__regexClusterIPs "empty" true) }}
+      {{- if $__clusterIPs }}
+        {{- nindent 0 "" -}}clusterIPs:
+        {{- $__clusterIPs | nindent 0 }}
+      {{- end }}
     {{- end }}
   {{- end }}
 
