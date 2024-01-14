@@ -146,7 +146,7 @@
       {{- $__regexSplit :="\\s+|\\s*[\\|,]\\s*" }}
       {{- $__val := mustRegexSplit $__regexSplit . -1 }}
       {{- range $__val }}
-        {{- $__regexSplit :=":" }}
+        {{- $__regexSplit :=":+" }}
         {{- $__val := mustRegexSplit $__regexSplit . -1 }}
         {{- if eq (len $__val) 2 }}
           {{- $__clean = mustAppend $__clean (dict "clusterIP" $__clusterIP "type" $__type "name" (mustLast $__val) "port" (mustFirst $__val)) }}
@@ -157,10 +157,10 @@
     {{- else if kindIs "slice" . }}
       {{- range . }}
         {{- if kindIs "string" . }}
-          {{- $__regexSplit :="\\s*[,]\\s*" }}
+          {{- $__regexSplit :="\\s+|\\s*[\\|,]\\s*" }}
           {{- $__val := mustRegexSplit $__regexSplit . -1 }}
           {{- range $__val }}
-            {{- $__regexSplit :="\\s+" }}
+            {{- $__regexSplit :=":+" }}
             {{- $__val := mustRegexSplit $__regexSplit . -1 }}
             {{- if eq (len $__val) 2 }}
               {{- $__clean = mustAppend $__clean (dict "clusterIP" $__clusterIP "type" $__type "name" (mustLast $__val) "port" (mustFirst $__val)) }}
