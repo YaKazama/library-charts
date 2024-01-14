@@ -20,8 +20,10 @@
   {{- $__regexRFC1035 := "^([a-z]{1,63}|[a-z][a-z0-9-]{0,61}[a-z0-9])$" }}
 
   {{- $__name := include "base.toa" (coalesce .Context.Name .Values.Name .Chart.Name) }}
-
-  {{- coalesce (include "base.fmt" (dict "s" (kebabcase $__name | lower) "r" $__regexRFC1035)) | nospace | trimSuffix "-" }}
+  {{- $__name = include "base.fmt" (dict "s" (kebabcase $__name | lower) "r" $__regexRFC1035) }}
+  {{- if $__name }}
+    {{- $__name | nospace | trimSuffix "-" }}
+  {{- end }}
 {{- end }}
 
 

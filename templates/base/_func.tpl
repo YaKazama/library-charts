@@ -519,21 +519,21 @@
     - 当正则表达式没有值时
       - 直接返回 s 的值
   */ -}}
-  {{- if $__regex }}
-    {{- if $__val }}
-      {{- if or (kindIs "float64" $__val) (kindIs "int" $__val) (kindIs "int64" $__val) }}
-        {{- $__val = $__val | int | toString }}
-      {{- end }}
-      {{- if mustRegexMatch $__regex $__val }}
-        {{- $__val }}
-      {{- else }}
-        {{- fail (print "base.fmt: regex not match. Values: " $__val " Regex: " $__regex ) }}
+  {{- if not (kindIs "invalid" $__val) }}
+    {{- if $__regex }}
+      {{- if $__val }}
+        {{- if or (kindIs "float64" $__val) (kindIs "int" $__val) (kindIs "int64" $__val) }}
+          {{- $__val = $__val | int | toString }}
+        {{- end }}
+        {{- if mustRegexMatch $__regex $__val }}
+          {{- $__val }}
+        {{- else }}
+          {{- fail (print "base.fmt: regex not match. Values: " $__val " Regex: " $__regex ) }}
+        {{- end }}
       {{- end }}
     {{- else }}
       {{- $__val }}
     {{- end }}
-  {{- else }}
-    {{- $__val }}
   {{- end }}
 {{- end }}
 
