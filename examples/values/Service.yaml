@@ -38,7 +38,9 @@ Service:
     clientIP: 300
       # timeoutSeconds: 0
   # 以 port 为键进行合并
-  # map, slice
+  # string 分隔符：空格，多组之间使用 "," 号分隔
+  # map, slice, string
+  # ports: <name> <port>[, <nameN> <portN> ...]
   ports:
   - appProtocol: xx
     name: xx1

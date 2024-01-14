@@ -142,11 +142,31 @@
   {{- $__clean := list }}
   {{- $__portsSrc := pluck "ports" .Context .Values }}
   {{- range ($__portsSrc | mustUniq | mustCompact) }}
-    {{- if kindIs "map" . }}
+    {{- if kindIs "string" . }}
+      {{- $__regexSplit :="\\s*[,]\\s*" }}
+      {{- $__val := mustRegexSplit $__regexSplit . -1 }}
+      {{- range $__val }}
+        {{- $__regexSplit :="\\s+" }}
+        {{- $__val := mustRegexSplit $__regexSplit . -1 }}
+        {{- if eq (len $__val) 2 }}
+          {{- $__clean = mustAppend $__clean (dict "clusterIP" $__clusterIP "type" $__type "name" (mustFirst $__val) "port" (mustLast $__val)) }}
+        {{- end }}
+      {{- end }}
+    {{- else if kindIs "map" . }}
       {{- $__clean = mustAppend $__clean (mustMerge . (dict "clusterIP" $__clusterIP "type" $__type)) }}
     {{- else if kindIs "slice" . }}
       {{- range . }}
-        {{- if kindIs "map" . }}
+        {{- if kindIs "string" . }}
+          {{- $__regexSplit :="\\s*[,]\\s*" }}
+          {{- $__val := mustRegexSplit $__regexSplit . -1 }}
+          {{- range $__val }}
+            {{- $__regexSplit :="\\s+" }}
+            {{- $__val := mustRegexSplit $__regexSplit . -1 }}
+            {{- if eq (len $__val) 2 }}
+              {{- $__clean = mustAppend $__clean (dict "clusterIP" $__clusterIP "type" $__type "name" (mustFirst $__val) "port" (mustLast $__val)) }}
+            {{- end }}
+          {{- end }}
+        {{- else if kindIs "map" . }}
           {{- $__clean = mustAppend $__clean (mustMerge . (dict "clusterIP" $__clusterIP "type" $__type)) }}
         {{- end }}
       {{- end }}
