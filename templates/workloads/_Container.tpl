@@ -519,7 +519,11 @@
     {{- end }}
 
     {{- $__env := list }}
-    {{- range ($__clean | mustUniq | mustCompact) }}
+    {{- $__val := list }}
+    {{- range $_, $v := (include "base.map.merge.single" (dict "s" $__clean "k" "name") | fromYaml) }}
+      {{- $__val = mustAppend $__val $v }}
+    {{- end }}
+    {{- range ($__val | mustUniq | mustCompact) }}
       {{- $__env = mustAppend $__env (include "definitions.EnvVar" . | fromYaml) }}
     {{- end }}
     {{- if $__env }}
