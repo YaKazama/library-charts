@@ -334,10 +334,10 @@
     {{- $__volumeMountsSrc := pluck "volumeMounts" . $.Context $.Values }}
     {{- range $__volumeMountsSrc }}
       {{- if kindIs "string" . }}
-        {{- $__regexSplit := "\\s+" }}
+        {{- $__regexSplit := "\\s+|\\s*[\\|,]\\s*" }}
         {{- $__valVolmeMounts := mustRegexSplit $__regexSplit . -1 }}
         {{- range $__valVolmeMounts | mustUniq | mustCompact }}
-          {{- $__regexSplit := ":" }}
+          {{- $__regexSplit := ":+" }}
           {{- $__val := mustRegexSplit $__regexSplit . -1 }}
           {{- if eq (len $__val) 2 }}
             {{- $__clean = mustAppend $__clean (dict "name" (mustFirst $__val) "mountPath" (mustLast $__val)) }}
@@ -357,10 +357,10 @@
       {{- else if kindIs "slice" . }}
         {{- range . }}
           {{- if kindIs "string" . }}
-            {{- $__regexSplit := "\\s+" }}
+            {{- $__regexSplit := "\\s+|\\s*[\\|,]\\s*" }}
             {{- $__valVolmeMounts := mustRegexSplit $__regexSplit . -1 }}
             {{- range $__valVolmeMounts | mustUniq | mustCompact }}
-              {{- $__regexSplit := ":" }}
+              {{- $__regexSplit := ":+" }}
               {{- $__val := mustRegexSplit $__regexSplit . -1 }}
               {{- if eq (len $__val) 2 }}
                 {{- $__clean = mustAppend $__clean (dict "name" (mustFirst $__val) "mountPath" (mustLast $__val)) }}
