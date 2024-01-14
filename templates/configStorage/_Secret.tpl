@@ -113,7 +113,9 @@
         {{- range $f, $p := $__dataFiles }}
           {{- $__clean = mustMerge $__clean (pick ($p | fromYaml) "server" "username" "password" "email") }}
         {{- end }}
+      {{- end }}
 
+      {{- if $__clean }}
         {{- $__needKeys := list "server" "username" "password" }}
         {{- range ($__needKeys | mustUniq | mustCompact) }}
           {{- if not (hasKey $__clean .) }}
@@ -145,10 +147,12 @@
         {{- $__clean = mustMerge $__clean (pick ($p | fromYaml) "username" "password") }}
       {{- end }}
 
-      {{- $__needKeys := list "username" "password" }}
-      {{- range ($__needKeys | mustUniq | mustCompact) }}
-        {{- if not (hasKey $__clean .) }}
-          {{- fail (printf "configStorage.Secret.data.parser: basic-auth %s not found" .) }}
+      {{- if $__clean }}
+        {{- $__needKeys := list "username" "password" }}
+        {{- range ($__needKeys | mustUniq | mustCompact) }}
+          {{- if not (hasKey $__clean .) }}
+            {{- fail (printf "configStorage.Secret.data.parser: basic-auth %s not found" .) }}
+          {{- end }}
         {{- end }}
       {{- end }}
     {{- end }}
@@ -167,10 +171,12 @@
         {{- end }}
       {{- end }}
 
-      {{- $__needKeys := list "ssh-privatekey" }}
-      {{- range ($__needKeys | mustUniq | mustCompact) }}
-        {{- if not (hasKey $__clean .) }}
-          {{- fail (printf "configStorage.Secret.data.parser: ssh-auth %s not found" .) }}
+      {{- if $__clean }}
+        {{- $__needKeys := list "ssh-privatekey" }}
+        {{- range ($__needKeys | mustUniq | mustCompact) }}
+          {{- if not (hasKey $__clean .) }}
+            {{- fail (printf "configStorage.Secret.data.parser: ssh-auth %s not found" .) }}
+          {{- end }}
         {{- end }}
       {{- end }}
 
@@ -192,10 +198,12 @@
         {{- end }}
       {{- end }}
 
-      {{- $__needKeys := list "tls.crt" "tls.keys" }}
-      {{- range ($__needKeys | mustUniq | mustCompact) }}
-        {{- if not (hasKey $__clean .) }}
-          {{- fail (printf "configStorage.Secret.data.parser: tls %s not found" .) }}
+      {{- if $__clean }}
+        {{- $__needKeys := list "tls.crt" "tls.keys" }}
+        {{- range ($__needKeys | mustUniq | mustCompact) }}
+          {{- if not (hasKey $__clean .) }}
+            {{- fail (printf "configStorage.Secret.data.parser: tls %s not found" .) }}
+          {{- end }}
         {{- end }}
       {{- end }}
 
@@ -213,10 +221,12 @@
         {{- $__clean = mustMerge $__clean (pick ($p | fromYaml) "token-id" "token-secret") }}
       {{- end }}
 
-      {{- $__needKeys := list "token-id" "token-secret" }}
-      {{- range ($__needKeys | mustUniq | mustCompact) }}
-        {{- if not (hasKey $__clean .) }}
-          {{- fail (printf "configStorage.Secret.data.parser: token %s not found" .) }}
+      {{- if $__clean }}
+        {{- $__needKeys := list "token-id" "token-secret" }}
+        {{- range ($__needKeys | mustUniq | mustCompact) }}
+          {{- if not (hasKey $__clean .) }}
+            {{- fail (printf "configStorage.Secret.data.parser: token %s not found" .) }}
+          {{- end }}
         {{- end }}
       {{- end }}
     {{- end }}
