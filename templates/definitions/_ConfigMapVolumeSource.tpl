@@ -5,7 +5,7 @@
 */ -}}
 {{- define "definitions.ConfigMapVolumeSource" -}}
   {{- with . }}
-    {{- $__defaultMode := include "base.fmt" (dict "s" (toString .defaultMode) "r" "^(0[0124]{3}|[1-9]?[0-9]|[1-4][0-9]{2}|50[0-9]|51[01])$") }}
+    {{- $__defaultMode := include "base.fmt" (dict "s" .defaultMode "r" "^(0[0-7]{3}|[1-9]?[0-9]|[1-4][0-9]{2}|50[0-9]|51[01])$") }}
     {{- if $__defaultMode }}
       {{- nindent 0 "" -}}defaultMode: {{ coalesce $__defaultMode "0644" }}
     {{- end }}
