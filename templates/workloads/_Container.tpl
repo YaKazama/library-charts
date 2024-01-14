@@ -6,10 +6,14 @@
   {{- with .container }}
     {{- $__regexSplit := "\\s+" }}
     {{- $__args := include "base.fmt.slice" (dict "s" (list .args) "r" $__regexSplit "sliceRedirect" true) }}
-    {{- $__command := include "base.fmt.slice" (dict "s" (list .command) "r" $__regexSplit "sliceRedirect" true) }}
-    {{- if and $__args $__command }}
+    {{- if $__args }}
       {{- nindent 0 "" -}}args:
       {{- $__args | nindent 0 }}
+    {{- end }}
+
+    {{- $__regexSplit := "\\s+" }}
+    {{- $__command := include "base.fmt.slice" (dict "s" (list .command) "r" $__regexSplit "sliceRedirect" true) }}
+    {{- if $__command }}
       {{- nindent 0 "" -}}command:
       {{- $__command | nindent 0 }}
     {{- end }}
@@ -43,7 +47,7 @@
         {{- $__defaultImagePullPolicy = "IfNotPresent" }}
       {{- end }}
       {{- $__imagePullPolicyAllowed := list "Always" "Never" "IfNotPresent" }}
-      {{- $__imagePullPolicy := include "base.string" .imagePullPolicy }}
+      {{- $__imagePullPolicy := include "base.string" (coalesce .imagePullPolicy $.Context.imagePullPolicy $.Values.imagePullPolicy) }}
       {{- if mustHas $__imagePullPolicy $__imagePullPolicyAllowed }}
         {{- nindent 0 "" -}}imagePullPolicy: {{ coalesce $__imagePullPolicy $__defaultImagePullPolicy }}
       {{- end }}
