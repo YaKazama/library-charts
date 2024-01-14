@@ -82,7 +82,7 @@
     {{- $__s = mustMerge $__s (dict "name" $__name) }}
     {{- $__vs := include .define $__s | fromYaml }}
     {{- if $__vs }}
-      {{- nindent 0 "" -}}name: vol-{{ $__name }}
+      {{- nindent 0 "" -}}name: vol-{{ coalesce $__vs.name $__name | trim }}
       {{- nindent 0 "" -}}{{ .k }}:
       {{- toYaml $__vs | nindent 2 }}
     {{- end }}
