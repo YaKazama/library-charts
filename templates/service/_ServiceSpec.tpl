@@ -14,7 +14,7 @@
 
   {{- $__typeClusterIPsAllowed := list "ClusterIP" "NodePort" "LoadBalancer" }}
   {{- /*
-    ports 需要用到 clusterIP 作为 targePort 的判断条件，故此处先预处理
+    ports 需要用到 clusterIP 作为 targetPort 的判断条件，故此处先预处理
   */ -}}
   {{- $__clusterIP := include "base.string.empty" (dict "s" .Values.clusterIP "empty" true) }}
   {{- if not $__clusterIP }}
