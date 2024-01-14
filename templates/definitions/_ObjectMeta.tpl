@@ -52,7 +52,7 @@
   */ -}}
   {{- $__ignoreLabels := false }}
   {{- if eq ._kind "Namespace" }}
-    {{- $__ignoreLabels := include "base.bool" (coalesce .Context.ignoreLabels .Values.ignoreLabels) }}
+    {{- $__ignoreLabels = include "base.bool" (coalesce .Context.ignoreLabels .Values.ignoreLabels) }}
   {{- end }}
   {{- if not $__ignoreLabels }}
     {{- nindent 0 "" -}}labels:

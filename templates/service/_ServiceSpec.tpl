@@ -202,6 +202,16 @@
         {{- $__selector = mustMerge $__selector . }}
       {{- end }}
     {{- end }}
+    {{- /*
+      追加 labels 到 selector ，受 ignoreLabels 参数影响
+    */ -}}
+    {{- $__ignoreLabels := false }}
+    {{- if eq ._kind "Namespace" }}
+      {{- $__ignoreLabels = include "base.bool" (coalesce .Context.ignoreLabels .Values.ignoreLabels) }}
+    {{- end }}
+    {{- if not $__ignoreLabels }}
+      {{- $__selector = mustMerge $__selector (include "base.labels" . | fromYaml) }}
+    {{- end }}
     {{- if $__selector }}
       {{- nindent 0 "" -}}selector:
         {{- toYaml $__selector | nindent 2 }}
