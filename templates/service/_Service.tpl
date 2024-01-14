@@ -9,12 +9,14 @@
       - 生效顺序： service, Service
     - 如果 service 或 Service 中定义了 annotations 也会进行同步
   */ -}}
-  {{- $__serviceSrc := list .Context.service .Context.Service }}
-  {{- $__clean := dict }}
-  {{- range ($__serviceSrc | mustUniq | mustCompact) }}
-    {{- $__clean = mustMerge $__clean . }}
+  {{- if or .Context.service .Context.Service }}
+    {{- $__serviceSrc := list .Context.service .Context.Service }}
+    {{- $__clean := dict }}
+    {{- range ($__serviceSrc | mustUniq | mustCompact) }}
+      {{- $__clean = mustMerge $__clean . }}
+    {{- end }}
+    {{- $_ := set . "Context" (mustMerge $__clean (dict "labels" (mustMerge .Context.labels .Values.labels))) }}
   {{- end }}
-  {{- $_ := set . "Context" $__clean }}
 
   {{- nindent 0 "" -}}metadata:
     {{- include "definitions.ObjectMeta" . | trim | nindent 2 }}
