@@ -1,0 +1,1380 @@
+# # 关于 Values.yaml 中的一些约定
+# - 注释中若出现标识：*，表示在 上下文 (Context) 生效，反之表示在 全局 (Values) 也同样生效
+# - 上下文的变量优先级比全局的更高，优先生效
+# - 默认情况下 ( 无特殊说明的情况下 )，变量覆盖规则 ( 在遵循优先级的情况下 )为：
+#   - string：优先级高的覆盖优先级低的
+#   - slice：合并为一个新的 slice
+#   - map：合并为一个新的 map，同名键会进行覆盖
+#   - 若变量同时允许使用 string 和 slice，则会合并成一个新的 slice
+#   - 若变量同时允许使用 slice 和 map，则会合并成一个新的 slice
+
+# # #### 全局 (Values) 变量配置 ####
+# apiVersion: 暂未使用
+# string
+apiVersion: ""
+# kind: 暂未使用
+# string
+kind: ""
+# name: Chart 名称
+# string
+name: ""
+# fullname: Chart 完整名称，会覆盖 name
+# string
+fullname: ""
+# namespace: K8S 命名空间。需要符合 RFC1123 规则
+# string
+# - 参考: https://kubernetes.io/zh-cn/docs/concepts/overview/working-with-objects/names/#dns-label-names
+namespace: ""
+# annotations: 注释
+# map
+# - 特殊变量 validOnly 如果定义，不会出现在结果集中。非全局变量配置时生效（此处不生效）
+annotations: {}
+# labels: 标签
+# map
+labels: {}
+# helmLabels: 是否在 labels 中注入内置的与 HELM 相关的标签
+# bool
+helmLabels: false
+# helmTesting: 是否允许生成 YAML 文件，不建议在非开发环境使用
+# bool
+helmTesting: false
+# enable: 是否允许生成 YAML 文件，建议在正式环境使用
+# bool
+enable: false
+# #### 全局变量 ####
+
+# # #### 上下文 (Context) 变量配置，可继承、覆盖全局 (Values) 变量 ####
+# # 参考 examples/values 目录中的 YAML 配置
+
+# # # CronJob
+# CronJob:
+#   helmTesting: false
+#   helmLabels: true
+#   name: cronJobTest
+#   nameAlias: cronJobTestAlias
+#   fullname: cronJobTestFullName
+#   schedule: "*/1 * * * *"
+#   timeZone: "Asia/Shanghai"
+#   concurrencyPolicy: "Allow"
+#   matchExpressions:
+#   # 基于等值 / 不等值
+#   - environment = production
+#   - environment1 == production1
+#   - tier != frontend
+#   # 基于集合
+#   - environment2 in (production2, qa2)
+#   - tier2 notin (frontend2, backend2)
+#   - partition
+#   - "!partition1"
+#   # 原生
+#   - key: key
+#     operator: In  # In/NotIn/Exists/DoesNotExist
+#     values:
+#     - value1
+#     - value2
+#   annotations:
+#     validOnly: false  # 特殊变量，不会出现在结果集中。非全局变量配置时生效（此处生效）。
+#     app.example.com: CronJob
+#     cron: cronJob
+#   labels:
+#     xxx: 123
+#   activeDeadlineSeconds: 10
+#   automountServiceAccountToken: true
+#   dnsPolicy: ClusterFirstWithHostNet
+#   hostname: vm-server-cronjob
+#   imagePullSecrets:
+#   - secret1
+#   - secret2
+#   - secret3
+#   nodeName: node-1
+#   nodeSelector:
+#     hostname: node-1
+#   restartPolicy: Always
+#   schedulerName: default
+#   serviceAccountName: default
+#   hostPID: false
+#   shareProcessNamespace: false
+#   terminationGracePeriodSeconds: 0
+#   nodeAffinity:
+#     required:
+#       matchExpressions:
+#       - nodeAffinity1 = 111
+#       matchFields:
+#       - nodeAffinity2 = 222
+#     preferred:
+#       weight1:
+#         matchExpressions:
+#         - nodeAffinity1 = 111
+#         matchFields:
+#         - nodeAffinity2 = 222
+#   podAffinity:
+#     required:
+#       topologyKey: kubernetes.io/hostname
+#       labelSelector:
+#         matchExpressions:
+#         - podAffinity1 = 111
+#         matchLabels:
+#           podAffinity2: 222
+#       namespaceSelector:
+#         matchExpressions:
+#         - podAffinity3 = 333
+#         matchLabels:
+#           podAffinity4: 444
+#       namespaces:
+#       - aaa
+#       - bbb
+#     preferred:
+#       weight1:
+#         topologyKey: kubernetes.io/hostname
+#         labelSelector:
+#           matchExpressions:
+#           - podAffinityW1 = W111
+#           matchLabels:
+#             podAffinityW2: W222
+#         namespaceSelector:
+#           matchExpressions:
+#           - podAffinityW3 = W333
+#           matchLabels:
+#             podAffinityW4: W444
+#         namespaces:
+#         - Waaa
+#         - Wbbb
+#   podAntiAffinity:
+#     required:
+#       topologyKey: kubernetes.io/hostname
+#       labelSelector:
+#         matchExpressions:
+#         - podAntiAffinity1 = 111
+#         matchLabels:
+#           podAntiAffinity2: 222
+#       namespaceSelector:
+#         matchExpressions:
+#         - podAntiAffinity3 = 333
+#         matchLabels:
+#           podAntiAffinity4: 444
+#       namespaces:
+#       - Antiaaa
+#       - Antibbb
+#     preferred:
+#       weight1:
+#         topologyKey: kubernetes.io/hostname
+#         labelSelector:
+#           matchExpressions:
+#           - podAntiAffinityW1 = W111
+#           matchLabels:
+#             podAntiAffinityW2: W222
+#         namespaceSelector:
+#           matchExpressions:
+#           - podAntiAffinityW3 = W333
+#           matchLabels:
+#             podAntiAffinityW4: W444
+#         namespaces:
+#         - AntiWaaa
+#         - AntiWbbb
+#   subdomain: cron
+#   hostAliases: 1.1.1.1 1.example.com
+#   # # linux /etc/hosts format string
+#   # 1.1.1.1 1.example.com
+#   # # 原生
+#   # - ip: 5.5.5.5
+#   #   hostnames:
+#   #   - 5.example.com
+#   #   - 55.example.com
+#   # # linux /etc/hosts format
+#   # - 1.1.1.1 1.example.com 11.example.com
+#   # - 2.2.2.2 2.example.com 22.example.com
+#   # # dict
+#   #   3.3.3.3:
+#   #   - 3.example.com
+#   #   - 33.example.com
+#   #   4.4.4.4:
+#   #   - 4.example.com
+#   #   - 44.example.com
+#   securityContext:
+#     fsGroup: 2000
+#     fsGroupChangePolicy: OnRootMismatch
+#     runAsGroup: 3000
+#     runAsNonRoot: true
+#     runAsUser: 1000
+#     seLinuxOptions:
+#       level: s0:c123,c456
+#       role: default
+#       type: xxxx
+#       user: root
+#     seccompProfile:
+#       localhostProfile: my-profiles/profile-allow.json
+#       type: Localhost
+#     supplementalGroups:
+#     - 1001
+#     - 1002
+#     sysctls: # net.ipv4.ip_forward = 1
+#     - name: xxx
+#       value: 123
+#     - net.ipv4.ip_forward = 0
+#       # xxx: 321
+#       # aaa: 111
+#     windowsOptions:
+#       gmsaCredentialSpec: 123
+#       gmsaCredentialSpecName: 333
+#       hostProcess: true
+#       runAsUserName: aaa
+#   tolerations:
+#   - key: aaa
+#     operator: Exists
+#     value: 123
+#     effect: NoSchedule
+#     tolerationSeconds: 3600
+#   - key: bbb
+#     operator: Equal
+#     value: 123
+#     effect: NoExecute
+#     tolerationSeconds: 3600
+#   volumes:
+#     cephfs:name-cephfs:
+#       monitors:
+#       - 1.1.1.1:6789
+#       - 1.1.1.2:6789
+#       - 1.1.1.3:6789
+#       path: /
+#       readOnly: true
+#       secretFile: /etc/ceph/user.secret
+#       secretRef: ""
+#       user: admin
+#     cephfs-aaa-fff:
+#       monitors:
+#       - 1.1.1.1:6789
+#       - 1.1.1.2:6789
+#       - 1.1.1.3:6789
+#       path: /aaa
+#       readOnly: false
+#       secretFile: /etc/ceph/user.secret
+#       secretRef: ""
+#       user: admin
+#     cephfs|:
+#       monitors:
+#       - 1.1.1.1:6789
+#       - 1.1.1.2:6789
+#       - 1.1.1.3:6789
+#       path: /aaa
+#       readOnly: false
+#       secretFile: /etc/ceph/user.secret
+#       secretRef: ""
+#       user: admin
+#     configMap:name-configMap:
+#       name: cm-config.yaml
+#       defaultMode: 0644
+#       items:
+#       - key: log-level
+#         mode: 0644
+#         path: path/to/item/file
+#       - key: log-level11
+#         mode: 0644
+#         path: path/to/item/file
+#       optional: true
+#     emptyDir:name-emptyDir:
+#       medium:
+#     emptyDir:
+#       medium: Memory
+#       sizeLimit: 10Gi
+#     emptyDiremptyDir:
+#       medium:
+#       sizeLimit: 1Gi
+#     fc:aaa:
+#       fsType: ext4
+#       lun: 123
+#       readOnly: true
+#       targetWWNs:
+#       - aaa
+#     fc:bbb:
+#       fsType: ext4
+#       readOnly: true
+#       wwids:
+#       - aaa-123
+#     hostPath:
+#       path: /data
+#       type:
+#     hostPath:name-hostPath:
+#       path: /data
+#       type: Directory
+#     nfs:
+#       server: nfs.example.com
+#       path: /data
+#       readOnly: true
+#     nfs-aaaaaa:
+#       server: nfs.example.com
+#       path: /data
+#       readOnly: true
+#     persistentVolumeClaim:
+#       claimName: claimName1
+#       readOnly: true
+#     pvcpvc-123123:
+#       claimName: 123123
+#     secret:
+#       defaultMode: 0644
+#       items:
+#       - key: secret-file
+#         mode: 0644
+#         path: path/to/item/file
+#       optional:
+#       secretName: sssss  # 可用 name 替换，但 secretName 会优先生效
+#     rbd:  # 使用前需要安装 ceph-common 组件
+#       fsType: ext4
+#       image: foo
+#       keyring: /etc/ceph/keyring
+#       monitors:
+#       - 1.1.1.1:6789
+#       - 1.1.1.2:6789
+#       - 1.1.1.3:6789
+#       pool: rbd
+#       readOnly: true
+#       user: admin
+#     rbdrbd-123123123123:  # 使用前需要安装 ceph-common 组件
+#       fsType: ext4
+#       image: foo
+#       monitors:
+#       - 1.1.1.1:6789
+#       - 1.1.1.2:6789
+#       - 1.1.1.3:6789
+#       pool: rbd
+#       readOnly: true
+#       secretRef: 123123
+#       user: admin
+#   containers:
+#   - name: container1
+#     args:
+#     - aaa
+#     - bbb
+#     command:
+#     - cmd1
+#     - cmd2
+#     env:
+#     - name: name3
+#       value: value3
+#     envFiles:
+#       configs/envs.yaml: CronJob.env
+#       configs/envs2.yaml: CronJob.env
+#     envFrom:
+#       configMapRef:
+#         name: xxxx
+#         optional: true
+#       prefix: xxxx
+#       secretRef:
+#         name: xxxxx
+#         optional: true
+#     envFromFiles:
+#       configs/envs.yaml: CronJob.env
+#       configs/envs2.yaml: CronJob.env
+#     image: "image:v1"
+#     imageFiles:
+#       configs/images.yaml: image1
+#     imagePullPolicy: "Always"
+#     lifecycle:
+#       postStart:
+#         exec:
+#           command: ["/bin/sh", "-c", "echo Hello from the postStart handler > /usr/share/message"]
+#       preStop:
+#         exec:
+#           command: ["/bin/sh","-c","nginx -s quit; while killall -0 nginx; do sleep 1; done"]
+#     livenessProbe:
+#       exec:
+#         command:
+#         - cat
+#         - /tmp/healthy
+#     ports: 80, 81, 82
+#     # ports:
+#     # - containerPort: 100
+#     #   hostIP: 1.1.1.1
+#     #   hostPort: 100
+#     #   name: name-ports
+#     #   protocol: TCP
+#     resizePolicy:
+#     - resourceName: "memory"
+#       restartPolicy: "RestartContainer"
+#     - name: "cpu"
+#       policy: "NotRequied"
+#     resources:
+#       limits:
+#         cpu: 1
+#         memory: 1Gi
+#       requests:
+#         cpu: 1
+#         memory: 1Gi
+#     resourcesFiles:
+#       configs/resources.yaml: requests
+#     securityContext:
+#       readOnlyRootFilesystem: true
+#     readinessProbe:
+#       tcpSocket:
+#         port: 8080
+#       initialDelaySeconds: 15
+#       periodSeconds: 10
+#     startupProbe:
+#       httpGet:
+#         path: /healthz
+#         port: liveness-port
+#       failureThreshold: 30
+#       periodSeconds: 10
+#     volumeDevices:
+#     - devicePath: aaaaa
+#       name: adfadfad
+#     - devicePath: aaaaa
+#       name: adfadfad
+#     volumeMounts:
+#     - name: aaaa
+#       mountPath: path/to/mount/point
+#     - name: bbbb
+#       mountPath: path/to/mount/point
+#     workingDir: path/to/work/dir
+#   # imagePullPolicy: "IfNotPresent"
+# # imagePullPolicy: "Never"
+# #   image: "image:v2"
+# #   imageFiles:
+# #     configs/images.yaml: image2
+# # image: "image:v3"
+# # imageFiles:
+# #   configs/images.yaml: image3
+#     # image:
+#     #   repository: "image-repository-v1"
+#     # image:
+#     #   repository: "image-repository-v2"
+#     #   tag: "image-tag-v1"
+#     # image:
+#     #   repository:
+#     #     url: cccc
+#     #     namespace: 333
+#     #     name: ffff
+#     #     bbbb: 4
+#     #     aaaa: 1/2
+#     #     vvv: 3aa
+#     #   tag:
+#     #     project:
+#     #     commit: 78987
+#     #     dataCommit:
+#     #     aaa: aaa
+#     #     bbb: bbb
+#     #     ddd: 111
+#     # image:
+#     #   repository:
+#     #   - "aaaaa"
+#     #   - "ns"
+#     #   - "cccc"
+#     #   tag:
+#     #   - "main_branch"
+#     #   - "fdssf3sg"
+#     #   - "r123456"
+#   initContainers:
+#   - name: init-c1
+#     envInitEnabled: true
+#     env:
+#     - name: init-name3
+#       value: init-value3
+#     envFiles:
+#       configs/envs.yaml: CronJob.env1
+#   envFiles:
+#     configs/envs.yaml: CronJob.env2
+
+# DaemonSet:
+#   helmTesting: false
+#   updateStrategy:
+#     type: RollingUpdate
+#     rollingUpdate:
+#       # maxSurge: 10%
+#       maxUnavailable: 1
+
+# Deployment:
+#   helmTesting: false
+#   helmLabels: true
+#   name: DeploymentTest
+#   nameAlias: DeploymentTestAlias
+#   fullname: DeploymentTestFullName
+#   strategy:
+#     type: RollingUpdate
+#     rollingUpdate:
+#       maxSurge: 25%
+#       maxUnavailable: 1
+
+# Job:
+#   helmTesting: false
+
+# Pod:
+#   helmTesting: false
+
+# ReplicaSet:
+#   helmTesting: false
+
+# ReplicationController:
+#   helmTesting: false
+
+# StatefulSet:
+#   helmTesting: false
+#   helmLabels: true
+#   updateStrategy:
+#     type: RollingUpdate
+#     rollingUpdate:
+#       partition: 0
+#       maxUnavailable: 1
+#   volumeClaimTemplates:
+#   # - name: vct-name
+#   #   accessModes: ReadWriteOnce
+#   #   storageClassName: storage-class-name
+#   #   size: 2Gi
+#     vct-name1:
+#       accessModes: ReadWriteOnce, ReadOnlyMany
+#       storageClassName: storage-class-name
+#       size: 2Gi
+#     vct-name2:
+#       accessModes:
+#       - ReadWriteOnce
+#       storageClassName: storage-class-name
+#       storage: 2Gi
+#   revisionHistoryLimit: 0
+#   replicas: 0
+#   serviceName: "ss"
+#   ordinals: 0
+#   # ordinals:
+#   #   start: 0
+#   name: Test
+#   nameAlias: TestAlias
+#   fullname: TestFullName
+#   strategy:
+#     type: RollingUpdate
+#     rollingUpdate:
+#       maxSurge: 25%
+#       maxUnavailable: 1
+#   matchExpressions:
+#   # 基于等值 / 不等值
+#   - environment = production
+#   - environment1 == production1
+#   - tier != frontend
+#   # 基于集合
+#   - environment2 in (production2, qa2)
+#   - tier2 notin (frontend2, backend2)
+#   - partition
+#   - "!partition1"
+#   # 原生
+#   - key: key
+#     operator: In  # In/NotIn/Exists/DoesNotExist
+#     values:
+#     - value1
+#     - value2
+#   annotations:
+#     validOnly: false  # 特殊变量，不会出现在结果集中。非全局变量配置时生效（此处生效）。
+#     app.example.com: test
+#     cron: test
+#   labels:
+#     xxx: 123
+#   activeDeadlineSeconds: 10
+#   automountServiceAccountToken: true
+#   dnsPolicy: ClusterFirstWithHostNet
+#   hostname: vm-server-test
+#   imagePullSecrets:
+#   - secret1
+#   - secret2
+#   - secret3
+#   nodeName: node-1
+#   nodeSelector:
+#     hostname: node-1
+#   restartPolicy: Always
+#   schedulerName: default
+#   serviceAccountName: default
+#   hostPID: false
+#   shareProcessNamespace: false
+#   terminationGracePeriodSeconds: 0
+#   nodeAffinity:
+#     required:
+#       matchExpressions:
+#       - nodeAffinity1 = 111
+#       matchFields:
+#       - nodeAffinity2 = 222
+#     preferred:
+#       weight1:
+#         matchExpressions:
+#         - nodeAffinity1 = 111
+#         matchFields:
+#         - nodeAffinity2 = 222
+#   podAffinity:
+#     required:
+#       topologyKey: kubernetes.io/hostname
+#       labelSelector:
+#         matchExpressions:
+#         - podAffinity1 = 111
+#         matchLabels:
+#           podAffinity2: 222
+#       namespaceSelector:
+#         matchExpressions:
+#         - podAffinity3 = 333
+#         matchLabels:
+#           podAffinity4: 444
+#       namespaces:
+#       - aaa
+#       - bbb
+#     preferred:
+#       weight1:
+#         topologyKey: kubernetes.io/hostname
+#         labelSelector:
+#           matchExpressions:
+#           - podAffinityW1 = W111
+#           matchLabels:
+#             podAffinityW2: W222
+#         namespaceSelector:
+#           matchExpressions:
+#           - podAffinityW3 = W333
+#           matchLabels:
+#             podAffinityW4: W444
+#         namespaces:
+#         - Waaa
+#         - Wbbb
+#   podAntiAffinity:
+#     required:
+#       topologyKey: kubernetes.io/hostname
+#       labelSelector:
+#         matchExpressions:
+#         - podAntiAffinity1 = 111
+#         matchLabels:
+#           podAntiAffinity2: 222
+#       namespaceSelector:
+#         matchExpressions:
+#         - podAntiAffinity3 = 333
+#         matchLabels:
+#           podAntiAffinity4: 444
+#       namespaces:
+#       - Antiaaa
+#       - Antibbb
+#     preferred:
+#       weight1:
+#         topologyKey: kubernetes.io/hostname
+#         labelSelector:
+#           matchExpressions:
+#           - podAntiAffinityW1 = W111
+#           matchLabels:
+#             podAntiAffinityW2: W222
+#         namespaceSelector:
+#           matchExpressions:
+#           - podAntiAffinityW3 = W333
+#           matchLabels:
+#             podAntiAffinityW4: W444
+#         namespaces:
+#         - AntiWaaa
+#         - AntiWbbb
+#   subdomain: cron
+#   hostAliases: 1.1.1.1 1.example.com
+#   # # linux /etc/hosts format string
+#   # 1.1.1.1 1.example.com
+#   # # 原生
+#   # - ip: 5.5.5.5
+#   #   hostnames:
+#   #   - 5.example.com
+#   #   - 55.example.com
+#   # # linux /etc/hosts format
+#   # - 1.1.1.1 1.example.com 11.example.com
+#   # - 2.2.2.2 2.example.com 22.example.com
+#   # # dict
+#   #   3.3.3.3:
+#   #   - 3.example.com
+#   #   - 33.example.com
+#   #   4.4.4.4:
+#   #   - 4.example.com
+#   #   - 44.example.com
+#   securityContext:
+#     fsGroup: 2000
+#     fsGroupChangePolicy: OnRootMismatch
+#     runAsGroup: 3000
+#     runAsNonRoot: true
+#     runAsUser: 1000
+#     seLinuxOptions:
+#       level: s0:c123,c456
+#       role: default
+#       type: xxxx
+#       user: root
+#     seccompProfile:
+#       localhostProfile: my-profiles/profile-allow.json
+#       type: Localhost
+#     supplementalGroups:
+#     - 1001
+#     - 1002
+#     sysctls: # net.ipv4.ip_forward = 1
+#     - name: xxx
+#       value: 123
+#     - net.ipv4.ip_forward = 0
+#       # xxx: 321
+#       # aaa: 111
+#     windowsOptions:
+#       gmsaCredentialSpec: 123
+#       gmsaCredentialSpecName: 333
+#       hostProcess: true
+#       runAsUserName: aaa
+#   tolerations:
+#   - key: aaa
+#     operator: Exists
+#     value: 123
+#     effect: NoSchedule
+#     tolerationSeconds: 3600
+#   - key: bbb
+#     operator: Equal
+#     value: 123
+#     effect: NoExecute
+#     tolerationSeconds: 3600
+#   volumes:
+#     cephfs:name-cephfs:
+#       monitors:
+#       - 1.1.1.1:6789
+#       - 1.1.1.2:6789
+#       - 1.1.1.3:6789
+#       path: /
+#       readOnly: true
+#       secretFile: /etc/ceph/user.secret
+#       secretRef: ""
+#       user: admin
+#     cephfs-aaa-fff:
+#       monitors:
+#       - 1.1.1.1:6789
+#       - 1.1.1.2:6789
+#       - 1.1.1.3:6789
+#       path: /aaa
+#       readOnly: false
+#       secretFile: /etc/ceph/user.secret
+#       secretRef: ""
+#       user: admin
+#     cephfs|:
+#       monitors:
+#       - 1.1.1.1:6789
+#       - 1.1.1.2:6789
+#       - 1.1.1.3:6789
+#       path: /aaa
+#       readOnly: false
+#       secretFile: /etc/ceph/user.secret
+#       secretRef: ""
+#       user: admin
+#     configMap:name-configMap:
+#       name: cm-config.yaml
+#       defaultMode: 0644
+#       items:
+#       - key: log-level
+#         mode: 0644
+#         path: path/to/item/file
+#       - key: log-level11
+#         mode: 0644
+#         path: path/to/item/file
+#       optional: true
+#     emptyDir:name-emptyDir:
+#       medium:
+#     emptyDir:
+#       medium: Memory
+#       sizeLimit: 10Gi
+#     emptyDiremptyDir:
+#       medium:
+#       sizeLimit: 1Gi
+#     fc:aaa:
+#       fsType: ext4
+#       lun: 123
+#       readOnly: true
+#       targetWWNs:
+#       - aaa
+#     fc:bbb:
+#       fsType: ext4
+#       readOnly: true
+#       wwids:
+#       - aaa-123
+#     hostPath:
+#       path: /data
+#       type:
+#     hostPath:name-hostPath:
+#       path: /data
+#       type: Directory
+#     nfs:
+#       server: nfs.example.com
+#       path: /data
+#       readOnly: true
+#     nfs-aaaaaa:
+#       server: nfs.example.com
+#       path: /data
+#       readOnly: true
+#     persistentVolumeClaim:
+#       claimName: claimName1
+#       readOnly: true
+#     pvcpvc-123123:
+#       claimName: 123123
+#     secret:
+#       defaultMode: 0644
+#       items:
+#       - key: secret-file
+#         mode: 0644
+#         path: path/to/item/file
+#       optional:
+#       secretName: sssss  # 可用 name 替换，但 secretName 会优先生效
+#     rbd:  # 使用前需要安装 ceph-common 组件
+#       fsType: ext4
+#       image: foo
+#       keyring: /etc/ceph/keyring
+#       monitors:
+#       - 1.1.1.1:6789
+#       - 1.1.1.2:6789
+#       - 1.1.1.3:6789
+#       pool: rbd
+#       readOnly: true
+#       user: admin
+#     rbdrbd-123123123123:  # 使用前需要安装 ceph-common 组件
+#       fsType: ext4
+#       image: foo
+#       monitors:
+#       - 1.1.1.1:6789
+#       - 1.1.1.2:6789
+#       - 1.1.1.3:6789
+#       pool: rbd
+#       readOnly: true
+#       secretRef: 123123
+#       user: admin
+#   containers:
+#   - name: container1
+#     args:
+#     - aaa
+#     - bbb
+#     command:
+#     - cmd1
+#     - cmd2
+#     env:
+#     - name: name3
+#       value: value3
+#     envFiles:
+#       configs/envs.yaml: CronJob.env
+#       configs/envs2.yaml: CronJob.env
+#     envFrom:
+#       configMapRef:
+#         name: xxxx
+#         optional: true
+#       prefix: xxxx
+#       secretRef:
+#         name: xxxxx
+#         optional: true
+#     envFromFiles:
+#       configs/envs.yaml: CronJob.env
+#       configs/envs2.yaml: CronJob.env
+#     image: "image:v1"
+#     imageFiles:
+#       configs/images.yaml: image1
+#     imagePullPolicy: "Always"
+#     lifecycle:
+#       postStart:
+#         exec:
+#           command: ["/bin/sh", "-c", "echo Hello from the postStart handler > /usr/share/message"]
+#       preStop:
+#         exec:
+#           command: ["/bin/sh","-c","nginx -s quit; while killall -0 nginx; do sleep 1; done"]
+#     livenessProbe:
+#       exec:
+#         command:
+#         - cat
+#         - /tmp/healthy
+#     ports: 80, 81, 82
+#     # ports:
+#     # - containerPort: 100
+#     #   hostIP: 1.1.1.1
+#     #   hostPort: 100
+#     #   name: name-ports
+#     #   protocol: TCP
+#     resizePolicy:
+#     - resourceName: "memory"
+#       restartPolicy: "RestartContainer"
+#     - name: "cpu"
+#       policy: "NotRequied"
+#     resources:
+#       limits:
+#         cpu: 1
+#         memory: 1Gi
+#       requests:
+#         cpu: 1
+#         memory: 1Gi
+#     resourcesFiles:
+#       configs/resources.yaml: requests
+#     securityContext:
+#       readOnlyRootFilesystem: true
+#     readinessProbe:
+#       tcpSocket:
+#         port: 8080
+#       initialDelaySeconds: 15
+#       periodSeconds: 10
+#     startupProbe:
+#       httpGet:
+#         path: /healthz
+#         port: liveness-port
+#       failureThreshold: 30
+#       periodSeconds: 10
+#     volumeDevices:
+#     - devicePath: aaaaa
+#       name: adfadfad
+#     - devicePath: aaaaa
+#       name: adfadfad
+#     volumeMounts:
+#     - name: aaaa
+#       mountPath: path/to/mount/point
+#     - name: bbbb
+#       mountPath: path/to/mount/point
+#     workingDir: path/to/work/dir
+#   # imagePullPolicy: "IfNotPresent"
+# # imagePullPolicy: "Never"
+# #   image: "image:v2"
+# #   imageFiles:
+# #     configs/images.yaml: image2
+# # image: "image:v3"
+# # imageFiles:
+# #   configs/images.yaml: image3
+#     # image:
+#     #   repository: "image-repository-v1"
+#     # image:
+#     #   repository: "image-repository-v2"
+#     #   tag: "image-tag-v1"
+#     # image:
+#     #   repository:
+#     #     url: cccc
+#     #     namespace: 333
+#     #     name: ffff
+#     #     bbbb: 4
+#     #     aaaa: 1/2
+#     #     vvv: 3aa
+#     #   tag:
+#     #     project:
+#     #     commit: 78987
+#     #     dataCommit:
+#     #     aaa: aaa
+#     #     bbb: bbb
+#     #     ddd: 111
+#     # image:
+#     #   repository:
+#     #   - "aaaaa"
+#     #   - "ns"
+#     #   - "cccc"
+#     #   tag:
+#     #   - "main_branch"
+#     #   - "fdssf3sg"
+#     #   - "r123456"
+#   initContainers:
+#   - name: init-c1
+#     envInitEnabled: true
+#     env:
+#     - name: init-name3
+#       value: init-value3
+#     envFiles:
+#       configs/envs.yaml: CronJob.env1
+#   envFiles:
+#     configs/envs.yaml: CronJob.env2
+
+# Service:
+#   helmTesting: false
+#   helmLabels: true
+#   name: Test
+#   nameAlias: TestAlias
+#   fullname: TestFullName
+#   allocateLoadBalancerNodePorts: false
+#   clusterIP: 1.1.1.1
+#   clusterIPs: 2.2.2.2 3.3.3.3
+#   # - 2.2.2.2
+#   # - 3.3.3.3
+#   externalIPs: 4.4.4.4 5.5.5.5
+#   externalName: externalName
+#   externalTrafficPolicy: Cluster
+#   healthCheckNodePort: 33333
+#   internalTrafficPolicy: Local
+#   loadBalancerIP: 6.6.6.6/32
+#   loadBalancerSourceRanges: 1.1.1.1/32 2.2.2.0/8
+#   sessionAffinityConfig: 123
+#     # clientIP:
+#     #   timeoutSeconds: 123
+#   ports:
+#     - name: aaaa
+#       appProtocol:
+#       nodePort:
+#       port: 65533
+#       protocol:
+#       targetPort:
+#     - port: 65532
+#       protocol: UDP
+
+# Ingress:
+#   helmTesting: false
+#   helmLabels: true
+#   name: Test
+#   nameAlias: TestAlias
+#   fullname: TestFullName
+#   ingressClassName: nginx
+#   tls:
+#     hosts: # "1.example.com 2.example.com *.1.example.com"
+#     - 3.example.com
+#     - 4.example.com
+#     - "*.2.example.com"
+#     secretName: secret-name
+#   rules:
+#     "*.example.com":
+#     # resource
+#     - apiGroup: apiGroup.example.com
+#       kind: Secret
+#       name: secret-name
+#       path: "/"
+#       pathType: "Prefix"
+#       default: false
+#     # service
+#     - name: aaa
+#       portName: bbb
+#       portNumber: 123
+#       path: "/aaa"
+#       pathType: "Prefix"
+#       default: false
+#     - name: ccc
+#       portName:
+#       portNumber: 123
+#       path: "/aaa"
+#       pathType: "Prefix"
+#       default: false
+#     "6.example.com":
+#     - name: ddd
+#       portName:
+#       portNumber: 123
+#       path: "/aaa"
+#       pathType: "Prefix"
+#       default: false
+
+# IngressClass:
+#   helmTesting: false
+#   helmLabels: true
+#   name: Test
+#   nameAlias: TestAlias
+#   fullname: TestFullName
+#   controller: example.com/ingress-controller
+#   parameters:
+#     apiGroup: k8s.example.com
+#     kind: IngressParameters
+#     name: external-lb
+#     # namespace: default
+#     scope: "Namespace"
+
+# ConfigMap:
+#   helmTesting: false
+#   helmLabels: true
+#   name: Test
+#   nameAlias: TestAlias
+#   fullname: TestFullName
+#   immutable: true
+#   data:
+#     player_initial_lives: "3"
+#     ui_properties_file_name: "user-interface.properties"
+#   dataFiles:
+#   - "configs/cm-datafile.yaml"
+#     # file1.yaml: "configs/cm-datafile.yaml"
+#   binaryData:
+#     player_initial_lives: "3"
+#     ui_properties_file_name: "user-interface.properties"
+#   binaryDataFiles:
+#   # - "configs/cm-datafile.yaml"
+#     file1.yaml: "configs/cm-datafile.yaml"
+
+# Secret:
+#   helmTesting: false
+#   helmLabels: true
+#   name: Test
+#   nameAlias: TestAlias
+#   fullname: TestFullName
+#   immutable: true
+#   # type: "kubernetes.io/service-account-token"
+#   # serviceAccountName: sa-name
+#   # annotations:
+#   #   # validOnly: true
+#   #   type: example1
+#   #   kubernetes.io/service-account.name: default
+#   # type: "kubernetes.io/dockercfg"
+#   # type: "kubernetes.io/dockerconfigjson"
+#   # type: "kubernetes.io/basic-auth"
+#   # type: "kubernetes.io/ssh-auth"
+#   # type: "kubernetes.io/tls"
+#   type: "bootstrap.kubernetes.io/token"
+#   # data:
+#   #   server: https://my-server.com
+#   #   username: my-username
+#   #   password: my-password
+#   #   email: my@email.com
+#   #   ssh-privatekey: "123123123123"
+#   #   tls.crt: "123"
+#   #   tls.key: "123"
+#   #   auth-extra-groups: "system:bootstrappers:kubeadm:default-node-token"
+#   #   expiration: 2020-09-13T04:39:10Z
+#   #   token-id: 5emitj
+#   #   token-secret: kq4gihvszzgn1p0r
+#   #   usage-bootstrap-authentication: true
+#   #   usage-bootstrap-signing: true
+#   stringData:
+#     server: "https://my-server.com"
+#     username: "my-username"
+#     password: "my-password"
+#     email: "my@email.com"
+#     ssh-privatekey: "123123123123"
+#     tls.crt: "123"
+#     tls.key: "123"
+#     auth-extra-groups: "system:bootstrappers:kubeadm:default-node-token"
+#     expiration: 2020-09-13T04:39:10Z
+#     token-id: 5emitj
+#     token-secret: kq4gihvszzgn1p0r
+#     usage-bootstrap-authentication: true
+#     usage-bootstrap-signing: true
+#     # server: hub.tencentyun.com
+#     # username: 100000067028
+#     # password: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE4NDkyNTYyMDEsImp0aSI6IjNkOWUxYWJkLTdjMDAtNDNmNC05MGEwLWFhMWRiYjI3ZjA5MiIsImlhdCI6MTUzMzg5NjIwMSwibmJmIjoxNTMzODk2MjAxLCJzdWIiOiIxMDAwMDAwNjcwMjgifQ.S9AsghgGfydrukncHn6haVQPFf06s6AOtSWeUO3Gock
+#     # email: 100000067028@qq.com
+#   # data:
+#   #   auth-extra-groups: "system:bootstrappers:kubeadm:default-node-token"
+#   #   expiration: 2020-09-13T04:39:10Z
+#   #   token-id: 5emitj
+#   #   token-secret: kq4gihvszzgn1p0r
+#   #   usage-bootstrap-authentication: true
+#   #   usage-bootstrap-signing: true
+#   # dataFiles:
+#   # # - "configs/sc-file.yaml"
+#   #   tls.crt: "configs/tls.crt"
+#   #   tls.key: "configs/tls.key"
+#   #   ssh-privatekey: "configs/cm-sshprivatekey.yaml"
+#   #   file1.yaml: "configs/sc-file.yaml"
+#   # stringData:
+#   #   auth-extra-groups: "system:bootstrappers:kubeadm:default-node-token"
+#   #   expiration: 2020-09-13T04:39:10Z
+#   #   token-id: 5emitj
+#   #   token-secret: kq4gihvszzgn1p0r
+#   #   usage-bootstrap-authentication: true
+#   #   usage-bootstrap-signing: true
+#   # stringDataFiles:
+#   # - "configs/sc-file.yaml"
+#     # tls.crt: "configs/tls.crt"
+#     # tls.key: "configs/tls.key"
+#     # ssh-privatekey: "configs/cm-sshprivatekey.yaml"
+#     # .dockercfg: "configs/sc-dockercfg.yaml"
+#     # .dockerconfigjson: "configs/sc-dockercfg.yaml"
+#     # file1.yaml: "configs/sc-file.yaml"
+
+# StorageClass:
+#   helmTesting: false
+#   helmLabels: true
+#   name: Test
+#   nameAlias: TestAlias
+#   fullname: TestFullName
+#   allowVolumeExpansion: true
+#   provisioner: kubernetes.io/aws-ebs
+#   parameters:
+#     type: gp2
+#   reclaimPolicy: Retain
+#   mountOptions: debug info
+#   # - debug
+#   # - info
+#   volumeBindingMode: Immediate
+#   allowedTopologies:
+#     topology.kubernetes.io/zone: aaa, bbb
+#     # - us-central-1a
+#     # - us-central-1b
+#     topology.kubernetes.io/zone2:
+#     - us-central-2a
+#     - us-central-2b
+
+# Binding:
+#   helmTesting: false
+#   helmLabels: true
+#   name: Test
+#   nameAlias: TestAlias
+#   fullname: TestFullName
+#   target:
+#     apiVersion: a
+#     kind: b
+#     namespace: dd
+#     name: cc
+#     filePath: "/aaaa"
+#     resourceVersion: fff
+#     uuid: aaaa-aaaa
+
+# ClusterRole:
+#   helmTesting: false
+#   helmLabels: true
+#   name: Test
+#   nameAlias: TestAlias
+#   fullname: TestFullName
+#   rules:
+#   - apiGroups:
+#     - ""
+#     - "*"
+#     resources:
+#     - "pods"
+#     verbs:
+#     - "get"
+#     - "watch"
+#     - "list"
+#   aggregationRule:
+#     matchExpressions:
+#     - aaa = bb
+#     - environment2 in (production2, qa2)
+#     matchLabels:
+#       ccc: dddd
+
+# ClusterRoleBinding:
+#   helmTesting: false
+#   helmLabels: true
+#   name: Test
+#   nameAlias: TestAlias
+#   fullname: TestFullName
+#   roleRef: # secret-reader
+#     apiGroup: rbac.authorization.k8s.io
+#     kind: ClusterRole
+#     name: secret-reader
+#   subjects:
+#   - apiGroup: rbac.authorization.k8s.io
+#     kind: ServiceAccount
+#     name: manager
+#     namespace: monitoring
+#   - apiGroup: rbac.authorization.k8s.io
+#     kind: Group
+#     name: manager
+#     namespace: monitoring
+
+# Role:
+#   helmTesting: false
+#   helmLabels: true
+#   name: Test
+#   nameAlias: TestAlias
+#   fullname: TestFullName
+#   rules:
+#   - apiGroups:
+#     - ""
+#     - "*"
+#     resources:
+#     - "pods"
+#     verbs:
+#     - "get"
+#     - "watch"
+#     - "list"
+#   aggregationRule:
+#     matchExpressions:
+#     - aaa = bb
+#     - environment2 in (production2, qa2)
+#     matchLabels:
+#       ccc: dddd
+
+# RoleBinding:
+#   helmTesting: false
+#   helmLabels: true
+#   name: Test
+#   nameAlias: TestAlias
+#   fullname: TestFullName
+#   roleRef: # secret-reader
+#     apiGroup: rbac.authorization.k8s.io
+#     kind: ClusterRole
+#     name: secret-reader
+#   subjects:
+#   - apiGroup: rbac.authorization.k8s.io
+#     kind: ServiceAccount
+#     name: manager
+#     namespace: monitoring
+#   - apiGroup: rbac.authorization.k8s.io
+#     kind: Group
+#     name: manager
+#     namespace: monitoring
+
+# Namespace:
+#   helmTesting: false
+#   helmLabels: true
+#   namespace: 12312312312321
+
+# PersistentVolume:
+#   helmTesting: false
+#   helmLabels: true
+#   accessModes: # ReadWriteOnce, ReadOnlyMany
+#   - ReadWriteOnce
+#   - ReadOnlyMany
+#   mountOptions: ro, soft
+#   # - ro
+#   # - soft
+#   volumes:
+#     cephfs:name-cephfs:
+#       monitors:
+#       - 1.1.1.1:6789
+#       - 1.1.1.2:6789
+#       - 1.1.1.3:6789
+#       path: /
+#       readOnly: true
+#       secretFile: /etc/ceph/user.secret
+#       secretRef:
+#         name: aaa
+#         namespace: bbb
+#       user: admin
+#     cephfs-aaa-fff:
+#       monitors:
+#       - 1.1.1.1:6789
+#       - 1.1.1.2:6789
+#       - 1.1.1.3:6789
+#       path: /aaa
+#       readOnly: false
+#       secretFile: /etc/ceph/user.secret
+#       secretRef: ""
+#       user: admin
+#     cephfs|:
+#       monitors:
+#       - 1.1.1.1:6789
+#       - 1.1.1.2:6789
+#       - 1.1.1.3:6789
+#       path: /aaa
+#       readOnly: false
+#       secretFile: /etc/ceph/user.secret
+#       secretRef: ""
+#       user: admin
+#     configMap:name-configMap:
+#       name: cm-config.yaml
+#       defaultMode: 0644
+#       items:
+#       - key: log-level
+#         mode: 0644
+#         path: path/to/item/file
+#       - key: log-level11
+#         mode: 0644
+#         path: path/to/item/file
+#       optional: true
+#     emptyDir:name-emptyDir:
+#       medium:
+#     emptyDir:
+#       medium: Memory
+#       sizeLimit: 10Gi
+#     emptyDiremptyDir:
+#       medium:
+#       sizeLimit: 1Gi
+#     fc:aaa:
+#       fsType: ext4
+#       lun: 123
+#       readOnly: true
+#       targetWWNs:
+#       - aaa
+#     fc:bbb:
+#       fsType: ext4
+#       readOnly: true
+#       wwids:
+#       - aaa-123
+#     hostPath:
+#       path: /data
+#       type:
+#     hostPath:name-hostPath:
+#       path: /data
+#       type: Directory
+#     nfs:
+#       server: nfs.example.com
+#       path: /data
+#       readOnly: true
+#     nfs-aaaaaa:
+#       server: nfs.example.com
+#       path: /data
+#       readOnly: true
+
+# ServiceAccount:
+#   helmTesting: false
+#   helmLabels: true
+#   name: ccc
+#   automountServiceAccountToken: false
+#   imagePullSecrets: # ccc ddd, fff
+#   - aaa
+#   - bbb
+#   secrets:
+#   - apiVersion: a
+#     kind: b
+#     namespace: dd
+#     name: cc
+#     filePath: "/aaaa"
+#     resourceVersion: fff
+#     uuid: aaaa-aaaa
