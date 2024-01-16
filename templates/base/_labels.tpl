@@ -24,7 +24,7 @@
     处理用户传入。键 name 的值会覆盖默认的值
   */ -}}
   {{- $__labelsSrc := pluck "labels" .Context .Values }}
-  {{- range $__labelsSrc | mustUniq | mustCompact }}
+  {{- range ($__labelsSrc | mustUniq | mustCompact) }}
     {{- $_ := unset . "ignoreLabels" }}
     {{- if kindIs "map" . }}
       {{- $__labels = mustMerge $__labels . }}

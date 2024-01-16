@@ -8,7 +8,7 @@
 
   {{- $__clean := dict }}
   {{- $__persistentVolumeSrc := list .Context .Context.spec .Context.persistentVolume .Values .Values.spec .Values.persistentVolume }}
-  {{- range $__persistentVolumeSrc | mustUniq | mustCompact }}
+  {{- range ($__persistentVolumeSrc | mustUniq | mustCompact) }}
     {{- if kindIs "map" . }}
       {{- $__clean = mustMerge $__clean . }}
     {{- end }}

@@ -29,7 +29,7 @@
             {{- end }}
           {{- end }}
 
-          {{- $__podAffinityTerm = include "definitions.NodeSelectorTerm" (dict "matchExpressions" (mustCompact (mustUniq $__expressions)) "matchLabels" (mustCompact (mustUniq $__labels))) | fromYaml }}
+          {{- $__podAffinityTerm = include "definitions.NodeSelectorTerm" (dict "matchExpressions" ($__expressions | mustUniq | mustCompact) "matchLabels" ($__labels | mustUniq | mustCompact)) | fromYaml }}
         {{- else if kindIs "map" $v }}
           {{- $__podAffinityTerm = include "definitions.PodAffinityTerm" $v | fromYaml }}
         {{- else }}

@@ -45,7 +45,7 @@
 {{- define "configStorage.ConfigMap.data.parser" -}}
   {{- with . }}
     {{- $__data := dict }}
-    {{- range .dataSrc | mustUniq | mustCompact }}
+    {{- range (.dataSrc | mustUniq | mustCompact) }}
       {{- if kindIs "map" . }}
         {{- $__data = mustMerge $__data . }}
       {{- else if kindIs "slice" . }}
@@ -58,7 +58,7 @@
     {{- end }}
 
     {{- $__dataFiles := dict }}
-    {{- range .dataFilesSrc | mustUniq | mustCompact }}
+    {{- range (.dataFilesSrc | mustUniq | mustCompact) }}
       {{- if kindIs "map" . }}
         {{- range $f, $p := . }}
           {{- $__dataFiles = mustMerge $__dataFiles (dict (base $f) ($.Files.Get $p)) }}

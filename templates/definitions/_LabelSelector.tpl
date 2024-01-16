@@ -41,7 +41,7 @@
     {{- fail "definitions.LabelSelector: matchExpressions not support, please use slice or map" }}
   {{- end }}
 
-  {{- $__matchExpressions = mustCompact (mustUniq $__matchExpressions) }}
+  {{- $__matchExpressions = $__matchExpressions | mustUniq | mustCompact }}
   {{- if $__matchExpressions }}
     {{- nindent 0 "" -}}matchExpressions:
     {{- toYaml $__matchExpressions | nindent 0 }}

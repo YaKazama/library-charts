@@ -66,7 +66,7 @@
         {{- $__clean = mustAppend $__clean (dict $k $v) }}
       {{- end }}
     {{- end }}
-    {{- range (mustCompact (mustUniq $__clean)) }}
+    {{- range ($__clean | mustUniq | mustCompact) }}
       {{- $__sysctls = mustAppend $__sysctls (include "definitions.Sysctl" . | fromYaml) }}
     {{- end }}
     {{- if $__sysctls }}

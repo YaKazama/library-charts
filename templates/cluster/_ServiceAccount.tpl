@@ -19,7 +19,7 @@
 
   {{- $__clean := list }}
   {{- $__secretsSrc := pluck "secrets" .Context .Values }}
-  {{- range $__secretsSrc | mustUniq | mustCompact }}
+  {{- range ($__secretsSrc | mustUniq | mustCompact) }}
     {{- if kindIs "map" . }}
       {{- $__clean = mustAppend $__clean . }}
     {{- else if kindIs "slice" . }}

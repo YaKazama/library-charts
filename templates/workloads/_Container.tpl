@@ -96,7 +96,7 @@
     {{- else if kindIs "map" .ports }}
       {{- $__clean = mustAppend $__clean .ports }}
     {{- else if kindIs "slice" .ports }}
-      {{- range (mustCompact (mustUniq .ports)) }}
+      {{- range (.ports | mustUniq | mustCompact) }}
         {{- if kindIs "string" . }}
           {{- $__regexSplit := "\\s+|\\s*[\\|\\:,]\\s*" }}
           {{- range (mustRegexSplit $__regexSplit . -1 | mustUniq | mustCompact) }}
@@ -110,7 +110,7 @@
       {{- end }}
     {{- end }}
     {{- $__ports := list }}
-    {{- range (mustCompact (mustUniq $__clean)) }}
+    {{- range ($__clean | mustUniq | mustCompact) }}
       {{- $__ports = mustAppend $__ports (include "definitions.ContainerPort" . | fromYaml) }}
     {{- end }}
     {{- $__ports = $__ports | mustUniq | mustCompact }}
@@ -224,7 +224,7 @@
     {{- end }}
 
     {{- $__restartPolicy := include "base.string" .restartPolicy }}
-    {{- if and $__restartPolicy .isInitContainer }}
+    {{- if and $__restartPolicy $.isInitContainer }}
       {{- nindent 0 "" -}}restartPolicy: Always
     {{- end }}
 
@@ -340,7 +340,7 @@
       {{- if kindIs "string" . }}
         {{- $__regexSplit := "\\s+|\\s*[\\|,]\\s*" }}
         {{- $__valVolmeMounts := mustRegexSplit $__regexSplit . -1 }}
-        {{- range $__valVolmeMounts | mustUniq | mustCompact }}
+        {{- range ($__valVolmeMounts | mustUniq | mustCompact) }}
           {{- $__regexSplit := ":+" }}
           {{- $__val := mustRegexSplit $__regexSplit . -1 }}
           {{- if eq (len $__val) 2 }}
@@ -363,7 +363,7 @@
           {{- if kindIs "string" . }}
             {{- $__regexSplit := "\\s+|\\s*[\\|,]\\s*" }}
             {{- $__valVolmeMounts := mustRegexSplit $__regexSplit . -1 }}
-            {{- range $__valVolmeMounts | mustUniq | mustCompact }}
+            {{- range ($__valVolmeMounts | mustUniq | mustCompact) }}
               {{- $__regexSplit := ":+" }}
               {{- $__val := mustRegexSplit $__regexSplit . -1 }}
               {{- if eq (len $__val) 2 }}
@@ -613,22 +613,39 @@
 */ -}}
 {{- define "workloads.Container.image" -}}
   {{- with . }}
-    {{- $__clean := dict }}
-    {{- $__rt := dict }}
+    {{- $__imageStr := dict "image" "" "repository" "" "tag" "" }}
+    {{- $__repository := dict }}
+    {{- $__tag := dict }}
 
+    {{- /*
+      image
+    */ -}}
     {{- range (.imageSrc | mustUniq | mustCompact) }}
       {{- if kindIs "string" . }}
-        {{- $__clean = mustMerge $__clean (dict "image" .) }}
+        {{- $_ := set $__imageStr "image" . }}
       {{- else if kindIs "map" . }}
-        {{- $__rt = mustMerge $__rt (pick . "repository" "tag") }}
-      {{- else }}
-        {{- fail "workloads.Container.image: image not support, please use string or map." }}
+        {{- if .repository }}
+          {{- if kindIs "string" .repository }}
+            {{- $_ := set $__imageStr "repository" (include "base.fmt.slice" (dict "s" (list .repository) "separators" "/")) }}
+          {{- else if kindIs "map" .repository }}
+            {{- $__repository = mustMerge $__repository .repository }}
+          {{- end }}
+        {{- end }}
+        {{- if .tag }}
+          {{- if kindIs "string" .tag }}
+            {{- $_ := set $__imageStr "tag" (include "base.fmt.slice" (dict "s" (list .tag) "separators" "-")) }}
+          {{- else if kindIs "map" .tag }}
+            {{- $__tag = mustMerge $__tag .tag }}
+          {{- end }}
+        {{- end }}
       {{- end }}
     {{- end }}
 
+    {{- /*
+      imageFiles
+    */ -}}
+    {{- $__regexSplit := coalesce $.r "\\.|:+" }}
     {{- range (.imageFilesSrc | mustUniq | mustCompact) }}
-      {{- $__regexSplit := coalesce $.r "\\.|:+" }}
-
       {{- if kindIs "map" . }}
         {{- range $f, $p := . }}
           {{- $__val := $.Files.Get $f | fromYaml }}
@@ -642,58 +659,59 @@
           {{- if $__val }}
             {{- with $__val }}
               {{- if kindIs "string" . }}
-                {{- $__clean = mustMerge $__clean (dict "image" .) }}
+                {{- $__imageStr = mustMerge $__imageStr (dict "image" .) }}
               {{- else if kindIs "map" . }}
-                {{- $__rt = mustMerge $__rt (pick . "repository" "tag") }}
-              {{- else }}
-                {{- fail "workloads.Container.image: imageFiles values not support, please use string or map." }}
+                {{- if .repository }}
+                  {{- if kindIs "string" .repository }}
+                    {{- $__imageStr = mustMerge $__imageStr (dict "repository" (include "base.fmt.slice" (dict "s" (list .repository) "separators" "/"))) }}
+                  {{- else if kindIs "map" .repository }}
+                    {{- $__repository = mustMerge $__repository .repository }}
+                  {{- end }}
+                {{- end }}
+                {{- if .tag }}
+                  {{- if kindIs "string" .tag }}
+                    {{- $__imageStr = mustMerge $__imageStr (dict "tag" (include "base.fmt.slice" (dict "s" (list .tag) "separators" "-"))) }}
+                  {{- else if kindIs "map" .tag }}
+                    {{- $__tag = mustMerge $__tag .tag }}
+                  {{- end }}
+                {{- end }}
               {{- end }}
             {{- end }}
           {{- end }}
         {{- end }}
-      {{- else }}
-        {{- fail "workloads.Container.image: imageFiles not support, please use map." }}
       {{- end }}
     {{- end }}
 
-    {{- $__regexImage := "([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\\.[a-zA-Z0-9]{2,}))?(\\/?[a-zA-Z0-9]+)*:?[a-zA-Z0-9-]+" }}
-
-    {{- if hasKey $__rt "repository" }}
-      {{- with $__rt.repository }}
-        {{- if or (kindIs "string" .) (kindIs "slice" .) }}
-          {{- $__val := include "base.fmt.slice" (dict "s" (list .) "separators" "/") }}
-          {{- $__clean = mustMerge $__clean (dict "repository" $__val) }}
-        {{- else if kindIs "map" . }}
-          {{- $__val := include "workloads.Container.image.parser" (dict "m" . "sequence" (list "url" "namespace" "name") "default" "" "separators" "/" "keyToLast" false) }}
-          {{- if mustRegexMatch $__regexImage $__val }}
-            {{- $__clean = mustMerge $__clean (dict "repository" $__val) }}
-          {{- end }}
-        {{- end }}
+    {{- /*
+      repository
+    */ -}}
+    {{- with $__repository }}
+      {{- $__val :="" }}
+      {{- if or (kindIs "string" .) (kindIs "slice" .) }}
+        {{- $__val = include "base.fmt.slice" (dict "s" (list .) "separators" "/") }}
+      {{- else if kindIs "map" . }}
+        {{- $__val = include "workloads.Container.image.parser" (dict "m" . "sequence" (list "url" "namespace" "name") "default" "" "separators" "/" "keyToLast" false) }}
       {{- end }}
+      {{- $__imageStr = mustMerge $__imageStr (dict "repository" $__val) }}
     {{- end }}
 
-    {{- if hasKey $__rt "tag" }}
-      {{- with $__rt.tag }}
-        {{- if or (kindIs "string" .) (kindIs "slice" .) }}
-          {{- $__val := include "base.fmt.slice" (dict "s" (list .) "separators" "/") }}
-          {{- $__clean = mustMerge $__clean (dict "tag" $__val) }}
-        {{- else if kindIs "map" . }}
-          {{- $__val := include "workloads.Container.image.parser" (dict "m" . "sequence" (list "build" "project" "commit" "dataCommit") "default" "latest" "separators" "-" "keyToLast" true) }}
-          {{- if mustRegexMatch $__regexImage $__val }}
-            {{- $__clean = mustMerge $__clean (dict "tag" $__val) }}
-          {{- end }}
-        {{- end }}
+    {{- /*
+      tag
+    */ -}}
+    {{- with $__tag }}
+      {{- $__val :="" }}
+      {{- if or (kindIs "string" .) (kindIs "slice" .) }}
+        {{- $__val = include "base.fmt.slice" (dict "s" (list .) "separators" "-") }}
+      {{- else if kindIs "map" . }}
+        {{- $__val = include "workloads.Container.image.parser" (dict "m" . "sequence" (list "build" "project" "commit" "dataCommit") "default" "" "separators" "-" "keyToLast" true) }}
       {{- end }}
+      {{- $__imageStr = mustMerge $__imageStr (dict "tag" $__val) }}
     {{- end }}
 
-    {{- $__image := include "base.string" (get $__clean "image") }}
-    {{- $__repository := include "base.string" (get $__clean "repository") }}
-    {{- $__tag := include "base.string" (coalesce (get $__clean "tag") "latest") }}
-
-    {{- if $__image }}
-      {{- $__image | trim }}
-    {{- else if and $__repository $__tag }}
-      {{- printf "%s:%s" $__repository $__tag }}
+    {{- if $__imageStr.image }}
+      {{- $__imageStr.image }}
+    {{- else if and $__imageStr.repository $__imageStr.tag }}
+      {{- printf "%s:%s" $__imageStr.repository $__imageStr.tag }}
     {{- else }}
       {{- fail (printf "workloads.Container.image: repository or tag not found. repository: %s, tag:%s" $__repository $__tag) }}
     {{- end }}
@@ -716,7 +734,7 @@
     {{- /*
       deepCopy 解决 $ 父作用域中 .image 中的内容被 unset 操作移除的问题
     */ -}}
-    {{- $__m := mustDeepCopy .m }}
+    {{- $__m := .m }}
     {{- $__sequence := .sequence }}
     {{- $__default := coalesce .default "" }}
     {{- $__separators := coalesce .separators "" }}
@@ -728,6 +746,9 @@
       {{- if $__sequence }}
         {{- range ($__sequence | mustUniq | mustCompact) }}
           {{- $__val := get $__m . }}
+          {{- if hasKey $__m . }}
+            {{- $_ := unset $__m . }}
+          {{- end }}
           {{- /*
             namespace 可以输入字符串或列表
           */ -}}
@@ -736,7 +757,6 @@
             {{- $__val = include "base.fmt.slice" (dict "s" (list $__val) "separators" "/" "r" $__regexSplit) }}
           {{- end }}
           {{- $__clean = mustAppend $__clean $__val }}
-          {{- $_ := unset $__m . }}
         {{- end }}
       {{- end }}
 

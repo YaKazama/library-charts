@@ -17,7 +17,7 @@
     {{- else if kindIs "map" .items }}
       {{- $__clean = mustAppend $__clean (pick .items "key" "mode" "path") }}
     {{- end }}
-    {{- range (mustCompact (mustUniq $__clean)) }}
+    {{- range ($__clean | mustUniq | mustCompact) }}
       {{- $__items = mustAppend $__items (include "definitions.KeyToPath" . | fromYaml) }}
     {{- end }}
     {{- if $__items }}

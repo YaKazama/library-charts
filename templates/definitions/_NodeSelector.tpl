@@ -27,7 +27,7 @@
         {{- end }}
       {{- end }}
 
-      {{- $__nodeSelectorTerms = mustAppend $__nodeSelectorTerms (include "definitions.NodeSelectorTerm" (dict "matchExpressions" (mustCompact (mustUniq $__expressions)) "matchFields" (mustCompact (mustUniq $__fields))) | fromYaml) }}
+      {{- $__nodeSelectorTerms = mustAppend $__nodeSelectorTerms (include "definitions.NodeSelectorTerm" (dict "matchExpressions" ($__expressions | mustUniq | mustCompact) "matchFields" ($__fields | mustUniq | mustCompact)) | fromYaml) }}
     {{- else if kindIs "map" . }}
       {{- $__nodeSelectorTerms = mustAppend $__nodeSelectorTerms (include "definitions.NodeSelectorTerm" . | fromYaml) }}
     {{- else }}

@@ -57,7 +57,7 @@
       {{- if kindIs "string" $__hostnames }}
         {{- include "base.fmt.slice" (dict "s" ($__hostnames | list)) | nindent 0 }}
       {{- else if kindIs "slice" $__hostnames }}
-        {{- mustCompact (mustUniq $__hostnames) | toYaml | nindent 0 }}
+        {{- $__hostnames | mustUniq | mustCompact | toYaml | nindent 0 }}
       {{- else }}
         {{- fail "definitions.HostAlias: hostnames not support, please use string or slice" }}
       {{- end }}

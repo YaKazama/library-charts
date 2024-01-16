@@ -46,7 +46,7 @@
     {{- end }}
   {{- end }}
   {{- $__subjects := list }}
-  {{- range $__clean | mustUniq | mustCompact }}
+  {{- range ($__clean | mustUniq | mustCompact) }}
     {{- $__subjects = mustAppend $__subjects (include "others.Subject.v1" . | fromYaml) }}
   {{- end }}
   {{- $__subjects = $__subjects | mustUniq | mustCompact }}

@@ -29,7 +29,7 @@
             {{- end }}
           {{- end }}
 
-          {{- $__preference = include "definitions.NodeSelectorTerm" (dict "matchExpressions" (mustCompact (mustUniq $__expressions)) "matchFields" (mustCompact (mustUniq $__fields))) | fromYaml }}
+          {{- $__preference = include "definitions.NodeSelectorTerm" (dict "matchExpressions" ($__expressions | mustUniq | mustCompact) "matchFields" ($__fields | mustUniq | mustCompact)) | fromYaml }}
         {{- else if kindIs "map" $v }}
           {{- $__preference = include "definitions.NodeSelectorTerm" $v | fromYaml }}
         {{- else }}

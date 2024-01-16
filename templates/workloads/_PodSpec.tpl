@@ -63,7 +63,7 @@ reference:
   {{- range $k, $v := $__cleanDict }}
     {{- $__clean = mustAppend $__clean (dict $k $v) }}
   {{- end }}
-  {{- range $__clean | mustUniq | mustCompact }}
+  {{- range ($__clean | mustUniq | mustCompact) }}
     {{- $__hostAlias = mustAppend $__hostAlias (include "definitions.HostAlias" . | fromYaml) }}
   {{- end }}
   {{- if $__hostAlias }}
@@ -170,7 +170,7 @@ reference:
       {{- $__clean = concat $__clean . }}
     {{- end }}
   {{- end }}
-  {{- range $__clean | mustUniq | mustCompact }}
+  {{- range ($__clean | mustUniq | mustCompact) }}
     {{- $__tolerations = mustAppend $__tolerations (include "definitions.Toleration" . | fromYaml) }}
   {{- end }}
   {{- if $__tolerations }}
@@ -190,10 +190,10 @@ reference:
       {{- end }}
     {{- end }}
   {{- end }}
-  {{- range $__clean | mustUniq | mustCompact }}
+  {{- range ($__clean | mustUniq | mustCompact) }}
     {{- $__volumes = mustAppend $__volumes (include "configStorage.Volume" . | fromYaml) }}
   {{- end }}
-  {{- $__volumes := $__volumes | mustUniq | mustCompact }}
+  {{- $__volumes = $__volumes | mustUniq | mustCompact }}
   {{- if $__volumes }}
     {{- nindent 0 "" -}}volumes:
     {{- toYaml $__volumes | nindent 0 }}
@@ -206,7 +206,7 @@ reference:
   {{- else if kindIs "map" .Context.containers }}
     {{- $__clean = mustAppend $__clean .Context.containers }}
   {{- end }}
-  {{- range $__clean | mustUniq | mustCompact }}
+  {{- range ($__clean | mustUniq | mustCompact) }}
     {{- $__containers = mustAppend $__containers (include "workloads.Container" (dict "container" . "isInitContainer" false "Values" $.Values "Files" $.Files "Chart" $.Chart "Release" $.Release "Context" $.Context) | fromYaml) }}
   {{- end }}
   {{- if $__containers }}
@@ -221,7 +221,7 @@ reference:
   {{- else if kindIs "map" .Context.initContainers }}
     {{- $__clean = mustAppend $__clean .Context.initContainers }}
   {{- end }}
-  {{- range $__clean | mustUniq | mustCompact }}
+  {{- range ($__clean | mustUniq | mustCompact) }}
     {{- $__initContainers = mustAppend $__initContainers (include "workloads.Container" (dict "container" . "isInitContainer" true "Values" $.Values "Files" $.Files "Chart" $.Chart "Release" $.Release "Context" $.Context) | fromYaml) }}
   {{- end }}
   {{- if $__initContainers }}
