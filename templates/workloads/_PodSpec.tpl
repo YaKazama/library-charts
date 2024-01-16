@@ -221,8 +221,15 @@ reference:
   {{- else if kindIs "map" .Context.initContainers }}
     {{- $__clean = mustAppend $__clean .Context.initContainers }}
   {{- end }}
+  {{- $__imageDisableOverwrite := dict }}
+  {{- $__imageDisableOverwriteSrc := pluck "imageDisableOverwrite" . .Context .Values }}
+  {{- range ($__imageDisableOverwriteSrc | mustUniq | mustCompact) }}
+    {{- if kindIs "map" . }}
+      {{- $__imageDisableOverwrite = mustMerge $__imageDisableOverwrite (pick . "image" "repository" "tag") }}
+    {{- end }}
+  {{- end }}
   {{- range ($__clean | mustUniq | mustCompact) }}
-    {{- $__initContainers = mustAppend $__initContainers (include "workloads.Container" (dict "container" . "isInitContainer" true "Values" $.Values "Files" $.Files "Chart" $.Chart "Release" $.Release "Context" $.Context) | fromYaml) }}
+    {{- $__initContainers = mustAppend $__initContainers (include "workloads.Container" (dict "container" . "isInitContainer" true "Values" $.Values "Files" $.Files "Chart" $.Chart "Release" $.Release "Context" $.Context "imageDisableOverwrite" $__imageDisableOverwrite) | fromYaml) }}
   {{- end }}
   {{- if $__initContainers }}
     {{- nindent 0 "" -}}initContainers:

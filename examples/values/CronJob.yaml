@@ -622,6 +622,16 @@ CronJob:
     # string
     restartPolicy: "Always"
     image: init-xxx
+    # 是否加载 .Values.image 仅在 initContainer 类型时生效
+    # map
+    imageDisableOverwrite:
+      # bool
+      image: false
+      # bool
+      repository: false
+      # bool
+      tag: false
+
 
 
 # # #### 旧有的调试记录 ####

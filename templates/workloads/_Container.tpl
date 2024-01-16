@@ -36,6 +36,27 @@
 
     {{- $__imageSrc := pluck "image" . $.Context $.Values }}
     {{- $__imageFilesSrc := pluck "imageFiles" . $.Context $.Values }}
+    {{- /*
+      imageDisableOverwrite: map ，用于控制在 initContainers 中是否读取 $.Values.image
+      - image: bool, true/false 是否加载 $.Values.image
+      - repository: bool, true/false 是否加载 $.Values.image.repository
+      - tag: bool, true/false 是否加载 $.Values.image.tag
+    */ -}}
+    {{- if and $.isInitContainer $.imageDisableOverwrite }}
+      {{- $__val := mustDeepCopy $.Values }}
+      {{- if $__val.image }}
+        {{- if $.imageDisableOverwrite.repository }}
+          {{- $_ := unset $__val.image "repository" }}
+        {{- end }}
+        {{- if $.imageDisableOverwrite.tag }}
+          {{- $_ := unset $__val.image "tag" }}
+        {{- end }}
+        {{- if $.imageDisableOverwrite.image }}
+          {{- $_ := unset $__val "image" }}
+        {{- end }}
+      {{- end }}
+      {{- $__imageSrc = pluck "image" . $.Context $__val }}
+    {{- end }}
     {{- $__image := include "workloads.Container.image" (dict "imageFilesSrc" $__imageFilesSrc "imageSrc" $__imageSrc "Files" $.Files) }}
     {{- if $__image }}
       {{- nindent 0 "" -}}image: {{ $__image }}
