@@ -56,7 +56,6 @@
     {{- $_ := set $__clean "matchExpressions" (concat $__clean.matchExpressions $__valMatchExpressions) }}
     {{- $_ := set $__clean "matchLabels" (mustMerge $__clean.matchLabels $__valMatchLabels) }}
   {{- end }}
-  {{- $__selector := include "definitions.LabelSelector" $__clean | fromYaml }}
   {{- /*
     追加 labels 到 selector ，受 ignoreLabels 参数影响
   */ -}}
@@ -65,8 +64,9 @@
     {{- $__ignoreLabels = include "base.bool" (coalesce .Context.ignoreLabels .Values.ignoreLabels) }}
   {{- end }}
   {{- if not $__ignoreLabels }}
-    {{- $__selector = mustMerge $__selector (include "base.labels" . | fromYaml) }}
+    {{- $_ := set $__clean "matchLabels" (mustMerge $__clean.matchLabels (include "base.labels" . | fromYaml)) }}
   {{- end }}
+  {{- $__selector := include "definitions.LabelSelector" $__clean | fromYaml }}
   {{- if $__selector }}
     {{- nindent 0 "" -}}selector:
       {{- toYaml $__selector | nindent 2 }}
