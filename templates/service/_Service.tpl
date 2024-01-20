@@ -15,7 +15,7 @@
     {{- range ($__serviceSrc | mustUniq | mustCompact) }}
       {{- $__clean = mustMerge $__clean . }}
     {{- end }}
-    {{- $_ := set . "Context" (mustMerge $__clean (dict "labels" (mustMerge .Context.labels .Values.labels))) }}
+    {{- $_ := set . "Context" (mustMerge $__clean .Context) }}
   {{- end }}
 
   {{- nindent 0 "" -}}metadata:
