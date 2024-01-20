@@ -290,7 +290,10 @@ CronJob:
   # - 已支持 cephfs, configMap / cm, emptyDir, fc, hostPath, nfs, persistentVolumeClaim / pvc, secret, rbd (ceph)
   #   - 这些值也作为固定前缀值
   volumes:
-    # cephfs为固定前缀值，表示 cephfs 选项，后续的内容会作为 volumes 的 name
+    # volumes name 前缀。仅在此处有效
+    # string
+    namePrefix: ""
+    # cephfs 为固定前缀值，表示 cephfs 选项，后续的内容会作为 volumes 的 name
     # - volumes.name 会增加固定前缀 "vol-"
     # - volumes.name 为空则会使用一个 8 位的随机字符串替换
     # 分隔符：空格, "|", ":", "-", ","
