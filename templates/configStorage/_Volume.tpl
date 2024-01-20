@@ -81,12 +81,14 @@
 {{- define "configStorage.Volume.VolumeSource" -}}
   {{- with . }}
     {{- $__s := .s }}
-    {{- $__name := coalesce .name (printf "vol-%s" (randAlpha 8 | lower)) }}
-    {{- $__s = mustMerge $__s (dict "name" $__name) }}
+    {{- $__namePrefix := .namePrefix }}
+    {{- $__s = mustMerge $__s (dict "name" (coalesce .name (randAlpha 8 | lower))) }}
+
     {{- $__vs := include .define $__s | fromYaml }}
     {{- if $__vs }}
-      {{- if .namePrefix }}
-        {{- $__name = printf "%s-%s" (.namePrefix | trimSuffix "-") (coalesce $__vs.name $__name) }}
+      {{- $__name := $__vs.name | trim | trimPrefix "-" }}
+      {{- if $__namePrefix }}
+        {{- $__name = printf "%s-%s" ($__namePrefix | trimSuffix "-") $__name }}
       {{- end }}
       {{- nindent 0 "" -}}name: {{ $__name | trim }}
       {{- nindent 0 "" -}}{{ .k }}:
