@@ -183,11 +183,13 @@ reference:
   {{- $__volumesSrc := pluck "volumes" .Context .Values }}
   {{- range ($__volumesSrc | mustUniq | mustCompact) }}
     {{- if kindIs "slice" . }}
-      {{- $__clean = concat $__clean . }}
-    {{- else if kindIs "map" . }}
-      {{- range $k, $v := . }}
-        {{- $__clean = mustAppend $__clean (dict $k $v) }}
+      {{- range . }}
+        {{- if kindIs "map" . }}
+          {{- $__clean = concat $__clean . }}
+        {{- end }}
       {{- end }}
+    {{- else if kindIs "map" . }}
+      {{- $__clean = mustAppend $__clean . }}
     {{- end }}
   {{- end }}
   {{- range ($__clean | mustUniq | mustCompact) }}
