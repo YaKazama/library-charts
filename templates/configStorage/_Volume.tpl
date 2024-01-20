@@ -82,13 +82,13 @@
   {{- with . }}
     {{- $__s := .s }}
     {{- $__name := coalesce .name (printf "vol-%s" (randAlpha 8 | lower)) }}
-    {{- if .namePrefix }}
-      {{- $__name = (printf "%s-%s" (.namePrefix | trimSuffix "-") $__name) }}
-    {{- end }}
     {{- $__s = mustMerge $__s (dict "name" $__name) }}
     {{- $__vs := include .define $__s | fromYaml }}
     {{- if $__vs }}
-      {{- nindent 0 "" -}}name: {{ (coalesce $__vs.name $__name) | trim }}
+      {{- if .namePrefix }}
+        {{- $__name = printf "%s-%s" (.namePrefix | trimSuffix "-") (coalesce $__vs.name $__name) }}
+      {{- end }}
+      {{- nindent 0 "" -}}name: {{ $__name | trim }}
       {{- nindent 0 "" -}}{{ .k }}:
       {{- toYaml $__vs | nindent 2 }}
     {{- end }}
