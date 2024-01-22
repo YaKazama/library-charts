@@ -23,11 +23,9 @@
         {{- toYaml $__httpGet | nindent 2 }}
     {{- end }}
 
-    {{- if eq .__probeType "livenessProbe" }}
-      {{- $__initialDelaySeconds := include "base.int" .initialDelaySeconds }}
-      {{- if $__initialDelaySeconds }}
-        {{- nindent 0 "" -}}initialDelaySeconds: {{ coalesce $__initialDelaySeconds 1 }}
-      {{- end }}
+    {{- $__initialDelaySeconds := include "base.int" .initialDelaySeconds }}
+    {{- if $__initialDelaySeconds }}
+      {{- nindent 0 "" -}}initialDelaySeconds: {{ coalesce $__initialDelaySeconds 1 }}
     {{- end }}
 
     {{- $__periodSeconds := include "base.int" .periodSeconds }}
