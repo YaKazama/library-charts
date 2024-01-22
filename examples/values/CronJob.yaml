@@ -499,6 +499,17 @@ CronJob:
     readinessProbe:
       tcpSocket:
         port: 8080
+      httpGet:
+        # * 仅在此处且定义了 path 值才生效。path 路径的前缀
+        # string
+        pathPrefix: "/"
+        # * 仅在此处且定义了 path 值才生效。path 路径的后缀
+        # string
+        pathSuffix: "/health/"
+        # 若定义了 pathPrefix 或 pathSuffix 会 与 path 一起拼接为新的字符串
+        # string
+        path: xxx
+        port: 1234
       initialDelaySeconds: 15
       periodSeconds: 10
     # string 分隔符：":"
