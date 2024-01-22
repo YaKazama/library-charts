@@ -59,7 +59,12 @@
         {{- toYaml $__httpHeaders | nindent 0 }}
     {{- end }}
 
+    {{- $__pathPrefix := include "base.string" .pathPrefix }}
+    {{- $__pathSuffix := include "base.string" .pathSuffix }}
     {{- $__path := include "base.string" .path }}
+    {{- if and $__path (or $__pathPrefix $__pathSuffix) }}
+      {{- $__path = print $__pathPrefix $__path $__pathSuffix | trim }}
+    {{- end }}
     {{- if $__path }}
       {{- nindent 0 "" -}}path: {{ $__path }}
     {{- end }}
