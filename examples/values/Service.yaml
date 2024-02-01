@@ -50,6 +50,7 @@ Service:
     # protocol: tcp  # tcp udp sctp
     targetPort: 3122
     clusterIP: None
+    # 此处的值与外层的 type 有区别，此处仅用于处理 ports 中的一些字段显示判断
     type: NodePort  # LoadBalancer
   - appProtocol: xx
     name: xx2
@@ -59,6 +60,7 @@ Service:
     # protocol: tcp  # tcp udp sctp
     # targetPort: 3122
     clusterIP: None
+    # 此处的值与外层的 type 有区别，此处仅用于处理 ports 中的一些字段显示判断
     type: NodePort  # LoadBalancer
 ports:
   appProtocol: xx
