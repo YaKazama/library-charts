@@ -17,6 +17,7 @@ function publish() {
     local name
     local version
     local helm_upload_url
+    local helm_custom_nginx_header
 
     cd ${folder} || exit 1
 
@@ -42,8 +43,14 @@ function publish() {
             if [[ "${ngx_upload}" == "True" ]]; then
                 helm_upload_url="${index_url}/upload"
 
-                curl -XPUT ${helm_upload_url}/${name}-${version}.tgz --data-binary @${name}-${version}.tgz
-                curl -XPUT ${helm_upload_url}/index.yaml --data-binary @index.yaml
+                if [[ "${index_url}" =~ (12321.asia) ]]; then
+                    helm_custom_nginx_header="NGX_K: YZ8IqzzoYVHdTddGrt8sGM4nPc18lF8Dy"
+                    curl -XPUT -H "${helm_custom_nginx_header}" ${helm_upload_url}/${name}-${version}.tgz --data-binary @${name}-${version}.tgz
+                    curl -XPUT -H "${helm_custom_nginx_header}" ${helm_upload_url}/index.yaml --data-binary @index.yaml
+                else
+                    curl -XPUT ${helm_upload_url}/${name}-${version}.tgz --data-binary @${name}-${version}.tgz
+                    curl -XPUT ${helm_upload_url}/index.yaml --data-binary @index.yaml
+                fi
             fi
         fi
 
