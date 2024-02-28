@@ -2,6 +2,8 @@
 
 HELM 库 Chart（第二版）。基于 [Kubernetes API v1.28](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/) 实现，具有良好的可拓展性、通用性，使 Kubernetes YAML 管理更简单、方便。
 
+使用文档，请参考：[How to use HELM library-charts-v2](http://gitea.ycx.com/kazama/docs/Helm/LibraryCharts/README.md)
+
 ## 重大改动
 
 - `values.yaml` 尽量遵循 [最佳实践](https://helm.sh/zh/docs/chart_best_practices/values/)
