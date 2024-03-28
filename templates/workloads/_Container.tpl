@@ -74,32 +74,35 @@
       {{- end }}
     {{- end }}
 
-    {{- $__clean := dict }}
-    {{- $__lifecycleSrc := pluck "lifecycle" . $.Context $.Values }}
-    {{- range ($__lifecycleSrc | mustUniq | mustCompact) }}
-      {{- if kindIs "map" . }}
-        {{- $__clean = mustMerge $__clean . }}
+    {{- if not $.isInitContainer }}
+      {{- $__clean := dict }}
+      {{- $__lifecycleSrc := pluck "lifecycle" . $.Context $.Values }}
+      {{- range ($__lifecycleSrc | mustUniq | mustCompact) }}
+        {{- if kindIs "map" . }}
+          {{- $__clean = mustMerge $__clean . }}
+        {{- end }}
+      {{- end }}
+      {{- $__lifecycle := include "definitions.Lifecycle" (pick $__clean "postStart" "preStop") | fromYaml }}
+      {{- if $__lifecycle }}
+        {{- nindent 0 "" -}}lifecycle:
+          {{- toYaml $__lifecycle | nindent 2 }}
       {{- end }}
     {{- end }}
-    {{- $__lifecycle := include "definitions.Lifecycle" (pick $__clean "postStart" "preStop") | fromYaml }}
-    {{- if $__lifecycle }}
-      {{- nindent 0 "" -}}lifecycle:
-        {{- toYaml $__lifecycle | nindent 2 }}
-    {{- end }}
 
-    {{- $__livenessProbeSrc := pluck "livenessProbe" . $.Context $.Values }}
-    {{- $__clean := dict "__probeType" "livenessProbe" }}
-    {{- range ($__livenessProbeSrc | mustUniq | mustCompact) }}
-      {{- if kindIs "map" . }}
-        {{- $__clean = mustMerge $__clean . }}
+    {{- if not $.isInitContainer }}
+      {{- $__livenessProbeSrc := pluck "livenessProbe" . $.Context $.Values }}
+      {{- $__clean := dict "__probeType" "livenessProbe" }}
+      {{- range ($__livenessProbeSrc | mustUniq | mustCompact) }}
+        {{- if kindIs "map" . }}
+          {{- $__clean = mustMerge $__clean . }}
+        {{- end }}
+      {{- end }}
+      {{- $__livenessProbe := include "definitions.Probe" $__clean | fromYaml }}
+      {{- if $__livenessProbe }}
+        {{- nindent 0 "" -}}livenessProbe:
+          {{- toYaml $__livenessProbe | nindent 2 }}
       {{- end }}
     {{- end }}
-    {{- $__livenessProbe := include "definitions.Probe" $__clean | fromYaml }}
-    {{- if $__livenessProbe }}
-      {{- nindent 0 "" -}}livenessProbe:
-        {{- toYaml $__livenessProbe | nindent 2 }}
-    {{- end }}
-
 
     {{- $__name := coalesce .name (printf "%s-%s" (include "base.fullname" $) (randAlphaNum 5)) }}
     {{- if $__name }}
@@ -140,17 +143,19 @@
       {{- toYaml $__ports | nindent 0 }}
     {{- end }}
 
-    {{- $__readinessProbeSrc := pluck "readinessProbe" . $.Context $.Values }}
-    {{- $__clean := dict "__probeType" "readinessProbe" }}
-    {{- range ($__readinessProbeSrc | mustUniq | mustCompact) }}
-      {{- if kindIs "map" . }}
-        {{- $__clean = mustMerge $__clean . }}
+    {{- if not $.isInitContainer }}
+      {{- $__readinessProbeSrc := pluck "readinessProbe" . $.Context $.Values }}
+      {{- $__clean := dict "__probeType" "readinessProbe" }}
+      {{- range ($__readinessProbeSrc | mustUniq | mustCompact) }}
+        {{- if kindIs "map" . }}
+          {{- $__clean = mustMerge $__clean . }}
+        {{- end }}
       {{- end }}
-    {{- end }}
-    {{- $__readinessProbe := include "definitions.Probe" $__clean | fromYaml }}
-    {{- if $__readinessProbe }}
-      {{- nindent 0 "" -}}readinessProbe:
-        {{- toYaml $__readinessProbe | nindent 2 }}
+      {{- $__readinessProbe := include "definitions.Probe" $__clean | fromYaml }}
+      {{- if $__readinessProbe }}
+        {{- nindent 0 "" -}}readinessProbe:
+          {{- toYaml $__readinessProbe | nindent 2 }}
+      {{- end }}
     {{- end }}
 
     {{- $__resourceNameAllowed := list "cpu" "memory" }}
@@ -262,17 +267,19 @@
         {{- toYaml $__securityContext | nindent 2 }}
     {{- end }}
 
-    {{- $__startupProbeSrc := pluck "startupProbe" . $.Context $.Values }}
-    {{- $__clean := dict "__probeType" "startupProbe" }}
-    {{- range ($__startupProbeSrc | mustUniq | mustCompact) }}
-      {{- if kindIs "map" . }}
-        {{- $__clean = mustMerge $__clean . }}
+    {{- if not $.isInitContainer }}
+      {{- $__startupProbeSrc := pluck "startupProbe" . $.Context $.Values }}
+      {{- $__clean := dict "__probeType" "startupProbe" }}
+      {{- range ($__startupProbeSrc | mustUniq | mustCompact) }}
+        {{- if kindIs "map" . }}
+          {{- $__clean = mustMerge $__clean . }}
+        {{- end }}
       {{- end }}
-    {{- end }}
-    {{- $__startupProbe := include "definitions.Probe" $__clean | fromYaml }}
-    {{- if $__startupProbe }}
-      {{- nindent 0 "" -}}startupProbe:
-        {{- toYaml $__startupProbe | nindent 2 }}
+      {{- $__startupProbe := include "definitions.Probe" $__clean | fromYaml }}
+      {{- if $__startupProbe }}
+        {{- nindent 0 "" -}}startupProbe:
+          {{- toYaml $__startupProbe | nindent 2 }}
+      {{- end }}
     {{- end }}
 
     {{- $__stdin := include "base.bool" (coalesce .stdin $.Context.stdin $.Values.stdin) }}
