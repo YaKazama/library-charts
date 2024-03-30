@@ -10,7 +10,7 @@
       {{- end }}
     {{- end }}
 
-    {{- $__typeAllowed := list "RollingUpdate" }}
+    {{- $__typeAllowed := list "RollingUpdate" "OnDelete" }}
     {{- if mustHas $__type $__typeAllowed }}
       {{- nindent 0 "" -}}type: {{ $__type }}
     {{- end }}
