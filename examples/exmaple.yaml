@@ -4,3 +4,92 @@
 # {{- if .Context.enable }}
 #   {{- include "TemplateName" . }}
 # {{- end }}
+
+
+# # # example
+
+# # # deploy.yaml
+# {{- $_ := set . "Context" .Values.busybox }}
+
+# {{- if .Context.enable }}
+#   {{- include "workloads.Deployment" . }}
+# {{- end }}
+
+# # # service.yaml
+# {{- $_ := set . "Context" .Values.busybox }}
+
+# {{- if .Context.enable }}
+#   {{- include "service.Service" . }}
+# {{- end }}
+
+# # # default values.yaml
+# namespace: "default"
+# strategy:
+#   type: "RollingUpdate"
+#   rollingUpdate:
+#     maxSurge: 1
+#     maxUnavailable: 1
+# dnsPolicy: "ClusterFirstWithHostNet"
+# restartPolicy: "Always"
+# imagePullSecrets:
+# - helm-secret
+# imageFiles:
+#   images.yaml: common.image
+# imagePullPolicy: "IfNotPresent"
+# workingDir: "/"
+# envFiles:
+#   envs.yaml: common.env
+
+# entrypoint: &_entrypoint
+#   command:
+#   - "sleep"
+#   args:
+#   - "1d"
+
+# busyboxName: &_busyboxName test-busybox
+# busybox:
+#   enable: false
+#   name: *_busyboxName
+#   replicas: 1
+
+#   service:
+#     ports: 9999:tcp-9999-busybox
+
+#   containers:
+#     name: *_busyboxName
+#     resourcesFiles:
+#       resources.yaml: busybox.resources
+#     env:
+#     - SERVICE_NAME: *_busyboxName
+#     <<: [*_entrypoint]
+
+# # # envs.yaml
+# common:
+#   env:
+#   - TZ: Asia/Shanghai
+#   - TERM: xterm
+#   - USER: root
+#   - PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+# # # images.yaml
+# common:
+#   image:
+#     repository:
+#       name: busybox
+#     tag: "1.28"
+
+# # # resources.yaml
+# defaultCPUandMEM: &_CPUandMEM
+#   cpu: 1
+#   memory: 1Gi
+
+# defaultLowerCPUandMEM: &_LCPUandMEM
+#   cpu: 50m
+#   memory: 256Mi
+
+# busybox:
+#   resources:
+#     limits:
+#       <<: *_CPUandMEM
+#     requests:
+#       <<: *_LCPUandMEM
