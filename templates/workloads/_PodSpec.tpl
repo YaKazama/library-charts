@@ -71,6 +71,21 @@ reference:
     {{- toYaml $__hostAlias | nindent 0 }}
   {{- end }}
 
+  {{- $__hostIPC := include "base.bool" (coalesce .Context.hostIPC .Values.hostIPC) }}
+  {{- if $__hostIPC }}
+    {{- nindent 0 "" -}}hostIPC: {{ $__hostIPC }}
+  {{- end }}
+
+  {{- $__hostNetwork := include "base.bool" (coalesce .Context.hostNetwork .Values.hostNetwork) }}
+  {{- if $__hostNetwork }}
+    {{- nindent 0 "" -}}hostNetwork: {{ $__hostNetwork }}
+  {{- end }}
+
+  {{- $__hostUsers := include "base.bool.false" (pluck "hostUsers" .Context .Values) }}
+  {{- if $__hostUsers }}
+    {{- nindent 0 "" -}}hostUsers: {{ $__hostUsers }}
+  {{- end }}
+
   {{- $__hostPID := include "base.bool" (coalesce .Context.hostPID .Values.hostPID) }}
   {{- $__shareProcessNamespace := include "base.bool" (coalesce .Context.shareProcessNamespace .Values.shareProcessNamespace) }}
   {{- if or $__hostPID $__shareProcessNamespace }}
