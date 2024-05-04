@@ -126,8 +126,7 @@
     {{- $__loadBalancerIP := include "base.string" (coalesce .Context.loadBalancerIP .Values.loadBalancerIP) }}
     {{- $__loadBalancerIP = include "base.fmt" (dict "s" $__loadBalancerIP "r" $__regexLoadBalancerIP) }}
     {{- if $__loadBalancerIP }}
-      {{- nindent 0 "" -}}loadBalancerIP:
-      {{- $__loadBalancerIP | nindent 0 }}
+      {{- nindent 0 "" -}}loadBalancerIP: {{ $__loadBalancerIP }}
     {{- end }}
   {{- end }}
 
