@@ -11,7 +11,7 @@
 
     {{- $__value := include "base.string" .value }}
     {{- if $__value }}
-      {{- nindent 0 "" -}}value: {{ $__value }}
+      {{- nindent 0 "" -}}value: {{ $__value | quote }}
     {{- else if and .valueFrom (empty $__value) }}
       {{- $__valueFrom := include "definitions.EnvVarSource" .valueFrom | fromYaml }}
       {{- if $__valueFrom }}
