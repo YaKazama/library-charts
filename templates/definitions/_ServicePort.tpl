@@ -38,7 +38,7 @@
         为数字时，此处使用 1-65535 的值
       */ -}}
       {{- $__regexTargetPort := "^([a-z0-9]{1,63}|[a-z0-9][a-z0-9-]{0,61}[a-z0-9])$|^([1-9]\\d{0,3}|[1-5]\\d{4}|6[0-4]\\d{3}|65[0-4]\\d{2}|655[0-2]\\d|6553[0-5])$" }}
-      {{- $__targetPort := include "base.fmt" (dict "s" (coalesce .targePort .port) "r" $__regexTargetPort) }}
+      {{- $__targetPort := include "base.fmt" (dict "s" (coalesce .targetPort .port) "r" $__regexTargetPort) }}
       {{- if $__targetPort }}
         {{- nindent 0 "" -}}targetPort: {{ $__targetPort }}
       {{- end }}
