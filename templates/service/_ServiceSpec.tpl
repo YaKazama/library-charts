@@ -179,7 +179,7 @@
   {{- $__val := list }}
   {{- range ($__clean | mustUniq | mustCompact) }}
     {{- if kindIs "map" . }}
-      {{- $__val = mustAppend $__val (dict .port .) }}
+      {{- $__val = mustAppend $__val (dict (printf "%s%s" .port (coalesce .protocol "TCP")) .) }}
     {{- end }}
   {{- end }}
   {{- $__ports := list }}
