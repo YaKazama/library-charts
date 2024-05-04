@@ -201,8 +201,10 @@ reference:
       {{- /*
         子项限制只能使用 map 格式，其他格式丢弃
       */ -}}
-      {{- if kindIs "map" . }}
-        {{- $__clean = concat $__clean . }}
+      {{- range . }}
+        {{- if kindIs "map" . }}
+          {{- $__clean = mustAppend $__clean . }}
+        {{- end }}
       {{- end }}
     {{- else if kindIs "map" . }}
       {{- $__namePrefix := dig "namePrefix" "" . }}
