@@ -12,7 +12,7 @@
 
     {{- $__name := include "base.string" .name }}
     {{- if $__name }}
-      {{- nindent 0 "" -}}name: {{ $__name }}
+      {{- nindent 0 "" -}}name: {{ $__name | trim | lower }}
     {{- end }}
 
     {{- $__readOnly := include "base.bool" .readOnly }}

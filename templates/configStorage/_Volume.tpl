@@ -31,7 +31,7 @@
       {{- $__val := mustRegexSplit $__regexSplit $k -1 }}
       {{- $__volType := mustFirst $__val | lower }}
       {{- $__volTypeLower := $__volType | lower }}
-      {{- $__volName := join "-" (mustRest $__val) }}
+      {{- $__volName := join "-" (mustRest $__val) | lower }}
 
       {{- /*
         当传入的是 slice 时，从其中取 namePrefix
