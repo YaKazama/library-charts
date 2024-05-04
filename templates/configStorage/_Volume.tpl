@@ -86,7 +86,7 @@
 
     {{- $__vs := include .define $__s | fromYaml }}
     {{- if $__vs }}
-      {{- $__name := $__vs.name | trim | trimPrefix "-" }}
+      {{- $__name := $__s.name | trim | trimPrefix "-" }}
       {{- if $__namePrefix }}
         {{- $__name = printf "%s-%s" ($__namePrefix | trimSuffix "-") $__name }}
       {{- end }}
