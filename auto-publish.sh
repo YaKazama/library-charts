@@ -13,6 +13,7 @@ function publish() {
     local merge="$4"
     local nexus_login_info="$5"
     local pkg_noclean="$6"
+    local ngx_k="$7"
     local cmd_helm
     local name
     local version
@@ -43,8 +44,8 @@ function publish() {
             if [[ "${ngx_upload}" == "True" ]]; then
                 helm_upload_url="${index_url}/upload"
 
-                if [[ "${index_url}" =~ (12321.asia) ]]; then
-                    helm_custom_nginx_header="NGX_K: YZ8IqzzoYVHdTddGrt8sGM4nPc18lF8Dy"
+                if [[ "${index_url}" =~ (12321.asia) || -n "${ngx_k}" ]]; then
+                    helm_custom_nginx_header="NGX_K: ${ngx_k}"
                     curl -XPUT -H "${helm_custom_nginx_header}" ${helm_upload_url}/${name}-${version}.tgz --data-binary @${name}-${version}.tgz
                     curl -XPUT -H "${helm_custom_nginx_header}" ${helm_upload_url}/index.yaml --data-binary @index.yaml
                 else
@@ -71,6 +72,7 @@ function usage() {
     echo "  --nexus-login <USER:PASS>:      Nexus 提供的 HELM Chart 仓库的 username and password。此时 --merge、-N 参数会失效"
     echo "  --merge:                        将生成的索引合并到给定的索引中"
     echo "  -N, --nginx-upload:             使用 Nginx 上传 / 下载站点时需要指定此参数"
+    echo "  --ngx-k <TOKEN>:                使用 Nginx 上传时使用的自定义变量 NGX_K 值"
     echo "  --no-clean:                     是否清理生成的 tgz 文件. 默认为 False 表示会清理"
     exit 0
 }
@@ -79,8 +81,8 @@ function main() {
     [[ "$1" =~ (^-{1,2}(h|help)+$) ]] && usage
 
     local ARGS
-    local ARGS_SHORT='h,i:,N'
-    local ARGS_LONG='help,index-url:,merge,nexus-login:,nginx-upload,no-clean'
+    local ARGS_SHORT='h,i:,N,k:'
+    local ARGS_LONG='help,index-url:,merge,nexus-login:,nginx-upload,ngx-k:,no-clean'
     ARGS=$(getopt -o ${ARGS_SHORT} --long ${ARGS_LONG} -n "$0" -- "$@")
     eval set -- "${ARGS}"
 
@@ -91,6 +93,7 @@ function main() {
             --merge)            local MERGE_STATUS="True";  shift 1 ;;
             --nexus-login)      local _NEXUS_LOGIN="$2";    shift 2 ;;
             -N|--nginx-upload)  local _NGX_UPLOAD="True";   shift 1 ;;
+            -k|--ngx-k)         local _NGX_K="$2";          shift 2 ;;
             --no-clean)         local _NO_CLEAN="True";     shift 1 ;;
             --)                 shift;                      break   ;;
             *)                  usage                               ;;
@@ -98,12 +101,13 @@ function main() {
     done
 
     # how to use
-    [[ -z "${INDEX_URL}" ]] && echo "HELM Chart 仓库未找到，--index-url 参数未指定！"
     [[ "${MERGE_STATUS}" != "True" ]] && MERGE_STATUS="False"
     [[ "${_NGX_UPLOAD}" != "True" ]] && _NGX_UPLOAD="False"
     [[ "${_NO_CLEAN}" != "True" ]] && _NO_CLEAN="False"
     [[ -z "$1" ]] && usage
-    publish "$1" "${INDEX_URL}" "${_NGX_UPLOAD}" "${MERGE_STATUS}" "${_NEXUS_LOGIN}" "${_NO_CLEAN}"
+    [[ -z "${INDEX_URL}" ]] && echo "HELM Chart 仓库未找到，--index-url 参数未指定！"
+    [[ "${INDEX_URL}" =~ (12321.asia) && -z "${_NGX_K}" ]] && echo "--ngx-k 未定义！" && usage
+    publish "$1" "${INDEX_URL}" "${_NGX_UPLOAD}" "${MERGE_STATUS}" "${_NEXUS_LOGIN}" "${_NO_CLEAN}" "${_NGX_K}"
 }
 
 # main
