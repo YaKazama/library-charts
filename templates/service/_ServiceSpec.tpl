@@ -150,6 +150,8 @@
         {{- $__val := mustRegexSplit $__regexSplit . -1 }}
         {{- if eq (len $__val) 2 }}
           {{- $__clean = mustAppend $__clean (dict "clusterIP" $__clusterIP "type" $__type "name" (mustLast $__val) "port" (mustFirst $__val)) }}
+        {{- else if eq (len $__val) 3 }}
+          {{- $__clean = mustAppend $__clean (dict "clusterIP" $__clusterIP "type" $__type "name" (index $__val 1) "port" (mustFirst $__val) "protocol" (mustLast $__val | upper)) }}
         {{- end }}
       {{- end }}
     {{- else if kindIs "map" . }}
@@ -164,6 +166,8 @@
             {{- $__val := mustRegexSplit $__regexSplit . -1 }}
             {{- if eq (len $__val) 2 }}
               {{- $__clean = mustAppend $__clean (dict "clusterIP" $__clusterIP "type" $__type "name" (mustLast $__val) "port" (mustFirst $__val)) }}
+            {{- else if eq (len $__val) 3 }}
+              {{- $__clean = mustAppend $__clean (dict "clusterIP" $__clusterIP "type" $__type "name" (index $__val 1) "port" (mustFirst $__val) "protocol" (mustLast $__val | upper)) }}
             {{- end }}
           {{- end }}
         {{- else if kindIs "map" . }}

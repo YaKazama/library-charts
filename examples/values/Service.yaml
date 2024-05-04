@@ -40,7 +40,7 @@ Service:
   # 以 port 为键进行合并
   # string 分隔符：":"，多组之间可使用空格、"|"、"," 进行分隔
   # map, slice, string
-  # ports: <port>:<name>[, <portN>:<nameN> ...]
+  # ports: <port>:<name>[:<protocol>][, <portN>:<nameN>[:<protocol>] ...]
   ports:
   - appProtocol: xx
     name: xx1

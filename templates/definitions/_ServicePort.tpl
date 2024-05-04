@@ -23,9 +23,12 @@
       {{- nindent 0 "" -}}port: {{ $__port }}
     {{- end }}
 
+    {{- /*
+      为空时，使用系统内置的默认值 TCP
+    */ -}}
     {{- $__protocolAllowed := list "TCP" "UDP" "SCTP" }}
     {{- $__protocol := include "base.string" .protocol }}
-    {{- if ($__protocol | upper) }}
+    {{- if mustHas ($__protocol | upper) $__protocolAllowed }}
       {{- nindent 0 "" -}}protocol: {{ $__protocol }}
     {{- end }}
 
