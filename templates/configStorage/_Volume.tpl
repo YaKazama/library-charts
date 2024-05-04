@@ -19,6 +19,9 @@
     {{- $__regexVolumes := "^(cephfs|configMap|cm|emptyDir|fc|hostPath|nfs|persistentVolumeClaim|pvc|secret|rbd)(\\s+|\\s*[\\|\\:\\-,]\\s*)?.*" }}
     {{- $__regexSplit := "\\s+|\\s*[\\|\\:\\-,]\\s*" }}
 
+    {{- /*
+      当传入的是 map 时，从其中取出 namePrefix
+    */ -}}
     {{- $__namePrefix := .namePrefix }}
 
     {{- range $k, $v := (omit . "namePrefix") }}
@@ -27,41 +30,48 @@
       {{- end }}
       {{- $__val := mustRegexSplit $__regexSplit $k -1 }}
       {{- $__volType := mustFirst $__val | lower }}
-      {{- $__volName := join "-" (mustRest $__val) | lower  }}
+      {{- $__volTypeLower := $__volType | lower }}
+      {{- $__volName := join "-" (mustRest $__val) }}
 
-      {{- if or (eq $__volType "cephfs") (mustRegexMatch "^(cephfs).*" $__volType) }}
+      {{- /*
+        当传入的是 slice 时，从其中取 namePrefix
+        由于 slice 和 map 不能同时传入，所以此时 $__namePrefix 为空字符
+      */ -}}
+      {{- $__namePrefix = dig "namePrefix" $__namePrefix $v }}
+
+      {{- if or (eq $__volTypeLower "cephfs") (mustRegexMatch "^(cephfs).*" $__volType) }}
         {{- include "configStorage.Volume.VolumeSource" (dict "s" $v "k" "cephfs" "define" "definitions.CephFSVolumeSource" "name" $__volName "namePrefix" $__namePrefix) | nindent 0 }}
       {{- end }}
 
-      {{- if or (eq $__volType "configmap") (eq $__volType "cm") (mustRegexMatch "^(configMap|cm).*" $__volType) }}
+      {{- if or (eq $__volTypeLower "configmap") (eq $__volType "cm") (mustRegexMatch "^(configMap|cm).*" $__volType) }}
         {{- include "configStorage.Volume.VolumeSource" (dict "s" $v "k" "configMap" "define" "definitions.ConfigMapVolumeSource" "name" $__volName "namePrefix" $__namePrefix) | nindent 0 }}
       {{- end }}
 
-      {{- if or (eq $__volType "emptydir") (mustRegexMatch "^(emptyDir).*" $__volType) }}
+      {{- if or (eq $__volTypeLower "emptydir") (mustRegexMatch "^(emptyDir).*" $__volType) }}
         {{- include "configStorage.Volume.VolumeSource" (dict "s" $v "k" "emptyDir" "define" "definitions.EmptyDirVolumeSource" "name" $__volName "namePrefix" $__namePrefix) | nindent 0 }}
       {{- end }}
 
-      {{- if or (eq $__volType "fc") (mustRegexMatch "^(fc).*" $__volType) }}
+      {{- if or (eq $__volTypeLower "fc") (mustRegexMatch "^(fc).*" $__volType) }}
         {{- include "configStorage.Volume.VolumeSource" (dict "s" $v "k" "fc" "define" "definitions.FCVolumeSource" "name" $__volName "namePrefix" $__namePrefix) | nindent 0 }}
       {{- end }}
 
-      {{- if or (eq $__volType "hostpath") (mustRegexMatch "^(hostPath).*" $__volType) }}
+      {{- if or (eq $__volTypeLower "hostpath") (mustRegexMatch "^(hostPath).*" $__volType) }}
         {{- include "configStorage.Volume.VolumeSource" (dict "s" $v "k" "hostPath" "define" "definitions.HostPathVolumeSource" "name" $__volName "namePrefix" $__namePrefix) | nindent 0 }}
       {{- end }}
 
-      {{- if or (eq $__volType "nfs") (mustRegexMatch "^(nfs).*" $__volType) }}
+      {{- if or (eq $__volTypeLower "nfs") (mustRegexMatch "^(nfs).*" $__volType) }}
         {{- include "configStorage.Volume.VolumeSource" (dict "s" $v "k" "nfs" "define" "definitions.NFSVolumeSource" "name" $__volName "namePrefix" $__namePrefix) | nindent 0 }}
       {{- end }}
 
-      {{- if or (eq $__volType "persistentvolumeclaim") (eq $__volType "pvc") (mustRegexMatch "^(persistentVolumeClaim|pvc).*" $__volType) }}
+      {{- if or (eq $__volTypeLower "persistentvolumeclaim") (eq $__volType "pvc") (mustRegexMatch "^(persistentVolumeClaim|pvc).*" $__volType) }}
         {{- include "configStorage.Volume.VolumeSource" (dict "s" $v "k" "persistentVolumeClaim" "define" "definitions.PersistentVolumeClaimVolumeSource" "name" $__volName "namePrefix" $__namePrefix) | nindent 0 }}
       {{- end }}
 
-      {{- if or (eq $__volType "rbd") (mustRegexMatch "^(rbd).*" $__volType) }}
+      {{- if or (eq $__volTypeLower "rbd") (mustRegexMatch "^(rbd).*" $__volType) }}
         {{- include "configStorage.Volume.VolumeSource" (dict "s" $v "k" "rbd" "define" "definitions.RBDVolumeSource" "name" $__volName "namePrefix" $__namePrefix) | nindent 0 }}
       {{- end }}
 
-      {{- if or (eq $__volType "secret") (mustRegexMatch "^(secret).*" $__volType) }}
+      {{- if or (eq $__volTypeLower "secret") (mustRegexMatch "^(secret).*" $__volType) }}
         {{- include "configStorage.Volume.VolumeSource" (dict "s" $v "k" "secret" "define" "definitions.SecretVolumeSource" "name" $__volName "namePrefix" $__namePrefix) | nindent 0 }}
       {{- end }}
 

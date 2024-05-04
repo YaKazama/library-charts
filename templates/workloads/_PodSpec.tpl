@@ -198,13 +198,18 @@ reference:
   {{- $__volumesSrc := pluck "volumes" .Context .Values }}
   {{- range ($__volumesSrc | mustUniq | mustCompact) }}
     {{- if kindIs "slice" . }}
-      {{- range . }}
-        {{- if kindIs "map" . }}
-          {{- $__clean = concat $__clean . }}
-        {{- end }}
+      {{- /*
+        子项限制只能使用 map 格式，其他格式丢弃
+      */ -}}
+      {{- if kindIs "map" . }}
+        {{- $__clean = concat $__clean . }}
       {{- end }}
     {{- else if kindIs "map" . }}
-      {{- $__clean = mustAppend $__clean . }}
+      {{- $__namePrefix := dig "namePrefix" "" . }}
+      {{- $__vol := omit . "namePrefix" }}
+      {{- range $k, $v := $__vol }}
+        {{- $__clean = mustAppend $__clean (dict $k $v "namePrefix" $__namePrefix) }}
+      {{- end }}
     {{- end }}
   {{- end }}
   {{- range ($__clean | mustUniq | mustCompact) }}

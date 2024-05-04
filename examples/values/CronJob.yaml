@@ -289,6 +289,15 @@ CronJob:
   # map, slice
   # - 已支持 cephfs, configMap / cm, emptyDir, fc, hostPath, nfs, persistentVolumeClaim / pvc, secret, rbd (ceph)
   #   - 这些值也作为固定前缀值
+  # 使用 map 时，namePrefix 全局生效（所有配置的 name 参数都会加上前缀）；使用 slice 时，namePrefix 参数独立生效
+  # volumes:
+  # - hostPath:qbVolConfig:
+  #     namePrefix: vol
+  #     path: /mnt/apps/services/qBittorrent/config
+  #     type: DirectoryOrCreate
+  # - hostPath:qbVolData:
+  #     path: /mnt/volumes/.downloads
+  #     type: DirectoryOrCreate
   volumes:
     # volumes name 前缀。仅在此处有效
     # string
