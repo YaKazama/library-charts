@@ -423,13 +423,17 @@
   检查 string 类型。传入的是一个非空字符串
 
   descr:
-  - 是 => 去掉开头 "0" 值和前后空格的字符串
+  - 是 => 去掉开头 "0" 值和前后空格的字符串，若字符串全为 "0"，则会去重并返回 "0"
   - 否 => 打印报错信息
 */ -}}
 {{- define "base.string" -}}
   {{- if not (kindIs "invalid" .) }}
     {{- if kindIs "string" . }}
-      {{- mustRegexReplaceAll "^0+" . "" | trim }}
+      {{- if mustRegexMatch "^0+$" . }}
+        {{- "0" }}
+      {{- else }}
+        {{- mustRegexReplaceAll "^0+" . "" | trim }}
+      {{- end }}
     {{- else }}
       {{- fail (print "base.string: type not support! Values: " .) }}
     {{- end }}
