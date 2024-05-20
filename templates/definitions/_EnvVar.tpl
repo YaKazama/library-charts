@@ -9,7 +9,7 @@
       {{- nindent 0 "" -}}name: {{ .name }}
     {{- end }}
 
-    {{- $__value := include "base.string" .value }}
+    {{- $__value := include "base.string.zero" .value }}
     {{- if $__value }}
       {{- nindent 0 "" -}}value: {{ $__value | quote }}
     {{- else if and .valueFrom (empty $__value) }}

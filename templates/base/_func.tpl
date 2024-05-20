@@ -423,16 +423,36 @@
   检查 string 类型。传入的是一个非空字符串
 
   descr:
-  - 是 => 去掉开头 "0" 值和前后空格的字符串，若字符串全为 "0"，则会去重并返回 "0"
+  - 是 => 去掉开头 "0" 值和前后空格的字符串
   - 否 => 打印报错信息
 */ -}}
 {{- define "base.string" -}}
   {{- if not (kindIs "invalid" .) }}
     {{- if kindIs "string" . }}
+      {{- mustRegexReplaceAll "^0+" . "" | trim }}
+    {{- else }}
+      {{- fail (print "base.string: type not support! Values: " .) }}
+    {{- end }}
+  {{- end }}
+{{- end }}
+
+
+{{- /*
+  检查 string 类型。传入的是一个非空字符串
+
+  descr:
+  - 是 => 去掉前后空格的字符串，
+    - 若字符串全为 "0+"，则会去重并返回 "0"，适用于 UID="0000" 这种情况
+    - 若字符串以 "^0+" 开头，则只保留一个 "0"，适用于 UMASK="022" 这种情况
+  - 否 => 打印报错信息
+*/ -}}
+{{- define "base.string.zero" -}}
+  {{- if not (kindIs "invalid" .) }}
+    {{- if kindIs "string" . }}
       {{- if mustRegexMatch "^0+$" . }}
         {{- "0" }}
       {{- else }}
-        {{- mustRegexReplaceAll "^0+" . "" | trim }}
+        {{- mustRegexReplaceAll "^0+" . "0" | trim }}
       {{- end }}
     {{- else }}
       {{- fail (print "base.string: type not support! Values: " .) }}
