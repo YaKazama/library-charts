@@ -18,7 +18,7 @@
 # # # service.yaml
 # {{- $_ := set . "Context" .Values.busybox }}
 
-# {{- if .Context.enable }}
+# {{- if and .Context.enable (or .Context.service .Context.Service) }}
 #   {{- include "service.Service" . }}
 # {{- end }}
 
