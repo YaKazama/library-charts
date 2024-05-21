@@ -111,12 +111,16 @@
 
     {{- $__clean := list }}
     {{- if kindIs "string" .ports }}
-      {{- $__regexSplit := "\\s+|\\s*[\\|\\:,]\\s*" }}
-      {{- $__regexCheckProtocol := "^\\d+/(TCP|tcp|UDP|udp|SCTP|sctp)$" }}
+      {{- $__regexSplit := "\\s+|\\s*[\\|,]\\s*" }}
+      {{- $__regexCheckProtocol := "^\\d+([:/]+[a-z][a-z0-9-]*[a-z])?[:/]+(TCP|tcp|UDP|udp|SCTP|sctp)$" }}
       {{- range (mustRegexSplit $__regexSplit .ports -1 | mustUniq | mustCompact) }}
         {{- if regexMatch $__regexCheckProtocol . }}
-          {{- $__val := mustRegexSplit "/" . -1 }}
-          {{- $__clean = mustAppend $__clean (dict "containerPort" (mustFirst $__val) "protocol" (mustLast $__val))  }}
+          {{- $__val := mustRegexSplit "[:/]+" . -1 }}
+          {{- if eq (len $__val) 2 }}
+            {{- $__clean = mustAppend $__clean (dict "containerPort" (mustFirst $__val) "protocol" (mustLast $__val | upper)) }}
+          {{- else if eq (len $__val) 3 }}
+            {{- $__clean = mustAppend $__clean (dict "containerPort" (mustFirst $__val) "name" (index $__val 1) "protocol" (mustLast $__val | upper)) }}
+          {{- end }}
         {{- else }}
           {{- $__clean = mustAppend $__clean (dict "containerPort" .) }}
         {{- end }}
@@ -128,12 +132,16 @@
     {{- else if kindIs "slice" .ports }}
       {{- range (.ports | mustUniq | mustCompact) }}
         {{- if kindIs "string" . }}
-          {{- $__regexSplit := "\\s+|\\s*[\\|\\:,]\\s*" }}
-          {{- $__regexCheckProtocol := "^\\d+/(TCP|tcp|UDP|udp|SCTP|sctp)$" }}
+          {{- $__regexSplit := "\\s+|\\s*[\\|,]\\s*" }}
+          {{- $__regexCheckProtocol := "^\\d+([:/]+[a-z][a-z0-9-]*[a-z])?[:/]+(TCP|tcp|UDP|udp|SCTP|sctp)$" }}
           {{- range (mustRegexSplit $__regexSplit . -1 | mustUniq | mustCompact) }}
             {{- if regexMatch $__regexCheckProtocol . }}
-              {{- $__val := mustRegexSplit "/" . -1 }}
-              {{- $__clean = mustAppend $__clean (dict "containerPort" (mustFirst $__val) "protocol" (mustLast $__val))  }}
+              {{- $__val := mustRegexSplit "[:/]+" . -1 }}
+              {{- if eq (len $__val) 2 }}
+                {{- $__clean = mustAppend $__clean (dict "containerPort" (mustFirst $__val) "protocol" (mustLast $__val | upper)) }}
+              {{- else if eq (len $__val) 3 }}
+                {{- $__clean = mustAppend $__clean (dict "containerPort" (mustFirst $__val) "name" (index $__val 1) "protocol" (mustLast $__val | upper)) }}
+              {{- end }}
             {{- else }}
               {{- $__clean = mustAppend $__clean (dict "containerPort" .) }}
             {{- end }}

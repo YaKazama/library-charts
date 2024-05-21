@@ -496,7 +496,11 @@ CronJob:
           - "nginx -s quit; while killall -0 nginx; do sleep 1; done"
           - "111"
     # string, int, map, slice
-    # ports: 80[/[tcp|udp|sctp], 443
+    # 当为 string 类型时，可以使用 "/" 或 ":" 分隔符。此处与 Service 资源中的 ports 定义规则保持一致
+    #   若格式为 80:tcp 会被拆分为 端口号 和 协议
+    #   若格式为 80:portName:tcp 会被拆分为 端口号、名称 和 协议
+    #   多组之间使用可使用 ","、"|"、空格作为分隔符
+    # ports: 80[</|:>[name]][</|:>[tcp|udp|sctp]], 443
     # ports: 4
     ports:
     - containerPort: 100
