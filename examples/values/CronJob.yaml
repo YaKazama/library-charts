@@ -496,7 +496,7 @@ CronJob:
           - "nginx -s quit; while killall -0 nginx; do sleep 1; done"
           - "111"
     # string, int, map, slice
-    # ports: 1, 2 3
+    # ports: 80[/[tcp|udp|sctp], 443
     # ports: 4
     ports:
     - containerPort: 100

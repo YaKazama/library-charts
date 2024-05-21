@@ -112,8 +112,14 @@
     {{- $__clean := list }}
     {{- if kindIs "string" .ports }}
       {{- $__regexSplit := "\\s+|\\s*[\\|\\:,]\\s*" }}
+      {{- $__regexCheckProtocol := "^\\d+/(TCP|tcp|UDP|udp|SCTP|sctp)$" }}
       {{- range (mustRegexSplit $__regexSplit .ports -1 | mustUniq | mustCompact) }}
-        {{- $__clean = mustAppend $__clean (dict "containerPort" .) }}
+        {{- if regexMatch $__regexCheckProtocol . }}
+          {{- $__val := mustRegexSplit "/" . -1 }}
+          {{- $__clean = mustAppend $__clean (dict "containerPort" (mustFirst $__val) "protocol" (mustLast $__val))  }}
+        {{- else }}
+          {{- $__clean = mustAppend $__clean (dict "containerPort" .) }}
+        {{- end }}
       {{- end }}
     {{- else if or (kindIs "int" .ports) (kindIs "float64" .ports) }}
       {{- $__clean = mustAppend $__clean (dict "containerPort" .ports) }}
@@ -123,8 +129,14 @@
       {{- range (.ports | mustUniq | mustCompact) }}
         {{- if kindIs "string" . }}
           {{- $__regexSplit := "\\s+|\\s*[\\|\\:,]\\s*" }}
+          {{- $__regexCheckProtocol := "^\\d+/(TCP|tcp|UDP|udp|SCTP|sctp)$" }}
           {{- range (mustRegexSplit $__regexSplit . -1 | mustUniq | mustCompact) }}
-            {{- $__clean = mustAppend $__clean (dict "containerPort" .) }}
+            {{- if regexMatch $__regexCheckProtocol . }}
+              {{- $__val := mustRegexSplit "/" . -1 }}
+              {{- $__clean = mustAppend $__clean (dict "containerPort" (mustFirst $__val) "protocol" (mustLast $__val))  }}
+            {{- else }}
+              {{- $__clean = mustAppend $__clean (dict "containerPort" .) }}
+            {{- end }}
           {{- end }}
         {{- else if or (kindIs "int" .) (kindIs "float64" .) }}
           {{- $__clean = mustAppend $__clean (dict "containerPort" .) }}
