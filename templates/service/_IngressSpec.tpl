@@ -25,6 +25,8 @@
   {{- $__ingressClassName := include "base.string" (coalesce .Context.ingressClassName .Values.ingressClassName) }}
   {{- if $__ingressClassName }}
     {{- nindent 0 "" -}}ingressClassName: {{ $__ingressClassName }}
+  {{- else }}
+    {{- nindent 0 "" -}}# {{ print "Warning: ingressClassName should be set or you need to check the default IngressClass config" }}
   {{- end }}
 
   {{- $__clean := list }}
