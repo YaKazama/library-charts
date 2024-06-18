@@ -7,7 +7,7 @@
 
     {{- $__name := include "base.string" (coalesce .name (printf "svc-%s" (randAlphaNum 8))) }}
     {{- if $__name }}
-      {{- nindent 0 "" -}}name: {{ $__name }}
+      {{- nindent 0 "" -}}name: {{ $__name | quote }}
     {{- end }}
 
     {{- $__typeNodePortAllowed := list "NodePort" "LoadBalancer" }}
