@@ -171,6 +171,8 @@ rm -rf <example>-${VERSION}.tgz index.yaml
   - cluster.RoleBinding
   - cluster.PersistentVolumeSpec
   - cluster.Namespace
+  - cluster.NetworkPolicy
+  - cluster.NetworkPolicySpec
   - cluster.ServiceAccount
   - cluster.Binding
 
@@ -203,10 +205,15 @@ rm -rf <example>-${VERSION}.tgz index.yaml
   - definitions.IngressClassParametersReference
   - definitions.RBDVolumeSource
   - definitions.NodeAffinity
+  - definitions.NetworkPolicyEgressRule
+  - definitions.NetworkPolicyIngressRule
+  - definitions.NetworkPolicyPeer
+  - definitions.NetworkPolicyPort
   - definitions.TopologySelectorTerm
   - definitions.ConfigMapEnvSource
   - definitions.PersistentVolumeClaimVolumeSource
   - definitions.IngressBackend
+  - definitions.IPBlock
   - definitions.Quantity
   - definitions.HostAlias
   - definitions.SecurityContext
