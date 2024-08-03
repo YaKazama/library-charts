@@ -1,0 +1,19 @@
+
+ReplicationController:
+  # https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#replicationcontrollerspec-v1-apps
+  # int
+  minReadySeconds: 10
+  # int
+  replicas: 1
+  # slice, map
+  selector:
+    # slice
+  - matchExpressions:
+    # - podAntiAffinity1 = 111
+    - xxx in (vvv, fff)
+    # map
+  - matchLabels:
+     podAntiAffinity2: 222
+
+  # https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#podspec-v1-core
+  # 参考 CronJob.yaml

@@ -1,0 +1,8 @@
+
+ManagedCertificate:
+  # string 分隔符：空格, "|",  ":",  ","
+  # string, slice
+  # domains:
+  # - "*.example.com"
+  # - 2.example.com 3.example.com, 4.example.com
+  domains: 1.example.com

@@ -1,0 +1,31 @@
+
+PersistentVolumeClaim:
+  # https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#persistentvolumeclaimspec-v1-core
+  # persistentVolumeClaim 可使用 spec 进行替换，也可以不使用 spec 和 persistentVolumeClaim 键直接在 .Context 和 .Values 中定义
+  # 生效顺序：.Context .Context.spec .Context.persistentVolumeClaim .Values .Values.spec .Values.persistentVolumeClaim
+  # map
+  persistentVolumeClaim:
+    accessModes: ReadWriteOnce ReadWriteOncePod ReadWriteOncePod
+    storageClassName: "xx"
+    volumeMode: Filesystem
+    volumeName: xxx
+    selector:
+      matchExpressions:
+      - podAffinity3 = 333
+      matchLabels:
+        podAffinity4: 444
+    dataSource:
+      apiGroup: xxx
+      kind: xxx
+      name: xxx
+    dataSourceRef:
+      apiGroup: xxx
+      kind: xxx
+      name: xxx
+      namespace: xxx
+    resources:
+      claims: xxxx
+      limits:
+        storage: 10Gi
+      requests:
+        storage: 10Gi

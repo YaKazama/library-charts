@@ -1,0 +1,87 @@
+
+# ports: int, float64, string, slice, map
+# to: slice, map
+egress:
+- ports: 4444 5555/udp 6666-7777/sctp
+  to:
+  - ipBlock:
+      cidr: 0.0.0.0/0
+- ports:
+  - port: 1234
+    endPort: 2234
+    protocol: tcp
+  - 9999
+- ports: 8888
+  to:
+    # string 第一个为 cidr 其他为 except
+    # slice, map 第一个生效
+  - ipBlock: 1.1.1.0/24 5.5.5.0/30
+  - ipBlock:
+      cidr: 12.12.12.0/24
+      except: 1.1.1.1/32 2.2.2.2/22, 3.3.3.3/11
+  - ipBlock:
+    - cidr: 1.1.2.0/24
+      except:
+      - 1.1.1.2/32 2.2.2.0/22, 3.3.0.0/11
+    namespaceSelector:
+      matchExpressions:
+      - key: string
+        operator: string
+        values:
+        - string array
+      matchLabels: {}
+    podSelector:
+      matchExpressions:
+      - key: string
+        operator: string
+        values:
+        - string array
+      matchLabels: {}
+ingress:
+- from:
+  - ipBlock:
+      cidr: 1.1.1.1/32
+      except:
+      - string array
+    namespaceSelector:
+      matchExpressions:
+      - key: string
+        operator: string
+        values:
+        - string array
+      matchLabels: {}
+    podSelector:
+      matchExpressions:
+      - key: string
+        operator: string
+        values:
+        - string array
+      matchLabels: {}
+  ports:
+  - endPort: 3333
+    port: 2222
+    protocol: tcp
+
+policyTypes: aaa bbb, ccc | ddd
+podSelector:
+  matchExpressions:
+  - tier != frontend
+  matchLabels:
+    label1: aaa
+
+NetworkPolicy:
+  enable: false
+  policyTypes:
+  - eee
+  - fff
+  - aaa
+  podSelector:
+    matchExpressions:
+    - key: string1
+      operator: in
+      values: stringsss aaaa
+    matchLabels:
+      label2: bbb
+  egress:
+    ports: addfadfa
+  ipBlock: 10.10.10.10/32

@@ -1,0 +1,12 @@
+
+Namespace:
+  #
+  # string
+  namespace: xxx
+  # 参考 CronJob.yaml
+  # bool
+  ignoreLabels: true
+  # 参考 CronJob.yaml
+  # map
+  labels:
+    name: ccc

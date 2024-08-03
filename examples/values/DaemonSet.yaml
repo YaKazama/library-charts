@@ -1,0 +1,29 @@
+
+DaemonSet:
+  minReadySeconds: 10
+  revisionHistoryLimit: 10
+  # matchExpressions
+  selector:
+    # slice
+  - matchExpressions:
+    # - podAntiAffinity1 = 111
+    - xxx in (vvv, fff)
+    # map
+  - matchLabels:
+     podAntiAffinity2: 222
+  updateStrategy:
+    rollingUpdate:
+      maxSurge: 10%
+      maxUnavailable: 1
+
+  # https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#podspec-v1-core
+  # 参考 CronJob.yaml
+
+
+# updateStrategy:
+#   type: RollingUpdate
+# selector:
+#   matchExpressions:
+#   - podAntiAffinity3 = 333
+#   matchLabels:
+#     podAntiAffinity4: 444

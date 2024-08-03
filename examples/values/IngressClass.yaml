@@ -1,0 +1,14 @@
+
+IngressClass:
+  controller: xxx
+  # 相同 Key 全直接进行合并
+  # slice, map
+  parameters:
+  - kind: xx
+    name: xx
+    apiGroup: xxx
+    scope: Namespace
+    namespace: xxx
+parameters:
+  kind: xxx
+  name: xxx

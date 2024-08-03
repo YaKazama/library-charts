@@ -1,0 +1,30 @@
+
+StorageClass:
+  # https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#storageclass-v1-storage-k8s-io
+  allowVolumeExpansion: true
+  # string 可用的分隔符：空格, ",", ":", "|"
+  # string, slice
+  mountOptions: xxxx
+  # map
+  parameters:
+    x: xx
+  provisioner: ccc
+  # "Retain" "Delete"
+  # string
+  reclaimPolicy: Retain
+  # "Immediate" "WaitForFirstConsumer"
+  # string
+  volumeBindingMode: WaitForFirstConsumer
+  # slice, map
+  allowedTopologies:
+    matchLabelExpressions:
+      key: a
+      values: a b c
+      ccc: vvv
+allowedTopologies:
+- matchLabelExpressions:
+  - key: ccc
+    values:
+    - cc
+    - dd
+  - xx: ff dd , fff

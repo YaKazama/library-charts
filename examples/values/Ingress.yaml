@@ -1,0 +1,71 @@
+
+Ingress:
+  # map
+  defaultBackend:
+    # map
+    resource:
+      apiGroup: string
+      kind: string
+      name: string
+    # map
+    service:
+      name: string
+      port:
+        name: string
+        number: 66
+  # string
+  ingressClassName: xxx
+  # string 类型，会作为 secretName 的值
+  # string, slice, map
+  tls:
+    # string, slice
+  - hosts:
+    - 11.example.com
+    secretName: string
+  - string1
+  - string2: 3.example.com 4.example.com
+  # slice, map
+  rules:
+    "*.example.com":
+    # resource
+      apiGroup: apiGroup.example.com
+      kind: Secret
+      name: secret-name
+      # 如果出现相同 path 的配置，则依据 path 的值进行合并，先定义先生效
+      path: "/"
+      pathType: "Prefix"
+rules:
+- "*.example.com":
+  # service
+  - name: aaa
+    # 与 portNumber 互斥，portName 后生效
+    portName: aaa
+    # 与 portName 互斥，portNumber 先生效
+    portNumber: 123
+    # * 仅在此处且定义了 path 值才生效。path 路径的前缀
+    # string
+    pathPrefix: /prefix
+    # * 仅在此处且定义了 path 值才生效。path 路径的后缀
+    # string
+    pathSuffix: /suffix/
+    # 如果出现相同 path 的配置，则依据 path 的值进行合并，先定义先生效
+    # string
+    path: "/aaa"
+    # one of "Exact" "Prefix" "ImplementationSpecific"
+    # string
+    pathType: "Prefix"
+  - name: bbb
+    # 与 portNumber 互斥，portName 后生效
+    portName: bbb
+    # 与 portName 互斥，portNumber 先生效
+    portNumber: 1234
+    # 如果出现相同 path 的配置，则依据 path 的值进行合并，先定义先生效
+    path: "/aaa"
+    pathType: "Prefix"
+- "1.example.com":
+  # service
+  - name: aaa
+    portName: bbb
+    portNumber: 123
+    path: "/aaa"
+    pathType: "Prefix"

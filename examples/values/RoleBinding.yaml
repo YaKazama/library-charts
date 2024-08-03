@@ -1,0 +1,21 @@
+
+RoleBinding:
+  # string 分隔符："|" 分别表示 kind 与 name 且只能以 User 或 Group 开头
+  # string, slice, map
+  # subjects:
+  # - kind: Group
+  #   name: manager      # 'name' 是区分大小写的
+  #   # apiGroup: rbac.authorization.k8s.io
+  #   namespace: xx
+  # subjects:
+  #   kind: Group
+  #   name: manager      # 'name' 是区分大小写的
+  #   # apiGroup: rbac.authorization.k8s.io
+  #   namespace: xx
+  subjects: Group | xxx-xx:xx:xx
+  # string 类型的值会作为 name 的值出现，其他值会使用默认值替换
+  # string, map
+  roleRef:
+    # kind: ClusterRole
+    name: secret-reader
+    # apiGroup: rbac.authorization.k8s.io

@@ -1,0 +1,84 @@
+
+Service:
+  # https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#servicespec-v1-core
+  allocateLoadBalancerNodePorts: false
+  clusterIP: 2.2.2.2
+  # string, slice
+  clusterIPs: ""
+  # string, slice
+  externalIPs: 1.1.1.1
+  externalName: xxx
+  # "Local" "Cluster"
+  # string
+  externalTrafficPolicy: Cluster
+  healthCheckNodePort: 1
+  # "Local" "Cluster"
+  # string
+  internalTrafficPolicy: Local
+  # string, slice
+  ipFamilies: 1.1.1.1
+  # "SingleStack" "PreferDualStack" "RequireDualStack"
+  # string
+  ipFamilyPolicy: ""
+  # "LoadBalancer"
+  # string
+  loadBalancerClass: ""
+  # string
+  loadBalancerIP: 1.1.1.1
+  # string, slice
+  loadBalancerSourceRanges: 1.1.1.1/32 2.2.2.3/32
+  publishNotReadyAddresses: true
+  type: ClusterIP
+  # map
+  selector:
+    a: a
+  sessionAffinity: ClientIP
+  # map
+  sessionAffinityConfig:
+    clientIP: 300
+      # timeoutSeconds: 0
+  # 以 port 为键进行合并
+  # string 分隔符：":"，多组之间可使用空格、"|"、"," 进行分隔
+  # map, slice, string
+  # ports: <port>:<name>[:<protocol>][, <portN>:<nameN>[:<protocol>] ...]
+  ports:
+  - appProtocol: xx
+    name: xx1
+    nodePort: 30001
+    # nodePortScope: 30000-32767
+    port: 3122
+    # protocol: tcp  # tcp udp sctp
+    targetPort: 3122
+    clusterIP: None
+    # 此处的值与外层的 type 有区别，此处仅用于处理 ports 中的一些字段显示判断
+    type: NodePort  # LoadBalancer
+  - appProtocol: xx
+    name: xx2
+    nodePort: 30002
+    # nodePortScope: 30000-32767
+    port: 3222
+    # protocol: tcp  # tcp udp sctp
+    # targetPort: 3122
+    clusterIP: None
+    # 此处的值与外层的 type 有区别，此处仅用于处理 ports 中的一些字段显示判断
+    type: NodePort  # LoadBalancer
+ports:
+  appProtocol: xx
+  name: xx3
+  nodePort: 30003
+  nodePortScope: 30000-32767
+  port: 3122
+  protocol: udp
+  targetPort: 3222
+sessionAffinityConfig:
+  clientIP:
+    timeoutSeconds: 600
+loadBalancerSourceRanges:
+- 2.2.2.2/32 3.3.3.3/32
+ipFamilies:
+- 2.2.2.2 3.3.3.3
+externalIPs:
+- 2.2.2.2 3.3.3.3
+clusterIPs:
+- 1.1.1.1
+- 2.2.2.2, 3.3.3.3

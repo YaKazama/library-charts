@@ -1,0 +1,60 @@
+
+StatefulSet:
+  # https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#statefulsetspec-v1-apps
+  minReadySeconds: 10
+  revisionHistoryLimit: 10
+  # slice, map
+  selector:
+    # slice
+  - matchExpressions:
+    # - podAntiAffinity1 = 111
+    - xxx in (vvv, fff)
+    # map
+  - matchLabels:
+     podAntiAffinity2: 222
+  activeDeadlineSeconds: 10
+  # map
+  strategy:
+    rollingUpdate:
+      maxSurge: 10%
+      maxUnavailable: 1
+  start: 0
+  ordinals: 10
+  # slice, map
+  volumeClaimTemplates:
+    name: vct-name1
+    accessModes: ReadWriteOnce
+    storageClassName: storage-class-name
+    size: 22Gi
+    vct-name1:
+      accessModes: ReadWriteOnce, ReadOnlyMany
+      storageClassName: storage-class-name
+      size: 2Gi
+    vct-name2:
+      accessModes:
+      - ReadWriteOnce
+      storageClassName: storage-class-name
+      storage: 2Gi
+
+  # https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#podspec-v1-core
+  # 参考 CronJob.yaml
+
+volumeClaimTemplates:
+- name: vct-name1
+  accessModes: ReadWriteOnce
+  storageClassName: storage-class-name
+  size: 12Gi
+- vct-name2:
+    accessModes:
+    - ReadWriteOnce
+    storageClassName: storage-class-name
+    storage: 12Gi
+ordinals:
+  start: 100
+strategy:
+  type: RollingUpdate
+selector:
+  matchExpressions:
+  - podAntiAffinity3 = 333
+  matchLabels:
+    podAntiAffinity4: 444
